@@ -1,0 +1,152 @@
+import Image from 'next/image';
+
+import { Button } from '@/components/ui/button';
+import type { RecognitionCandidate } from '@/lib/recognition';
+
+type RecognitionCandidateCardProps = {
+  candidate: RecognitionCandidate;
+  isConfirmed: boolean;
+  onConfirm: (candidate: RecognitionCandidate) => void;
+};
+
+function getConfidenceLabel(score: number) {
+  if (score >= 0.86) {
+    return '非常接近';
+  }
+
+  if (score >= 0.72) {
+    return '较大概率';
+  }
+
+  if (score >= 0.58) {
+    return '可能匹配';
+  }
+
+  return '较弱';
+}
+
+export function RecognitionCandidateCard({
+  candidate,
+  isConfirmed,
+  onConfirm,
+}: RecognitionCandidateCardProps) {
+  const confidence = Math.round(candidate.score * 100);
+  const confidenceLabel = getConfidenceLabel(candidate.score);
+  const characterLabel =
+    candidate.goods.characterNames.length > 0
+      ? candidate.goods.characterNames.join(' / ')
+      : '角色待补充';
+  const attributeChips = [
+    candidate.goods.goodsType,
+    candidate.goods.material,
+    candidate.goods.sizeLabel,
+    candidate.goods.edition,
+  ].filter((value): value is string => Boolean(value));
+
+  return (
+    <article
+      className={
+        isConfirmed
+          ? 'panel-float rounded-[1.7rem] border border-[color:color-mix(in_oklab,var(--accent)_54%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,transparent),color-mix(in_oklab,var(--surface-strong)_88%,var(--background)))] p-4 shadow-[0_30px_74px_-44px_color-mix(in_oklab,var(--accent)_42%,transparent)]'
+          : 'panel-float rounded-[1.7rem] border border-[color:color-mix(in_oklab,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-4'
+      }
+    >
+      <div className="flex gap-4">
+        <div className="hud-card relative h-28 w-24 shrink-0 overflow-hidden rounded-[1.25rem]">
+          {candidate.goods.primaryImageUrl ? (
+            <Image
+              alt={candidate.goods.name}
+              className="object-cover"
+              fill
+              sizes="96px"
+              src={candidate.goods.primaryImageUrl}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-center text-xs leading-5 text-[color:color-mix(in_oklab,var(--foreground)_56%,var(--background))]">
+              暂无图片
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap gap-2">
+                <span className="hud-chip text-foreground border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_14%,transparent)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase">
+                  Top {candidate.rank}
+                </span>
+                <span className="hud-chip text-muted-foreground px-3 py-1 text-xs">
+                  {candidate.goods.skuCode}
+                </span>
+                  {isConfirmed ? (
+                    <span className="hud-chip text-foreground border-[color:color-mix(in_oklab,var(--primary)_38%,white)] bg-[color:color-mix(in_oklab,var(--primary)_20%,transparent)] px-3 py-1 text-xs font-semibold">
+                    已确认目标
+                    </span>
+                  ) : null}
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-foreground text-base leading-6 font-semibold">
+                  {candidate.goods.name}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-6">
+                  {characterLabel} / {candidate.goods.ipName}
+                </p>
+                <p className="text-sm leading-6 text-[color:color-mix(in_oklab,var(--foreground)_68%,var(--background))]">
+                  {candidate.goods.seriesName}
+                </p>
+              </div>
+            </div>
+
+            <div className="shrink-0 text-right">
+              <p className="font-heading text-foreground text-4xl leading-none">
+                {confidence}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs tracking-[0.18em] uppercase">
+                {confidenceLabel}
+              </p>
+            </div>
+          </div>
+
+          <div className="h-2.5 overflow-hidden rounded-full bg-[color:color-mix(in_oklab,var(--background)_74%,var(--card))]">
+            <div
+              className="h-full rounded-full bg-[linear-gradient(90deg,color-mix(in_oklab,var(--accent)_76%,white),color-mix(in_oklab,var(--primary)_54%,white))]"
+              style={{ width: `${confidence}%` }}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {attributeChips.map((attribute) => (
+              <span
+                className="hud-chip text-muted-foreground px-3 py-1 text-xs"
+                key={`${candidate.id}-${attribute}`}
+              >
+                {attribute}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="hud-card px-4 py-3">
+              <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                匹配原因
+              </p>
+              <p className="text-foreground mt-2 text-sm leading-6">
+                {candidate.matchReason}
+              </p>
+            </div>
+
+            <Button
+              className="w-full lg:w-auto"
+              onClick={() => onConfirm(candidate)}
+              type="button"
+              variant={isConfirmed ? 'secondary' : 'default'}
+            >
+              {isConfirmed ? '已选定目标' : '确认这件商品'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
