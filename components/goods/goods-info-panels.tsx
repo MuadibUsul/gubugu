@@ -9,11 +9,9 @@ type GoodsInfoPanelsProps = {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-border/60 flex items-start justify-between gap-4 border-b py-3 first:pt-0 last:border-b-0 last:pb-0">
-      <span className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
-        {label}
-      </span>
-      <span className="text-foreground max-w-[18rem] text-right text-sm leading-7">
+    <div className="border-border/60 flex flex-col gap-2 border-b py-3 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <span className="text-muted-foreground meta-label">{label}</span>
+      <span className="text-foreground max-w-full text-sm leading-7 sm:max-w-[18rem] sm:text-right">
         {value}
       </span>
     </div>
@@ -26,9 +24,7 @@ export function GoodsInfoPanels({ goods }: GoodsInfoPanelsProps) {
       <section className="collection-panel p-5 sm:p-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-              图鉴身份
-            </p>
+            <p className="text-muted-foreground eyebrow-label">图鉴身份</p>
             <h1 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
               {goods.name}
             </h1>
@@ -70,9 +66,7 @@ export function GoodsInfoPanels({ goods }: GoodsInfoPanelsProps) {
       <section className="collection-panel p-5 sm:p-6">
         <div className="space-y-4">
           <div>
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-              结构化属性
-            </p>
+            <p className="text-muted-foreground eyebrow-label">结构化属性</p>
             <h2 className="font-heading text-foreground mt-2 text-4xl leading-none">
               SKU 规格卡
             </h2>
@@ -81,10 +75,7 @@ export function GoodsInfoPanels({ goods }: GoodsInfoPanelsProps) {
           <div>
             <InfoRow label="SKU" value={goods.skuCode} />
             <InfoRow label="版本" value={goods.edition ?? '标准版'} />
-            <InfoRow
-              label="材质"
-              value={goods.material ?? '暂未收录'}
-            />
+            <InfoRow label="材质" value={goods.material ?? '暂未收录'} />
             <InfoRow label="尺寸" value={goods.sizeLabel ?? '暂未收录'} />
             <InfoRow
               label="发售日期"
@@ -97,22 +88,16 @@ export function GoodsInfoPanels({ goods }: GoodsInfoPanelsProps) {
 
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="collection-panel p-5 sm:p-6">
-          <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-            价格
-          </p>
+          <p className="text-muted-foreground eyebrow-label">价格</p>
           <div className="mt-4 space-y-3">
             <div className="hud-card px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
-                官方定价
-              </p>
+              <p className="text-muted-foreground meta-label">官方定价</p>
               <p className="text-foreground mt-2 text-lg font-semibold">
                 {formatCatalogCurrency(goods.msrpAmount, goods.currencyCode)}
               </p>
             </div>
             <div className="hud-card border-dashed px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
-                市场观察
-              </p>
+              <p className="text-muted-foreground meta-label">市场观察</p>
               <p className="text-muted-foreground mt-2 text-sm leading-7">
                 这里会继续补充市场观察信息。当前页面先聚焦图鉴属性、收藏状态与用户内容。
               </p>
@@ -121,9 +106,7 @@ export function GoodsInfoPanels({ goods }: GoodsInfoPanelsProps) {
         </div>
 
         <div className="collection-panel p-5 sm:p-6">
-          <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-            标签
-          </p>
+          <p className="text-muted-foreground eyebrow-label">标签</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {goods.tags.length > 0 ? (
               goods.tags.map((tag) => (
@@ -146,9 +129,7 @@ export function GoodsInfoPanels({ goods }: GoodsInfoPanelsProps) {
 
       <section className="collection-panel p-5 sm:p-6">
         <div className="space-y-2">
-          <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-            识别入口
-          </p>
+          <p className="text-muted-foreground eyebrow-label">识别入口</p>
           <h2 className="font-heading text-foreground text-4xl leading-none">
             相机识别入口
           </h2>

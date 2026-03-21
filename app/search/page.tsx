@@ -5,17 +5,14 @@ import { SearchFilters } from '@/components/search/search-filters';
 import { SearchResults } from '@/components/search/search-results';
 import { Button } from '@/components/ui/button';
 import type { SearchPageControls } from '@/components/search/search-query';
-import {
-  getMultiSearchParamValues,
-  getSingleSearchParamValue,
-} from '@/lib/search-params';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { getSingleSearchParamValue, getMultiSearchParamValues } from '@/lib/search-params';
+import { getAuthUser } from '@/server/auth/session';
 import { getGoodsSearchPageData } from '@/server/data';
+import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 export const metadata: Metadata = {
   title: '搜索',
-  description:
-    '按关键词、IP、角色、系列、谷物类型和标签搜索图鉴。',
+  description: '按关键词、IP、角色、系列、商品类型和标签定位 SKU。',
 };
 
 const searchPageQuerySchema = z.object({
@@ -71,6 +68,7 @@ function normalizeSearchControls(
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const controls = normalizeSearchControls(resolvedSearchParams);
+  const authUser = await getAuthUser();
   let pageData: Awaited<ReturnType<typeof getGoodsSearchPageData>> | null =
     null;
   let state: 'ready' | 'error' = 'ready';
@@ -96,32 +94,28 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
       <form
         action="/search"
-        className="mx-auto flex min-h-screen w-full max-w-[92rem] flex-col gap-6 px-5 py-[5.5rem] md:px-8 md:py-24 xl:px-10 xl:py-24"
+        className="mx-auto flex min-h-screen w-full max-w-[94rem] flex-col gap-6 px-5 py-[5.5rem] md:px-8 md:py-24 xl:px-10 xl:py-24"
       >
         <section className="collection-panel relative overflow-hidden px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--accent)_20%,transparent),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_94%,transparent)_0%,color-mix(in_oklab,var(--surface-soft)_88%,var(--background))_100%)]" />
-          <div className="relative space-y-7">
+          <div className="relative grid gap-6">
             <div className="space-y-4">
               <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
-                搜索优先图鉴
+                Search
               </p>
-              <div className="space-y-4">
-                <h1 className="font-heading text-foreground max-w-5xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5.15rem]">
-                  把零散线索重新收束到准确的 SKU 记录
-                </h1>
-                <p className="max-w-3xl text-base leading-8 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))] sm:text-lg">
-                  搜索始终是站点主入口，而筛选层也会明确展开：关键词、IP、角色、系列、谷物类型和标签都直接映射到图鉴查询。
-                </p>
-              </div>
+              <h1 className="font-heading text-foreground max-w-5xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5.15rem]">
+                先找到正确的 SKU
+              </h1>
             </div>
 
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
               <input
                 autoComplete="off"
+                autoFocus
                 className="ui-field-lg h-15 px-5 text-base sm:text-lg"
                 defaultValue={controls.query ?? ''}
                 name="query"
-                placeholder="搜索 IP、角色、系列、SKU 编号或标签"
+                placeholder="角色名、系列名、SKU 编号"
                 type="search"
               />
               <Button
@@ -129,28 +123,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 size="lg"
                 type="submit"
               >
-                搜索图鉴
+                搜索
               </Button>
-            </div>
-
-            <div className="grid gap-3 lg:grid-cols-3">
-              {[
-                '关键词会命中 SKU 名称、SKU 编号、系列名、IP 名、角色名和标签。',
-                'IP、角色、系列、谷物类型和标签都已经作为 V1 直接筛选项暴露出来。',
-                '结果始终保持 SKU 优先，因此收藏状态、评论、评分和交换意向都不会失去核心实体。',
-              ].map((item) => (
-                <div
-                  className="hud-card px-4 py-4 text-sm leading-7"
-                  key={item}
-                >
-                  {item}
-                </div>
-              ))}
             </div>
           </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
           <SearchFilters
             controls={controls}
             filterOptions={pageData?.filterOptions}
@@ -158,6 +137,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <SearchResults
             controls={controls}
             filterOptions={pageData?.filterOptions}
+            isAuthenticated={Boolean(authUser)}
             result={pageData?.results}
             state={state}
           />

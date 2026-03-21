@@ -25,15 +25,12 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
         <div className="space-y-5">
           <div className="space-y-3">
             <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
-              筛选器
+              过滤范围
             </p>
             <div>
               <h2 className="font-heading text-foreground text-4xl leading-none">
-                搜索筛选
+                筛选
               </h2>
-              <p className="text-muted-foreground mt-3 text-sm leading-7">
-                V1 现在把 IP、角色、系列、谷物类型和标签都直接暴露成筛选项，而不是把部分查询状态藏在上下文链接里。
-              </p>
             </div>
           </div>
 
@@ -127,7 +124,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                 className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
                 htmlFor="search-sidebar-goods-type"
               >
-                谷物类型
+                商品类型
               </label>
               <select
                 className={controlClassName}
@@ -135,11 +132,10 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                 id="search-sidebar-goods-type"
                 name="goodsType"
               >
-                <option value="">全部谷物类型</option>
+                <option value="">全部商品类型</option>
                 {(filterOptions?.goodsTypes ?? []).map((goodsType) => (
                   <option key={goodsType.value} value={goodsType.value}>
-                    {formatGoodsTypeLabel(goodsType.value)} (
-                    {goodsType.goodsCount})
+                    {formatGoodsTypeLabel(goodsType.value)} ({goodsType.goodsCount})
                   </option>
                 ))}
               </select>
@@ -156,11 +152,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                     const isChecked = controls.tagSlugs.includes(tag.slug);
 
                     return (
-                      <label
-                        className="cursor-pointer"
-                        htmlFor={inputId}
-                        key={tag.id}
-                      >
+                      <label className="cursor-pointer" htmlFor={inputId} key={tag.id}>
                         <input
                           className="peer sr-only"
                           defaultChecked={isChecked}
@@ -179,8 +171,8 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                     );
                   })
                 ) : (
-                  <div className="hud-card text-muted-foreground border-dashed px-4 py-4 text-sm leading-7">
-                    暂时还没有可用的标签分面。
+                  <div className="hud-card text-muted-foreground border-dashed px-4 py-4 text-sm">
+                    暂无标签
                   </div>
                 )}
               </div>
@@ -191,36 +183,29 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-4">
                 <h3 className="text-sm font-semibold tracking-[0.18em] uppercase">
-                  当前筛选
+                  当前过滤
                 </h3>
-                <span className="text-muted-foreground text-xs">
-                  当前查询范围
-                </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {controls.ipSlug ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">
-                    IP：{controls.ipSlug}
-                  </span>
+                  <span className="hud-chip px-3 py-1.5 text-sm">IP · {controls.ipSlug}</span>
                 ) : null}
                 {controls.characterSlug ? (
                   <span className="hud-chip px-3 py-1.5 text-sm">
-                    角色：{controls.characterSlug}
+                    角色 · {controls.characterSlug}
                   </span>
                 ) : null}
                 {controls.seriesSlug ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">
-                    系列：{controls.seriesSlug}
-                  </span>
+                  <span className="hud-chip px-3 py-1.5 text-sm">系列 · {controls.seriesSlug}</span>
                 ) : null}
                 {controls.goodsType ? (
                   <span className="hud-chip px-3 py-1.5 text-sm">
-                    类型：{formatGoodsTypeLabel(controls.goodsType)}
+                    类型 · {formatGoodsTypeLabel(controls.goodsType)}
                   </span>
                 ) : null}
                 {controls.tagSlugs.map((tagSlug) => (
                   <span className="hud-chip px-3 py-1.5 text-sm" key={tagSlug}>
-                    标签：{tagSlug}
+                    标签 · {tagSlug}
                   </span>
                 ))}
               </div>
@@ -228,7 +213,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
           ) : null}
 
           <div className="flex flex-wrap gap-3 pt-2">
-            <Button type="submit">应用筛选</Button>
+            <Button type="submit">应用过滤</Button>
             <Button asChild variant="outline">
               <a href="/search">重置搜索</a>
             </Button>

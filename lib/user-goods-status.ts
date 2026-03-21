@@ -15,15 +15,15 @@ export const userGoodsStatusMeta: Record<
 > = {
   owned: {
     label: '已拥有',
-    description: '会点亮补全进度。',
+    description: '计入收藏进度',
   },
   wanted: {
     label: '想要',
-    description: '把这个 SKU 保留在目标收藏架上。',
+    description: '加入想要清单',
   },
   exchange: {
     label: '可交换',
-    description: '标记这个 SKU 之后可用于换物。',
+    description: '用于交换展示',
   },
 };
 

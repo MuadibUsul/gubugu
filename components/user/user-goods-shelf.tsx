@@ -165,9 +165,9 @@ export function UserGoodsShelf({
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
                 {title}
               </h2>
-              <p className="text-muted-foreground mt-3 text-sm leading-7 sm:text-base">
-                {description}
-              </p>
+            <p className="text-muted-foreground mt-3 text-sm sm:text-base">
+              {description}
+            </p>
             </div>
           </div>
           <div className="border-border/70 bg-background/76 text-muted-foreground rounded-full border px-4 py-2 text-sm">
@@ -189,9 +189,7 @@ export function UserGoodsShelf({
       ) : (
         <div className="collection-panel p-6 sm:p-7">
           <div className="border-border/65 bg-background/72 rounded-[1.6rem] border border-dashed px-5 py-8">
-            <p className="text-muted-foreground text-sm leading-7">
-              这个收藏架里暂时还没有追踪中的 SKU。你可以先去商品详情页添加状态，再回来查看这里的内容。
-            </p>
+            <p className="text-muted-foreground text-sm">暂无内容</p>
           </div>
         </div>
       )}

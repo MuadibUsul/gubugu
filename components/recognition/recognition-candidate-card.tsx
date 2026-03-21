@@ -7,48 +7,51 @@ type RecognitionCandidateCardProps = {
   candidate: RecognitionCandidate;
   isConfirmed: boolean;
   onConfirm: (candidate: RecognitionCandidate) => void;
+  compact?: boolean;
 };
 
 function getConfidenceLabel(score: number) {
   if (score >= 0.86) {
-    return '非常接近';
+    return '高度接近';
   }
 
   if (score >= 0.72) {
-    return '较大概率';
+    return '较高可能';
   }
 
   if (score >= 0.58) {
-    return '可能匹配';
+    return '可作为候选';
   }
 
-  return '较弱';
+  return '信号偏弱';
 }
 
 export function RecognitionCandidateCard({
   candidate,
   isConfirmed,
   onConfirm,
+  compact = false,
 }: RecognitionCandidateCardProps) {
   const confidence = Math.round(candidate.score * 100);
   const confidenceLabel = getConfidenceLabel(candidate.score);
   const characterLabel =
     candidate.goods.characterNames.length > 0
       ? candidate.goods.characterNames.join(' / ')
-      : '角色待补充';
+      : '未关联角色';
   const attributeChips = [
     candidate.goods.goodsType,
     candidate.goods.material,
     candidate.goods.sizeLabel,
-    candidate.goods.edition,
   ].filter((value): value is string => Boolean(value));
 
   return (
     <article
       className={
-        isConfirmed
-          ? 'panel-float rounded-[1.7rem] border border-[color:color-mix(in_oklab,var(--accent)_54%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,transparent),color-mix(in_oklab,var(--surface-strong)_88%,var(--background)))] p-4 shadow-[0_30px_74px_-44px_color-mix(in_oklab,var(--accent)_42%,transparent)]'
-          : 'panel-float rounded-[1.7rem] border border-[color:color-mix(in_oklab,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-4'
+        compact
+          ? 'panel-float rounded-[1.5rem] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-4'
+          : isConfirmed
+            ? 'panel-float rounded-[1.8rem] border border-[color:color-mix(in_oklab,var(--accent)_54%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,transparent),color-mix(in_oklab,var(--surface-strong)_88%,var(--background)))] p-5 shadow-[0_30px_74px_-44px_color-mix(in_oklab,var(--accent)_42%,transparent)]'
+            : 'panel-float rounded-[1.8rem] border border-[color:color-mix(in_oklab,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-5'
       }
     >
       <div className="flex gap-4">
@@ -72,17 +75,17 @@ export function RecognitionCandidateCard({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 space-y-2">
               <div className="flex flex-wrap gap-2">
-                <span className="hud-chip text-foreground border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_14%,transparent)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase">
+                <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase">
                   Top {candidate.rank}
                 </span>
                 <span className="hud-chip text-muted-foreground px-3 py-1 text-xs">
                   {candidate.goods.skuCode}
                 </span>
-                  {isConfirmed ? (
-                    <span className="hud-chip text-foreground border-[color:color-mix(in_oklab,var(--primary)_38%,white)] bg-[color:color-mix(in_oklab,var(--primary)_20%,transparent)] px-3 py-1 text-xs font-semibold">
-                    已确认目标
-                    </span>
-                  ) : null}
+                {isConfirmed ? (
+                  <span className="hud-chip border-[color:color-mix(in_oklab,var(--primary)_38%,white)] bg-[color:color-mix(in_oklab,var(--primary)_20%,transparent)] px-3 py-1 text-xs font-semibold">
+                    已选定
+                  </span>
+                ) : null}
               </div>
 
               <div className="space-y-1">
@@ -90,10 +93,10 @@ export function RecognitionCandidateCard({
                   {candidate.goods.name}
                 </h3>
                 <p className="text-muted-foreground text-sm leading-6">
-                  {characterLabel} / {candidate.goods.ipName}
+                  {characterLabel}
                 </p>
                 <p className="text-sm leading-6 text-[color:color-mix(in_oklab,var(--foreground)_68%,var(--background))]">
-                  {candidate.goods.seriesName}
+                  {candidate.goods.seriesName} / {candidate.goods.ipName}
                 </p>
               </div>
             </div>
@@ -126,25 +129,41 @@ export function RecognitionCandidateCard({
             ))}
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <div className="hud-card px-4 py-3">
-              <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
-                匹配原因
-              </p>
-              <p className="text-foreground mt-2 text-sm leading-6">
+          {!compact ? (
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <div className="hud-card px-4 py-3">
+                <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                  匹配依据
+                </p>
+                <p className="text-foreground mt-2 text-sm leading-6">
+                  {candidate.matchReason}
+                </p>
+              </div>
+
+              <Button
+                className="w-full lg:w-auto"
+                onClick={() => onConfirm(candidate)}
+                type="button"
+                variant={isConfirmed ? 'secondary' : 'default'}
+              >
+                {isConfirmed ? '已确认' : '是，就是它'}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-muted-foreground line-clamp-1 text-sm">
                 {candidate.matchReason}
               </p>
+              <Button
+                className="shrink-0"
+                onClick={() => onConfirm(candidate)}
+                type="button"
+                variant={isConfirmed ? 'secondary' : 'outline'}
+              >
+                {isConfirmed ? '已确认' : '选择'}
+              </Button>
             </div>
-
-            <Button
-              className="w-full lg:w-auto"
-              onClick={() => onConfirm(candidate)}
-              type="button"
-              variant={isConfirmed ? 'secondary' : 'default'}
-            >
-              {isConfirmed ? '已选定目标' : '确认这件商品'}
-            </Button>
-          </div>
+          )}
         </div>
       </div>
     </article>

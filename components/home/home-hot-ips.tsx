@@ -7,9 +7,9 @@ import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 function getIpCardAccent(index: number) {
   const accents = [
-    'from-[color:color-mix(in_oklab,var(--accent)_22%,transparent)] via-[color:color-mix(in_oklab,var(--surface-strong)_92%,var(--card))] to-[color:color-mix(in_oklab,var(--background)_88%,var(--card))]',
-    'from-[color:color-mix(in_oklab,var(--primary)_18%,transparent)] via-[color:color-mix(in_oklab,var(--surface-strong)_92%,var(--card))] to-[color:color-mix(in_oklab,var(--background)_90%,var(--card))]',
-    'from-[color:color-mix(in_oklab,var(--secondary)_22%,transparent)] via-[color:color-mix(in_oklab,var(--surface-strong)_92%,var(--card))] to-[color:color-mix(in_oklab,var(--background)_90%,var(--card))]',
+    'from-[color:color-mix(in_oklab,var(--primary)_14%,transparent)] via-[color:color-mix(in_oklab,var(--surface-strong)_96%,var(--card))] to-[color:color-mix(in_oklab,var(--background)_94%,var(--card))]',
+    'from-[color:color-mix(in_oklab,var(--accent)_16%,transparent)] via-[color:color-mix(in_oklab,var(--surface-strong)_96%,var(--card))] to-[color:color-mix(in_oklab,var(--background)_94%,var(--card))]',
+    'from-[color:color-mix(in_oklab,var(--secondary)_16%,transparent)] via-[color:color-mix(in_oklab,var(--surface-strong)_96%,var(--card))] to-[color:color-mix(in_oklab,var(--background)_94%,var(--card))]',
   ] as const;
 
   return accents[index % accents.length];
@@ -18,24 +18,23 @@ function getIpCardAccent(index: number) {
 function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
   return (
     <article
-      className={`panel-float group relative overflow-hidden rounded-[1.9rem] border border-[color:color-mix(in_oklab,var(--accent)_18%,var(--border))] bg-gradient-to-br ${getIpCardAccent(index)} p-5 shadow-[0_30px_78px_-42px_color-mix(in_oklab,var(--shadow-tint)_74%,transparent)]`}
+      className={`panel-float group relative overflow-hidden rounded-[2rem] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-gradient-to-br ${getIpCardAccent(index)} p-6 shadow-[0_30px_78px_-42px_color-mix(in_oklab,var(--shadow-tint)_44%,transparent)]`}
     >
       {ip.coverImageUrl ? (
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-[0.12] transition duration-500 group-hover:scale-[1.03] group-hover:opacity-[0.16]"
+          className="absolute inset-y-0 right-0 w-[46%] bg-cover bg-center opacity-[0.18] transition duration-500 group-hover:scale-[1.02] group-hover:opacity-[0.24]"
           style={{
-            backgroundImage: `url(${ip.coverImageUrl})`,
+            backgroundImage: `linear-gradient(270deg, transparent 0%, color-mix(in oklab, var(--background) 40%, transparent) 58%, color-mix(in oklab, var(--background) 96%, transparent) 100%), url(${ip.coverImageUrl})`,
           }}
         />
       ) : null}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--accent)_22%,transparent),transparent_36%),linear-gradient(135deg,transparent_0%,color-mix(in_oklab,white_18%,transparent)_46%,transparent_100%)]" />
 
-      <div className="relative flex h-full flex-col justify-between gap-8">
-        <div className="space-y-4">
+      <div className="relative flex h-full flex-col justify-between gap-10">
+        <div className="max-w-[28rem] space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.34em] uppercase">
-                热门 IP
+              <p className="text-[0.68rem] font-semibold tracking-[0.34em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
+                热门作品
               </p>
               <h3 className="font-heading text-foreground mt-3 text-4xl leading-none">
                 {ip.name}
@@ -48,19 +47,15 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
             </div>
 
             <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
-              精选
+              作品入口
             </span>
           </div>
 
-          <p className="max-w-xl text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_76%,var(--background))]">
-            这个 IP 下当前已发布 {ip.goodsCount} 件商品、{ip.characterCount}{' '}
-            个角色和 {ip.seriesCount} 条系列线。它应该直接成为图鉴浏览入口，而不只是搜索跳板。
-          </p>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="hud-card px-4 py-3">
-            <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <p className="text-[0.68rem] tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
               商品
             </p>
             <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -69,7 +64,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
           </div>
 
           <div className="hud-card px-4 py-3">
-            <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <p className="text-[0.68rem] tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
               角色
             </p>
             <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -78,7 +73,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
           </div>
 
           <div className="hud-card px-4 py-3">
-            <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <p className="text-[0.68rem] tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
               系列
             </p>
             <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -87,8 +82,8 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
           </div>
         </div>
 
-        <Button asChild className="rounded-full" variant="secondary">
-          <Link href={`/ips/${ip.slug}`}>打开 IP 页面</Link>
+        <Button asChild className="w-fit rounded-full" variant="secondary">
+          <Link href={`/ips/${ip.slug}`}>进入作品页</Link>
         </Button>
       </div>
     </article>
@@ -131,9 +126,9 @@ export async function HomeHotIpsSection() {
   if (state === 'error') {
     return (
       <HomeSectionState
-        description="当前热门 IP 暂时不可用，请稍后刷新后再试。"
+        description="当前热门作品入口暂时不可用，请稍后刷新后再试。"
         eyebrow="数据不可用"
-        title="热门 IP 卡片加载失败"
+        title="作品入口加载失败"
         tone="error"
       />
     );
@@ -142,9 +137,9 @@ export async function HomeHotIpsSection() {
   if (state === 'empty') {
     return (
       <HomeSectionState
-        description="当前还没有已发布的 IP 记录。等真实图鉴数据就绪后，这里会展示最适合作为浏览入口的 IP。"
+        description="暂无作品记录。"
         eyebrow="空状态"
-        title="热门 IP 卡片为空"
+        title="作品入口为空"
         tone="warning"
       />
     );
@@ -155,18 +150,17 @@ export async function HomeHotIpsSection() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
           <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
-            热门 IP
+            世界观入口
           </p>
           <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-            热门作品入口
+            从喜欢的作品进入，
+            <br />
+            再找到属于你的那件周边。
           </h2>
-          <p className="text-muted-foreground max-w-2xl text-sm leading-7 sm:text-base">
-            首页优先给出最有价值的图鉴浏览入口，而不是平铺最新更新列表。每张卡片现在都能直接打开对应的 IP 页面。
-          </p>
         </div>
 
         <div className="hud-chip text-muted-foreground px-4 py-2 text-sm">
-          当前展示 {hotIps.length} 个入口
+          当前展示 {hotIps.length} 个作品入口
         </div>
       </div>
 

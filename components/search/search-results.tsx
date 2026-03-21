@@ -1,10 +1,7 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
-import type {
-  GoodsSearchFilterOptions,
-  GoodsSearchResult,
-} from '@/server/data';
+import type { GoodsSearchFilterOptions, GoodsSearchResult } from '@/server/data';
 
 import {
   buildSearchHref,
@@ -19,6 +16,7 @@ type SearchResultsProps = {
   result?: GoodsSearchResult;
   filterOptions?: GoodsSearchFilterOptions;
   state?: 'ready' | 'error';
+  isAuthenticated: boolean;
 };
 
 function resolveFacetLabel({
@@ -40,15 +38,16 @@ export function SearchResults({
   result,
   filterOptions,
   state = 'ready',
+  isAuthenticated,
 }: SearchResultsProps) {
   if (state === 'error' || !result) {
     return (
       <SearchPanelState
         actionHref="/search"
-        actionLabel="返回搜索页"
-        description="当前搜索结果暂时不可用，请稍后重试。"
+        actionLabel="返回搜索"
+        description="稍后再试。"
         eyebrow="搜索不可用"
-        title="搜索结果加载失败"
+        title="结果加载失败"
         tone="error"
       />
     );
@@ -87,14 +86,16 @@ export function SearchResults({
     return (
       <SearchPanelState
         actionHref="/search"
-        actionLabel="查看全部已发布商品"
-        description="当前关键词和筛选条件没有命中任何商品。你可以放宽查询范围，或清掉部分筛选后重新查看更大的图鉴范围。"
+        actionLabel="查看全部商品"
+        description="换个关键词，或减少筛选。"
         eyebrow="没有结果"
-        title="这次搜索没有匹配到商品"
+        title="这次没找到"
         tone="warning"
       />
     );
   }
+
+  const [bestMatch, ...otherItems] = result.items;
 
   return (
     <section className="space-y-5">
@@ -102,21 +103,15 @@ export function SearchResults({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
             <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
-              搜索结果
+              Results
             </p>
-            <div>
-              <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-                {result.query ? `“${result.query}” 的搜索结果` : '最新已发布商品'}
-              </h2>
-              <p className="text-muted-foreground mt-3 text-sm leading-7 sm:text-base">
-                共找到 {result.total} 条结果。当前第 {result.page} / {totalPages}{' '}
-                页。结果会保持 SKU 优先，同时继续向上链接到 IP、系列和角色图鉴视图。
-              </p>
-            </div>
+            <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
+              {result.query ? `“${result.query}”` : '全部商品'}
+            </h2>
           </div>
 
           <div className="hud-chip text-muted-foreground px-4 py-2 text-sm">
-            每页 {result.pageSize} 条
+            {result.total} 件
           </div>
         </div>
 
@@ -128,18 +123,38 @@ export function SearchResults({
               </span>
             ))}
           </div>
-        ) : (
-          <p className="text-muted-foreground mt-5 text-sm leading-7">
-            当前没有额外筛选条件，列表展示的是更完整的已发布商品图鉴。
-          </p>
-        )}
+        ) : null}
       </div>
 
-      <div className="grid gap-4 2xl:grid-cols-2">
-        {result.items.map((item) => (
-          <SearchResultCard item={item} key={item.id} />
-        ))}
-      </div>
+      {bestMatch ? (
+        <div className="space-y-3">
+          <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            最佳匹配
+          </p>
+          <SearchResultCard
+            isAuthenticated={isAuthenticated}
+            item={bestMatch}
+            priority="featured"
+          />
+        </div>
+      ) : null}
+
+      {otherItems.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            其他结果
+          </p>
+          <div className="grid gap-4 2xl:grid-cols-2">
+            {otherItems.map((item) => (
+              <SearchResultCard
+                isAuthenticated={isAuthenticated}
+                item={item}
+                key={item.id}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {totalPages > 1 ? (
         <div className="collection-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">

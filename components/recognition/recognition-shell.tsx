@@ -38,12 +38,12 @@ const pipelineSteps = [
   {
     key: 'match',
     label: '候选匹配',
-    description: '返回结构稳定、带排序的 SKU 候选结果。',
+    description: '返回候选结果。',
   },
   {
     key: 'confirm',
-    label: '最终确认',
-    description: '由用户确认最终匹配到的商品 SKU。',
+    label: '确认',
+    description: '确认目标 SKU。',
   },
 ] as const;
 
@@ -79,7 +79,7 @@ function getCameraStatusCopy(state: CameraState, errorMessage: string | null) {
     case 'live':
       return '相机已启动。你可以手动拍摄，或启用自动拍摄。';
     case 'preview':
-      return '预览图已经生成，确认后即可请求候选结果。';
+      return '预览已生成。';
     case 'unsupported':
       return '当前浏览器不支持相机访问，请改用上传图片。';
     case 'denied':
@@ -96,7 +96,7 @@ function getResultHeadline(state: ResultState) {
     case 'processing':
       return '候选匹配中';
     case 'ready':
-      return '候选结果已返回';
+      return '结果已返回';
     case 'error':
       return '候选请求失败';
     default:
@@ -502,9 +502,6 @@ export function RecognitionShell() {
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
                 识别取景台
               </h2>
-              <p className="text-muted-foreground max-w-2xl text-sm leading-7">
-                把物品放进中央取景框，生成静态图片，再请求候选结果。
-              </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -553,9 +550,7 @@ export function RecognitionShell() {
                         <p className="font-heading text-foreground text-3xl leading-none">
                           等待输入
                         </p>
-                        <p className="text-muted-foreground text-sm leading-7">
-                          启动相机或上传一张图片后，就可以进入识别流程。
-                        </p>
+                        <p className="text-muted-foreground text-sm">启动相机或上传图片。</p>
                       </div>
                     </div>
                   )}
@@ -579,7 +574,7 @@ export function RecognitionShell() {
 
                   <div className="pointer-events-none absolute bottom-4 left-4 right-4 flex items-center justify-between gap-4">
                     <span className="border-border/70 bg-background/74 text-muted-foreground inline-flex rounded-full border px-3 py-1 text-xs backdrop-blur">
-                      请尽量把主体放在中央窗口内。
+                      尽量居中。
                     </span>
                     {countdown !== null ? (
                       <span className="border-border/70 bg-background/74 text-foreground inline-flex min-w-16 items-center justify-center rounded-full border px-4 py-1 text-sm font-semibold backdrop-blur">
@@ -683,7 +678,7 @@ export function RecognitionShell() {
 
               <div className="border-border/70 bg-background/76 rounded-[1.8rem] border p-5">
                 <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
-                  预览流程
+                  预览
                 </p>
                 <div className="mt-4 grid gap-3">
                   <Button
@@ -702,18 +697,13 @@ export function RecognitionShell() {
                     {previewSource === 'upload' ? '清空预览' : '重新拍摄'}
                   </Button>
                 </div>
-                <p className="text-muted-foreground mt-4 text-sm leading-7">
-                  当前流程会调用识别服务，并按照统一的结果协议返回候选商品。
-                </p>
               </div>
 
               <div className="border-border/70 bg-background/76 rounded-[1.8rem] border border-dashed p-5">
                 <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
-                  降级路径
+                  上传入口
                 </p>
-                <p className="text-muted-foreground mt-3 text-sm leading-7">
-                  如果相机不可用、不受支持或被拒绝，上传入口依然可以继续使用。
-                </p>
+                <p className="text-muted-foreground mt-3 text-sm">相机不可用时可直接上传。</p>
               </div>
             </aside>
           </div>
@@ -726,7 +716,7 @@ export function RecognitionShell() {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="space-y-2">
                 <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-                  识别流程
+                  进度
                 </p>
                 <h2 className="font-heading text-foreground text-4xl leading-none">
                   {resultHeadline}

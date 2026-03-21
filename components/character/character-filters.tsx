@@ -27,6 +27,7 @@ export function CharacterFilters({
         action={`/ips/${controls.ipSlug}/characters/${controls.characterSlug}`}
         className="collection-panel p-5 sm:p-6"
       >
+        <input name="view" type="hidden" value={controls.view} />
         <div className="space-y-5">
           <div className="space-y-3">
             <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">

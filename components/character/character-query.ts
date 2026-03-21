@@ -1,6 +1,7 @@
 export type CharacterPageControls = {
   ipSlug: string;
   characterSlug: string;
+  view: 'goods' | 'progress';
   goodsType?: string;
   seriesSlug?: string;
   tagSlugs: string[];
@@ -11,6 +12,7 @@ export type CharacterPageControls = {
 export function buildCharacterEncyclopediaHref({
   ipSlug,
   characterSlug,
+  view,
   goodsType,
   seriesSlug,
   tagSlugs,
@@ -18,6 +20,10 @@ export function buildCharacterEncyclopediaHref({
   viewer,
 }: CharacterPageControls) {
   const params = new URLSearchParams();
+
+  if (view !== 'goods') {
+    params.set('view', view);
+  }
 
   if (goodsType) {
     params.set('goodsType', goodsType);

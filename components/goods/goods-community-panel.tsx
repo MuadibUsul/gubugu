@@ -48,7 +48,7 @@ export function GoodsCommunityPanel({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="space-y-2">
               <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-                评分汇总
+                评分概览
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none">
                 社区评分
@@ -61,25 +61,19 @@ export function GoodsCommunityPanel({
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
-                总分
-              </p>
+              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">总分</p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.averageScore?.toFixed(2) ?? 'N/A'}
               </p>
             </div>
             <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
-                值得入手
-              </p>
+              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">值得入手</p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.worthBuyingRate ?? 0}%
               </p>
             </div>
             <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
-                我的评分
-              </p>
+              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">我的评分</p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.userRating
                   ? community.ratingSummary.userRating.overallScore.toFixed(2)
@@ -150,14 +144,14 @@ export function GoodsCommunityPanel({
           <div className="flex items-end justify-between gap-4">
             <div className="space-y-2">
               <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-                图片聚焦
+                图片
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none">
-                藏家晒单
+                晒图
               </h2>
             </div>
             <div className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-4 py-2 text-sm">
-              {spotlightImages.length} 张图片
+              {spotlightImages.length} 张
             </div>
           </div>
 
@@ -178,8 +172,8 @@ export function GoodsCommunityPanel({
               ))}
             </div>
           ) : (
-            <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[1.5rem] border border-dashed px-4 py-4 text-sm leading-7">
-              暂时还没有通过审核的晒单图片。新上传图片会先进入待审核状态，审核通过后才会展示在这个 SKU 的图库里。
+            <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[1.5rem] border border-dashed px-4 py-4 text-sm">
+              暂无图片
             </div>
           )}
         </div>
@@ -192,11 +186,11 @@ export function GoodsCommunityPanel({
               评论
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
-              这个 SKU 下的留言
+              留言
             </h2>
           </div>
           <div className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-4 py-2 text-sm">
-            {goods.summary.postCount} 条已通过评论
+            {goods.summary.postCount} 条
           </div>
         </div>
 
@@ -210,7 +204,7 @@ export function GoodsCommunityPanel({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
-                      藏家笔记
+                      收藏笔记
                     </p>
                     <p className="text-foreground mt-2 text-sm leading-7">
                       {post.body}
@@ -242,8 +236,8 @@ export function GoodsCommunityPanel({
             ))}
           </div>
         ) : (
-          <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[1.6rem] border border-dashed px-4 py-4 text-sm leading-7">
-            暂时还没有通过审核的评论。新的社区笔记会先提交审核，人工通过后才会展示在这里。
+          <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[1.6rem] border border-dashed px-4 py-4 text-sm">
+            暂无评论
           </div>
         )}
       </div>

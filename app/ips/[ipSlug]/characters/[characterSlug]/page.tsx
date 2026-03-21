@@ -10,6 +10,7 @@ import {
   buildCharacterEncyclopediaHref,
   type CharacterPageControls,
 } from '@/components/character/character-query';
+import { PageViewSwitch } from '@/components/layout/page-view-switch';
 import { SearchPanelState } from '@/components/search/search-panel-state';
 import {
   defaultDemoViewerKey,
@@ -37,6 +38,7 @@ const characterPageParamsSchema = z.object({
 });
 
 const characterPageSearchSchema = z.object({
+  view: z.enum(['goods', 'progress']).default('goods'),
   goodsType: z.string().trim().min(1).optional(),
   seriesSlug: z.string().trim().min(1).optional(),
   tagSlugs: z.array(z.string().trim().min(1)).max(12).default([]),
@@ -80,6 +82,7 @@ function buildCharacterPageControls({
   viewerKey: string;
 }) {
   return characterPageSearchSchema.parse({
+    view: getSingleSearchParamValue(searchParams.view),
     goodsType: getSingleSearchParamValue(searchParams.goodsType),
     seriesSlug: getSingleSearchParamValue(searchParams.series),
     tagSlugs: Array.from(
@@ -179,47 +182,74 @@ export default async function CharacterPage({
           viewerLabel={activeViewer.label}
         />
 
-        <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <CharacterFilters
-            controls={controls}
-            data={data}
-            viewerOptions={
-              authUser
-                ? []
-                : (
-                    Object.entries(demoViewers) as Array<
-                      [DemoViewerKey, (typeof demoViewers)[DemoViewerKey]]
-                    >
-                  ).map(([key, item]) => ({
-                    key,
-                    label: item.label,
-                  }))
-            }
-          />
+        <PageViewSwitch
+          items={[
+            {
+              active: controls.view === 'goods',
+              badge: `${filteredGoods.length}`,
+              description: '保留筛选和商品墙，适合快速扫货与点亮。',
+              href: buildCharacterEncyclopediaHref({
+                ...controls,
+                view: 'goods',
+              }),
+              label: '商品视图',
+            },
+            {
+              active: controls.view === 'progress',
+              badge: `${data.completion.character.progressPercentage}%`,
+              description: '只看完成度和系列进度，不再和商品墙一起纵向堆叠。',
+              href: buildCharacterEncyclopediaHref({
+                ...controls,
+                view: 'progress',
+              }),
+              label: '进度视图',
+            },
+          ]}
+        />
 
-          <div className="space-y-6">
-            <CharacterCompletionPanel data={data} />
+        {controls.view === 'goods' ? (
+          <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+            <CharacterFilters
+              controls={controls}
+              data={data}
+              viewerOptions={
+                authUser
+                  ? []
+                  : (
+                      Object.entries(demoViewers) as Array<
+                        [DemoViewerKey, (typeof demoViewers)[DemoViewerKey]]
+                      >
+                    ).map(([key, item]) => ({
+                      key,
+                      label: item.label,
+                    }))
+              }
+            />
 
-            {filteredGoods.length > 0 ? (
-              <CharacterGoodsWall controls={controls} items={filteredGoods} />
-            ) : (
-              <SearchPanelState
-                actionHref={buildCharacterEncyclopediaHref({
-                  ...controls,
-                  goodsType: undefined,
-                  seriesSlug: undefined,
-                  tagSlugs: [],
-                  ownedOnly: false,
-                })}
-                actionLabel="清空角色筛选"
-                description="当前角色筛选条件下没有匹配商品。可以放宽标签、系列或“仅看已拥有”条件，回到完整收藏墙。"
-                eyebrow="没有匹配商品"
-                title="当前角色筛选下没有结果"
-                tone="warning"
-              />
-            )}
-          </div>
-        </section>
+            <div>
+              {filteredGoods.length > 0 ? (
+                <CharacterGoodsWall controls={controls} items={filteredGoods} />
+              ) : (
+                <SearchPanelState
+                  actionHref={buildCharacterEncyclopediaHref({
+                    ...controls,
+                    goodsType: undefined,
+                    seriesSlug: undefined,
+                    tagSlugs: [],
+                    ownedOnly: false,
+                  })}
+                  actionLabel="清空角色筛选"
+                  description="当前筛选条件下没有匹配商品，可以放宽标签、系列或已拥有条件。"
+                  eyebrow="没有匹配商品"
+                  title="当前角色筛选下没有结果"
+                  tone="warning"
+                />
+              )}
+            </div>
+          </section>
+        ) : (
+          <CharacterCompletionPanel data={data} />
+        )}
       </div>
     </main>
   );

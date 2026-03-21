@@ -41,8 +41,8 @@ function StatusToggleButton({
       aria-pressed={active}
       className={
         active
-          ? 'group flex h-full min-h-[9.75rem] w-full flex-col justify-between rounded-[1.6rem] border border-[color:color-mix(in_oklab,var(--accent)_68%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] px-4 py-4 text-left shadow-[0_20px_44px_-30px_color-mix(in_oklab,var(--accent)_44%,transparent)] transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60'
-          : 'group border-border/70 bg-background/78 flex h-full min-h-[9.75rem] w-full flex-col justify-between rounded-[1.6rem] border px-4 py-4 text-left transition hover:-translate-y-0.5 hover:border-[color:color-mix(in_oklab,var(--accent)_48%,var(--border))] disabled:translate-y-0 disabled:opacity-60'
+          ? 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[1.75rem] border border-[color:color-mix(in_oklab,var(--accent)_72%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_16%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] px-4 py-4 text-left shadow-[0_24px_54px_-34px_color-mix(in_oklab,var(--accent)_50%,transparent)] transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60'
+          : 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[1.75rem] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_88%,var(--background)))] px-4 py-4 text-left transition hover:-translate-y-0.5 hover:border-[color:color-mix(in_oklab,var(--accent)_48%,var(--border))] disabled:translate-y-0 disabled:opacity-60'
       }
       disabled={pending}
       name="status"
@@ -51,7 +51,7 @@ function StatusToggleButton({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-foreground text-base font-semibold leading-tight">
+          <p className="text-foreground text-lg font-semibold leading-tight">
             {label}
           </p>
           <p className="text-muted-foreground mt-2 text-sm leading-6">
@@ -61,11 +61,11 @@ function StatusToggleButton({
         <span
           className={
             active
-              ? 'text-foreground inline-flex min-h-9 min-w-[4.75rem] shrink-0 items-center justify-center rounded-full border border-[color:color-mix(in_oklab,var(--accent)_72%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-center text-[0.68rem] font-semibold tracking-[0.22em] whitespace-nowrap uppercase'
-              : 'border-border/70 bg-card/76 text-muted-foreground inline-flex min-h-9 min-w-[4.75rem] shrink-0 items-center justify-center rounded-full border px-3 py-1 text-center text-[0.68rem] font-semibold tracking-[0.22em] whitespace-nowrap uppercase'
+              ? 'text-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border border-[color:color-mix(in_oklab,var(--accent)_74%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-center text-[0.68rem] font-semibold tracking-[0.22em] whitespace-nowrap uppercase'
+              : 'border-border/70 bg-card/76 text-muted-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border px-3 py-1 text-center text-[0.68rem] font-semibold tracking-[0.22em] whitespace-nowrap uppercase'
           }
         >
-          {pending ? '保存中' : active ? '已启用' : '未开启'}
+          {pending ? '保存中' : active ? '已选中' : '未选中'}
         </span>
       </div>
     </button>
@@ -95,16 +95,13 @@ export function GoodsStatusActions({
               收藏状态
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
-              管理这个 SKU 的收藏状态
+              登录后管理
             </h2>
-            <p className="text-muted-foreground text-sm leading-7">
-              登录后才能把这个 SKU 标记为已拥有、想要或可交换。已拥有状态会直接进入角色补全系统。
-            </p>
           </div>
 
           <Button asChild>
             <Link href={`/login?next=${encodeURIComponent(nextPath)}`}>
-              登录后管理状态
+              登录
             </Link>
           </Button>
         </div>
@@ -115,20 +112,17 @@ export function GoodsStatusActions({
   return (
     <section className="collection-panel p-5 sm:p-6">
       <div className="space-y-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
               收藏状态
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
-              已拥有、想要、可交换
+              标记这件 SKU
             </h2>
-            <p className="text-muted-foreground text-sm leading-7">
-              这三个状态可以自由组合开启。其中“已拥有”会点亮角色图鉴中的补全进度。
-            </p>
           </div>
           <div className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-4 py-2 text-sm">
-            {userLabel ?? '已登录收藏者'}
+            {userLabel ?? '已登录'}
           </div>
         </div>
 
@@ -144,7 +138,7 @@ export function GoodsStatusActions({
             ))
           ) : (
             <span className="border-border/70 text-muted-foreground rounded-full border border-dashed px-3 py-1 text-xs tracking-[0.18em] uppercase">
-              暂无状态
+              尚未标记
             </span>
           )}
         </div>

@@ -24,7 +24,7 @@ const toggleUserGoodsStatusInputSchema = z.object({
     .min(1)
     .max(512)
     .refine((value) => value.startsWith('/'), {
-      message: 'nextPath 必须是站内路由。',
+      message: 'nextPath 必须是站内路径。',
     }),
 });
 
@@ -67,8 +67,8 @@ export async function toggleUserGoodsStatusAction(
   return {
     status: 'success',
     message: flags.activeStatuses.includes(status)
-      ? `已加入「${userGoodsStatusMeta[status].label}」状态。`
-      : `已从「${userGoodsStatusMeta[status].label}」状态中移除。`,
+      ? `已加入“${userGoodsStatusMeta[status].label}”状态。`
+      : `已从“${userGoodsStatusMeta[status].label}”状态中移除。`,
     activeStatuses: sortUserGoodsStatuses(flags.activeStatuses),
   };
 }

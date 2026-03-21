@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { AuthStatusDock } from '@/components/auth/auth-status-dock';
+import { SiteNavigation } from '@/components/layout/site-navigation';
 import { siteConfig } from '@/lib/config/site';
 
 import './globals.css';
@@ -36,6 +37,7 @@ export default function RootLayout({
           <div className="site-frame" />
         </div>
         <AuthStatusDock />
+        <SiteNavigation />
         <div className="relative z-10">{children}</div>
       </body>
     </html>

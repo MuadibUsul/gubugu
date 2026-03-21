@@ -128,7 +128,7 @@ Copy `.env.example` to `.env.local` and configure:
 
 ## Current Status
 
-The repository is currently a foundation shell with initial App Router structure, styling baseline, and typed project setup. The main business model, schema, and feature flows are still being established.
+The repository already contains working V1 slices for search, goods detail, collection state, community submission, exchange intent, recognition entry, and admin management. It should be treated as a usable product baseline, not a throwaway shell.
 
 When implementing features, keep these constraints in mind:
 
@@ -137,3 +137,13 @@ When implementing features, keep these constraints in mind:
 - validate boundary inputs with Zod
 - keep schema changes migration-driven
 - keep code maintainable for long-term solo iteration
+
+## Completeness Contract
+
+This repository does not allow dead-end UI.
+
+- any primary CTA, button, or entry label that looks interactive must either navigate to a real route or submit to a real backend action
+- if a feature is exposed in the UI, the corresponding page or flow must exist and be reachable without hidden URLs
+- frontend states must be wired to backend data or server actions; do not leave decorative controls that never persist or resolve
+- if a browse surface is not ready, keep it out of the UI instead of shipping a placeholder entrance
+- when a feature needs explanation text, that text does not replace the requirement for a usable route or action

@@ -162,7 +162,11 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           {data.goods.length > 0 ? (
             <div className="grid gap-4 2xl:grid-cols-2">
               {data.goods.map((item) => (
-                <SearchResultCard item={item} key={item.id} />
+                <SearchResultCard
+                  isAuthenticated={false}
+                  item={item}
+                  key={item.id}
+                />
               ))}
             </div>
           ) : (

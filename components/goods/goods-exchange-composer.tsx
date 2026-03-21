@@ -32,7 +32,7 @@ function SubmitButton() {
       disabled={pending}
       type="submit"
     >
-      {pending ? '提交中...' : '提交审核'}
+      {pending ? '提交中...' : '提交'}
     </button>
   );
 }
@@ -50,7 +50,10 @@ export function GoodsExchangeComposer({
     createExchangeListingAction,
     initialCreateExchangeListingActionState,
   );
-  const nextPath = useMemo(() => `/goods/${goodsSlug}`, [goodsSlug]);
+  const nextPath = useMemo(
+    () => `/goods/${goodsSlug}?view=exchange`,
+    [goodsSlug],
+  );
   const [selectedWantedGoodsId, setSelectedWantedGoodsId] = useState(
     wantedGoodsOptions[0]?.id ?? '',
   );
@@ -65,21 +68,16 @@ export function GoodsExchangeComposer({
         <div className="space-y-4">
           <div className="space-y-2">
             <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
-              发布意向
+              交换
             </p>
             <h3 className="font-heading text-foreground text-3xl leading-none">
-              我有这件，想换另一件
+              登录后发布
             </h3>
-            <p className="text-muted-foreground text-sm leading-7">
-              登录后才能发布交换意向。这里仅记录你有什么、想换什么，不处理金钱、担保或仲裁，提交后也可能先进入待审核。
-            </p>
           </div>
 
           <Button asChild>
-            <Link
-              href={`/login?next=${encodeURIComponent(`${nextPath}#exchange-desk`)}`}
-            >
-              登录后发布
+            <Link href={`/login?next=${encodeURIComponent(`${nextPath}#exchange-desk`)}`}>
+              登录
             </Link>
           </Button>
         </div>
@@ -90,9 +88,7 @@ export function GoodsExchangeComposer({
   if (wantedGoodsOptions.length === 0) {
     return (
       <div className="border-border/70 bg-background/76 rounded-[1.75rem] border border-dashed p-5">
-        <p className="text-muted-foreground text-sm leading-7">
-          暂时还没有其他已发布 SKU 可供选择为目标。先保留这个区域，后续再升级成更完整的选择器。
-        </p>
+        <p className="text-muted-foreground text-sm">暂无可选目标 SKU。</p>
       </div>
     );
   }
@@ -103,23 +99,20 @@ export function GoodsExchangeComposer({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
-              发布意向
+              交换
             </p>
             <span className="border-border/70 bg-card/80 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-              {userLabel ?? '已登录收藏者'}
+              {userLabel ?? '已登录'}
             </span>
           </div>
           <h3 className="font-heading text-foreground text-3xl leading-none">
             我有 A，想换 B
           </h3>
-          <p className="text-muted-foreground text-sm leading-7">
-            当前 SKU 会固定作为你拿出的物品。选择想换的目标 SKU，补充说明后提交一个轻量交换意向即可。
-          </p>
         </div>
 
         {hasPendingSubmission ? (
-          <div className="border-border/70 bg-accent/12 text-foreground rounded-[1.3rem] border px-4 py-4 text-sm leading-7">
-            你最近一次交换意向已经进入待审核状态。只有人工通过后才会公开展示。
+          <div className="border-border/70 bg-accent/12 text-foreground rounded-[1.3rem] border px-4 py-4 text-sm">
+            你有一条交换意向正在审核中。
           </div>
         ) : null}
 
@@ -128,9 +121,7 @@ export function GoodsExchangeComposer({
             <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
               我有
             </p>
-            <p className="text-foreground mt-2 text-sm font-semibold">
-              {goodsName}
-            </p>
+            <p className="text-foreground mt-2 text-sm font-semibold">{goodsName}</p>
           </div>
           <div className="border-border/70 bg-card/74 rounded-[1.45rem] border px-4 py-4">
             <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
@@ -174,14 +165,14 @@ export function GoodsExchangeComposer({
               className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
               htmlFor="exchange-note"
             >
-              交换说明
+              说明
             </label>
             <textarea
               className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-28 w-full rounded-[1.35rem] border px-4 py-4 text-sm leading-7 outline-none focus-visible:ring-2"
               id="exchange-note"
               maxLength={600}
               name="note"
-              placeholder="例如：我这边有一件带套未拆的重复，优先想换双人色纸。这里只记录交换意向，不处理支付。"
+              placeholder="写下你的交换意向。"
               required
             />
           </div>
@@ -192,14 +183,14 @@ export function GoodsExchangeComposer({
                 className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
                 htmlFor="exchange-condition-note"
               >
-                品相说明
+                品相
               </label>
               <textarea
                 className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-24 w-full rounded-[1.35rem] border px-4 py-4 text-sm leading-7 outline-none focus-visible:ring-2"
                 id="exchange-condition-note"
                 maxLength={280}
                 name="conditionNote"
-                placeholder="例如：已套袋、未拆封、短暂摆放过、边角轻微磨损等。"
+                placeholder="可选"
               />
             </div>
 
@@ -208,14 +199,14 @@ export function GoodsExchangeComposer({
                 className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
                 htmlFor="exchange-location-hint"
               >
-                地区提示
+                地区
               </label>
               <input
                 className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 w-full rounded-[1.35rem] border px-4 py-3 text-sm outline-none focus-visible:ring-2"
                 id="exchange-location-hint"
                 maxLength={128}
                 name="locationHint"
-                placeholder="例如：上海、杭州，或更具体一些的面交区域。"
+                placeholder="可选"
                 type="text"
               />
             </div>
@@ -228,11 +219,7 @@ export function GoodsExchangeComposer({
               </p>
               <div className="grid gap-2 sm:grid-cols-3">
                 {exchangeFulfillmentMethodValues.map((method) => (
-                  <label
-                    className="cursor-pointer"
-                    htmlFor={`exchange-fulfillment-${method}`}
-                    key={method}
-                  >
+                  <label className="cursor-pointer" htmlFor={`exchange-fulfillment-${method}`} key={method}>
                     <input
                       className="peer sr-only"
                       defaultChecked={method === 'either'}
@@ -256,39 +243,19 @@ export function GoodsExchangeComposer({
 
             <fieldset className="space-y-3">
               <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
-                附加选项
+                选项
               </p>
               <div className="grid gap-3">
                 <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[1.25rem] border px-4 py-4">
-                  <input
-                    className="border-border mt-1 size-4 rounded"
-                    name="allowMulti"
-                    type="checkbox"
-                    value="1"
-                  />
+                  <input className="border-border mt-1 size-4 rounded" name="allowMulti" type="checkbox" value="1" />
                   <div>
-                    <p className="text-foreground text-sm font-semibold">
-                      接受多换一
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-sm leading-6">
-                      接受打包交换或多件组合交换。
-                    </p>
+                    <p className="text-foreground text-sm font-semibold">接受多换一</p>
                   </div>
                 </label>
                 <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[1.25rem] border px-4 py-4">
-                  <input
-                    className="border-border mt-1 size-4 rounded"
-                    name="allowCash"
-                    type="checkbox"
-                    value="1"
-                  />
+                  <input className="border-border mt-1 size-4 rounded" name="allowCash" type="checkbox" value="1" />
                   <div>
-                    <p className="text-foreground text-sm font-semibold">
-                      接受补差
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-sm leading-6">
-                      这里只是表达意愿，即使审核通过也不会在这里生成支付或下单流程。
-                    </p>
+                    <p className="text-foreground text-sm font-semibold">接受补差</p>
                   </div>
                 </label>
               </div>
@@ -304,7 +271,7 @@ export function GoodsExchangeComposer({
           <div className="flex flex-wrap gap-3">
             <SubmitButton />
             <span className="border-border/70 bg-card/76 text-muted-foreground inline-flex h-11 items-center justify-center rounded-full border px-4 text-sm">
-              仅待审核意向，不处理金钱
+              仅记录意向
             </span>
           </div>
         </form>

@@ -17,7 +17,7 @@ type UserProfileHeroProps = {
 function getPrivacyModeLabel(mode: string) {
   switch (mode) {
     case 'public-demo':
-      return '公开收藏页';
+      return '公开展示';
     case 'self':
       return '仅自己可见';
     case 'public':
@@ -47,7 +47,7 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
         <div className="space-y-7">
           <div className="space-y-4">
             <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.38em] uppercase">
-              收藏者主页
+              Collection
             </p>
 
             <div className="flex flex-wrap items-start gap-5">
@@ -74,12 +74,6 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
                     </p>
                   ) : null}
                 </div>
-
-                {profile.bio ? (
-                  <p className="max-w-3xl text-base leading-8 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))] sm:text-lg">
-                    {profile.bio}
-                  </p>
-                ) : null}
               </div>
             </div>
           </div>
@@ -124,19 +118,19 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
               className="bg-secondary text-secondary-foreground hover:bg-secondary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition"
               href="#owned-shelf"
             >
-              查看已拥有收藏架
+              已拥有
             </a>
             <a
               className="border-border bg-background/82 text-foreground hover:bg-muted inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-semibold transition"
               href="#exchange-board"
             >
-              打开交换板
+              交换
             </a>
             <a
               className="border-border bg-background/82 text-foreground hover:bg-muted inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-semibold transition"
               href="#photo-archive"
             >
-              跳转到图片归档
+              图片
             </a>
           </div>
         </div>
@@ -148,22 +142,17 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
           <div className="relative flex h-full flex-col gap-5">
             <div className="space-y-3">
               <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.34em] uppercase">
-                收藏册
+                Visibility
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none">
-                这是收藏册，
-                <br />
-                不是后台表格
+                当前设置
               </h2>
-              <p className="text-muted-foreground text-sm leading-7">
-                这个页面应该突出补全进度、适合展示的卡片和交换入口，而不是把收藏者压缩成一排库存数据。
-              </p>
             </div>
 
             <div className="grid gap-3">
               <div className="border-border/65 bg-background/76 rounded-[1.4rem] border px-4 py-3">
                 <p className="text-muted-foreground text-[0.66rem] tracking-[0.26em] uppercase">
-                  收藏地
+                  收藏者
                 </p>
                 <p className="text-foreground mt-2 text-sm font-semibold">
                   {profile.city ?? '当前登录账户'}
@@ -179,7 +168,7 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
               </div>
               <div className="border-border/65 bg-card/72 rounded-[1.4rem] border border-dashed px-4 py-3">
                 <p className="text-muted-foreground text-[0.66rem] tracking-[0.26em] uppercase">
-                  其他可见方式
+                  其他模式
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {data.privacy.reservedModes.map((mode) => (

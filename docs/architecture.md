@@ -16,6 +16,9 @@
 - validate boundary inputs with Zod
 - place database access behind `server/` modules
 - prefer small typed modules over large utility buckets
+- ship only closed-loop UI: exposed controls must resolve to a real route, server action, or persisted workflow
+- prefer a few complete entry points over many partial screens
+- treat search, recognition, collection, goods detail, and admin flows as first-class routes with clear navigation between them
 
 ## Next recommended setup steps
 
@@ -23,4 +26,3 @@
 2. Add initial Drizzle schema and migration pipeline.
 3. Add auth and user-state primitives.
 4. Add domain slices for IP, character, series, and goods SKU.
-

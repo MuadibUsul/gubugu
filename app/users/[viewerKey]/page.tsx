@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { z } from 'zod';
 
+import { PageViewSwitch } from '@/components/layout/page-view-switch';
 import { UserExchangeListings } from '@/components/user/user-exchange-listings';
 import { UserGoodsShelf } from '@/components/user/user-goods-shelf';
 import { UserPhotoArchive } from '@/components/user/user-photo-archive';
@@ -13,7 +15,14 @@ type UserPageProps = {
   params: Promise<{
     viewerKey: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+const userPageSearchSchema = z.object({
+  section: z
+    .enum(['owned', 'wanted', 'exchange', 'board', 'photos'])
+    .default('owned'),
+});
 
 function resolveViewer(viewerKey: string) {
   if (viewerKey in demoViewers) {
@@ -25,6 +34,10 @@ function resolveViewer(viewerKey: string) {
   return null;
 }
 
+function getSingleValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export async function generateMetadata({
   params,
 }: UserPageProps): Promise<Metadata> {
@@ -32,20 +45,28 @@ export async function generateMetadata({
   const profile = resolveViewer(viewerKey);
 
   return {
-    title: profile ? `${profile.displayName} 的收藏册` : '用户主页',
+    title: profile ? `${profile.displayName} 的收藏页` : '用户主页',
     description: profile
-      ? `${profile.displayName} 的收藏册、交换板与图片归档页。`
+      ? `${profile.displayName} 的收藏页、交换板与图片归档。`
       : '收藏者主页',
   };
 }
 
-export default async function UserPage({ params }: UserPageProps) {
+export default async function UserPage({
+  params,
+  searchParams,
+}: UserPageProps) {
   const { viewerKey } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
   const profile = resolveViewer(viewerKey);
 
   if (!profile) {
     notFound();
   }
+
+  const section = userPageSearchSchema.parse({
+    section: getSingleValue(resolvedSearchParams.section),
+  }).section;
 
   const data = await getUserProfilePageData({
     userId: profile.userId,
@@ -62,36 +83,90 @@ export default async function UserPage({ params }: UserPageProps) {
       <div className="mx-auto flex min-h-screen w-full max-w-[94rem] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
         <UserProfileHero data={data} profile={profile} />
         <UserProgressOverview data={data} />
-        <UserGoodsShelf
-          description="已拥有条目会构成收藏册的主体，展示当前补全进度、已点亮卡片和已经上架的核心展示品。"
-          id="owned-shelf"
-          items={data.goods.owned}
-          status="owned"
-          title="已拥有收藏架"
+        <PageViewSwitch
+          items={[
+            {
+              active: section === 'owned',
+              badge: `${data.goods.owned.length}`,
+              description: '主收藏架，只看已经拥有并点亮的 SKU。',
+              href: `/users/${viewerKey}?section=owned`,
+              label: '已拥有',
+            },
+            {
+              active: section === 'wanted',
+              badge: `${data.goods.wanted.length}`,
+              description: '目标清单单独展开，不和主收藏混排。',
+              href: `/users/${viewerKey}?section=wanted`,
+              label: '想要',
+            },
+            {
+              active: section === 'exchange',
+              badge: `${data.goods.exchange.length}`,
+              description: '把可交换库存折叠成独立视图，浏览更快。',
+              href: `/users/${viewerKey}?section=exchange`,
+              label: '交换库存',
+            },
+            {
+              active: section === 'board',
+              badge: `${data.exchangeListings.length}`,
+              description: '直接进入交换板，查看挂单和目标。 ',
+              href: `/users/${viewerKey}?section=board`,
+              label: '交换板',
+            },
+            {
+              active: section === 'photos',
+              badge: `${data.recentPhotoEntries.length}`,
+              description: '图片归档独立出来，避免整页继续下拉。',
+              href: `/users/${viewerKey}?section=photos`,
+              label: '图片归档',
+            },
+          ]}
         />
-        <UserGoodsShelf
-          description="想要条目会保留下一阶段的收藏目标，方便继续补角色线、系列线和活动线。"
-          id="wanted-shelf"
-          items={data.goods.wanted}
-          status="wanted"
-          title="想要收藏架"
-        />
-        <UserGoodsShelf
-          description="可交换条目会和主收藏区分开来，让重复品与轮换库存保持清晰、便于浏览。"
-          id="exchange-shelf"
-          items={data.goods.exchange}
-          status="exchange"
-          title="可交换收藏架"
-        />
-        <UserExchangeListings
-          entryGoods={exchangeEntryGoods.map((item) => ({
-            id: item.id,
-            slug: item.slug,
-            name: item.name,
-          }))}
-          items={data.exchangeListings}
-        />
-        <UserPhotoArchive items={data.recentPhotoEntries} />
+
+        {section === 'owned' ? (
+          <UserGoodsShelf
+            description="已拥有条目构成收藏册主体，当前视图只保留最常查看的一层内容。"
+            id="owned-shelf"
+            items={data.goods.owned}
+            status="owned"
+            title="已拥有收藏架"
+          />
+        ) : null}
+
+        {section === 'wanted' ? (
+          <UserGoodsShelf
+            description="想要条目单独整理成目标层，方便继续补角色线与系列线。"
+            id="wanted-shelf"
+            items={data.goods.wanted}
+            status="wanted"
+            title="想要收藏架"
+          />
+        ) : null}
+
+        {section === 'exchange' ? (
+          <UserGoodsShelf
+            description="可交换库存从主收藏里拆出，重复品和轮换库存可以集中查看。"
+            id="exchange-shelf"
+            items={data.goods.exchange}
+            status="exchange"
+            title="可交换收藏架"
+          />
+        ) : null}
+
+        {section === 'board' ? (
+          <UserExchangeListings
+            entryGoods={exchangeEntryGoods.map((item) => ({
+              id: item.id,
+              slug: item.slug,
+              name: item.name,
+            }))}
+            items={data.exchangeListings}
+          />
+        ) : null}
+
+        {section === 'photos' ? (
+          <UserPhotoArchive items={data.recentPhotoEntries} />
+        ) : null}
       </div>
     </main>
   );

@@ -34,17 +34,14 @@ export function GoodsExchangePanel({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
             <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
-              交换台
+              交换
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
-              仅做轻量交换意向
+              交换意向
             </h2>
-            <p className="text-muted-foreground text-sm leading-7">
-              发布“我有这个 SKU，我想换另一个”的意向，但不把图鉴做成下单交易流。
-            </p>
           </div>
           <div className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-4 py-2 text-sm">
-            {exchange.listings.length} 条已通过的公开意向
+            {exchange.listings.length} 条
           </div>
         </div>
 
@@ -59,17 +56,6 @@ export function GoodsExchangePanel({
         />
 
         <div className="space-y-3">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
-                这个 SKU 下的公开意向
-              </p>
-              <p className="text-muted-foreground mt-2 text-sm leading-7">
-                这里只展示已经通过审核的交换意向。联系方式、支付、担保和仲裁都不在当前范围内。
-              </p>
-            </div>
-          </div>
-
           {exchange.listings.length > 0 ? (
             <div className="grid gap-3">
               {exchange.listings.map((listing) => (
@@ -94,9 +80,7 @@ export function GoodsExchangePanel({
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-foreground text-sm font-semibold">
-                          想换到
-                        </p>
+                        <p className="text-foreground text-sm font-semibold">想换</p>
                         {listing.wantedGoods ? (
                           <Link
                             className="group border-border/70 bg-card/72 block rounded-[1.35rem] border p-4 transition hover:-translate-y-0.5"
@@ -113,8 +97,8 @@ export function GoodsExchangePanel({
                             </p>
                           </Link>
                         ) : (
-                          <div className="border-border/70 bg-card/72 text-muted-foreground rounded-[1.35rem] border border-dashed px-4 py-4 text-sm leading-7">
-                            目标 SKU 暂时还没有关联上。
+                          <div className="border-border/70 bg-card/72 text-muted-foreground rounded-[1.35rem] border border-dashed px-4 py-4 text-sm">
+                            目标 SKU 暂未关联
                           </div>
                         )}
                       </div>
@@ -135,12 +119,12 @@ export function GoodsExchangePanel({
                         </span>
                         {listing.allowMulti ? (
                           <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                            Allow multi
+                            多换一
                           </span>
                         ) : null}
                         {listing.allowCash ? (
                           <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                            Allow cash difference
+                            补差
                           </span>
                         ) : null}
                         {listing.locationHint ? (
@@ -153,7 +137,7 @@ export function GoodsExchangePanel({
                       {listing.conditionNote ? (
                         <div className="border-border/70 bg-card/72 rounded-[1.2rem] border px-4 py-4">
                           <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
-                            品相说明
+                            品相
                           </p>
                           <p className="text-foreground mt-2 text-sm leading-7">
                             {listing.conditionNote}
@@ -166,8 +150,8 @@ export function GoodsExchangePanel({
               ))}
             </div>
           ) : (
-            <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.55rem] border border-dashed px-4 py-4 text-sm leading-7">
-              这个 SKU 下暂时还没有通过审核的交换意向。新的提交会先保留为待审核，直到人工给出结论。
+            <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.55rem] border border-dashed px-4 py-4 text-sm">
+              暂无交换意向
             </div>
           )}
         </div>
