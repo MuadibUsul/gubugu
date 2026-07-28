@@ -126,7 +126,6 @@ Repository shape:
 Working conventions:
 
 - keep active product code in the main app directories above
-- do not treat `bootstrap-temp/` as the source of truth unless the user explicitly asks for work there
 - do not mix server actions and route handlers arbitrarily within the same feature; choose a consistent pattern
 - do not refactor unrelated modules while completing a task
 - solve one task at a time

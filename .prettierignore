@@ -8,6 +8,3 @@ pnpm-lock.yaml
 # diff back.
 drizzle/migrations
 next-env.d.ts
-
-# Bootstrap residue, not product source. See README.md.
-bootstrap-temp

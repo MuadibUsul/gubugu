@@ -74,10 +74,7 @@ The platform should support:
 - `drizzle/`: schema, migrations, and seed workspace
 - `docs/`: product, schema, UI, and architecture documentation
 - `public/`: static assets
-
-Note:
-
-- `bootstrap-temp/` exists as bootstrap residue and should not be treated as the main product source of truth
+- `images/`: source images the seed copies into `public/local-sample-images`
 
 ## Local Setup
 

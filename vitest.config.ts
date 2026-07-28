@@ -11,7 +11,6 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['{lib,server,drizzle}/**/*.test.ts'],
-    // bootstrap-temp is scaffolding residue, not product source.
-    exclude: ['node_modules', '.next', 'bootstrap-temp'],
+    exclude: ['node_modules', '.next'],
   },
 });
