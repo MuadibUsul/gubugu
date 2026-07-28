@@ -16,7 +16,7 @@ import type {
   CatalogSubmissionType,
   ModerationStatus,
 } from '@/lib/moderation';
-import { getDb } from '@/server/db/client';
+import { getDb, isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 const REVIEW_LIMIT = 5;
 
@@ -108,8 +108,7 @@ export type ModerationQueueData = {
 
 function toCollectorLabel(userId: string) {
   return (
-    getDemoViewerByUserId(userId)?.displayName ??
-    `收藏者 ${userId.slice(0, 8)}`
+    getDemoViewerByUserId(userId)?.displayName ?? `收藏者 ${userId.slice(0, 8)}`
   );
 }
 
@@ -154,8 +153,7 @@ function createFallbackData(): ModerationQueueData {
       {
         key: 'catalog-submissions',
         label: '用户投稿',
-        description:
-          '面向新条目与元数据修正的结构化图鉴提案。',
+        description: '面向新条目与元数据修正的结构化图鉴提案。',
         counts: catalogSubmissionCounts,
         reservedNote:
           '后续可补：payload diff 对比、审核人绑定，以及已通过内容并入真实图鉴记录。',
@@ -163,8 +161,7 @@ function createFallbackData(): ModerationQueueData {
       {
         key: 'photo-uploads',
         label: '图片投稿',
-        description:
-          '收藏者上传并挂载到 SKU 社区笔记下的实拍图片。',
+        description: '收藏者上传并挂载到 SKU 社区笔记下的实拍图片。',
         counts: photoCounts,
         reservedNote:
           '后续可补：图片安全审核、重复检测，以及驳回文件的存储清理。',
@@ -172,8 +169,7 @@ function createFallbackData(): ModerationQueueData {
       {
         key: 'comments',
         label: '评论',
-        description:
-          '围绕 SKU 的短评内容，只有审核通过后才会公开。',
+        description: '围绕 SKU 的短评内容，只有审核通过后才会公开。',
         counts: commentCounts,
         reservedNote:
           '后续可补：审核备注、批量处理，以及辱骂/垃圾内容的升级标签。',
@@ -181,8 +177,7 @@ function createFallbackData(): ModerationQueueData {
       {
         key: 'exchange-intents',
         label: '交换意向',
-        description:
-          '轻量 have/want 记录，保持在支付与托管之外。',
+        description: '轻量 have/want 记录，保持在支付与托管之外。',
         counts: exchangeCounts,
         reservedNote:
           '后续可补：审核决策、联系政策检查，以及手动暂停/关闭处理。',
@@ -227,8 +222,7 @@ function createFallbackData(): ModerationQueueData {
           altText: '葵亚克力立牌的桌面展示图。',
           goodsSlug: 'aoi-tsukishiro-spring-bloom-acrylic-stand',
           goodsName: 'Aoi Tsukishiro Acrylic Stand - Spring Bloom Ver.',
-          noteExcerpt:
-            '一张暖光桌面展示图，随附简短质感说明。',
+          noteExcerpt: '一张暖光桌面展示图，随附简短质感说明。',
           moderationStatus: 'pending',
           reviewNote: null,
           submitterLabel: 'Mika Archive',
@@ -259,8 +253,7 @@ function createFallbackData(): ModerationQueueData {
           goodsSlug: 'ren-kagetsu-spring-bloom-glitter-can-badge',
           goodsName: 'Ren Kagetsu Glitter Can Badge - Spring Bloom Ver.',
           wantedGoodsName: 'Aoi Tsukishiro Acrylic Stand - Spring Bloom Ver.',
-          description:
-            '抽到重复，希望直接换到葵的立牌，不接受补差价。',
+          description: '抽到重复，希望直接换到葵的立牌，不接受补差价。',
           moderationStatus: 'pending',
           reviewNote: null,
           submitterLabel: 'Ren Swap Desk',
@@ -436,38 +429,30 @@ export async function getModerationQueueData(): Promise<ModerationQueueData> {
         {
           key: 'catalog-submissions',
           label: '用户投稿',
-          description:
-            '后续可并入图鉴数据的结构化提案。',
+          description: '后续可并入图鉴数据的结构化提案。',
           counts: catalogCounts,
-          reservedNote:
-            '后续可补：diff 对比、审核人归属与通过后的合并执行。',
+          reservedNote: '后续可补：diff 对比、审核人归属与通过后的合并执行。',
         },
         {
           key: 'photo-uploads',
           label: '图片投稿',
-          description:
-            '收藏实拍图片与评论审核决定保持独立。',
+          description: '收藏实拍图片与评论审核决定保持独立。',
           counts: photoCounts,
-          reservedNote:
-            '后续可补：存储清理与单图审核历史。',
+          reservedNote: '后续可补：存储清理与单图审核历史。',
         },
         {
           key: 'comments',
           label: '评论',
-          description:
-            '文字笔记在审核员通过公开前会一直保持待审。',
+          description: '文字笔记在审核员通过公开前会一直保持待审。',
           counts: commentCounts,
-          reservedNote:
-            '后续可补：批量操作、垃圾内容标记与驳回模板。',
+          reservedNote: '后续可补：批量操作、垃圾内容标记与驳回模板。',
         },
         {
           key: 'exchange-intents',
           label: '交换意向',
-          description:
-            '意向记录仍然绑定 SKU，且不进入支付流程。',
+          description: '意向记录仍然绑定 SKU，且不进入支付流程。',
           counts: exchangeCounts,
-          reservedNote:
-            '后续可补：审核队列筛选器与策略级校验。',
+          reservedNote: '后续可补：审核队列筛选器与策略级校验。',
         },
       ],
       catalogSubmissions: {
@@ -530,7 +515,11 @@ export async function getModerationQueueData(): Promise<ModerationQueueData> {
         note: '已通过的交换意向后续可以公开显示，驳回项则继续停留在 SKU 页之外。',
       },
     };
-  } catch {
+  } catch (error) {
+    if (!isDatabaseAccessConfigurationError(error)) {
+      throw error;
+    }
+
     return createFallbackData();
   }
 }

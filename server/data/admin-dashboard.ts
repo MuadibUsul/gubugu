@@ -13,7 +13,7 @@ import {
   posts,
   series,
 } from '@/drizzle/schema';
-import { getDb } from '@/server/db/client';
+import { getDb, isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 const GOODS_LIMIT = 8;
 const REVIEW_LIMIT = 5;
@@ -124,8 +124,7 @@ function createFallbackDashboardData(): AdminDashboardData {
   return {
     mode: 'fallback',
     generatedAt: new Date(),
-    statusNote:
-      '当前无法访问数据库，因此管理后台正在展示一份兜底快照。',
+    statusNote: '当前无法访问数据库，因此管理后台正在展示一份兜底快照。',
     statistics: [
       {
         key: 'sku-records',
@@ -208,7 +207,8 @@ function createFallbackDashboardData(): AdminDashboardData {
           id: 'fallback-submission-1',
           goodsSlug: 'aoi-tsukishiro-spring-bloom-acrylic-stand',
           goodsName: 'Aoi Tsukishiro Acrylic Stand - Spring Bloom Ver.',
-          excerpt: 'Desk setup photo with warm lamp light and layered acrylic edge detail.',
+          excerpt:
+            'Desk setup photo with warm lamp light and layered acrylic edge detail.',
           imageCount: 2,
           status: 'visible',
           createdAt: new Date('2026-03-17T10:00:00.000Z'),
@@ -217,14 +217,14 @@ function createFallbackDashboardData(): AdminDashboardData {
           id: 'fallback-submission-2',
           goodsSlug: 'ren-kagetsu-spring-bloom-glitter-can-badge',
           goodsName: 'Ren Kagetsu Glitter Can Badge - Spring Bloom Ver.',
-          excerpt: 'Close-up of the glitter finish for collectors comparing blind-pack quality.',
+          excerpt:
+            'Close-up of the glitter finish for collectors comparing blind-pack quality.',
           imageCount: 1,
           status: 'visible',
           createdAt: new Date('2026-03-16T13:20:00.000Z'),
         },
       ],
-      note:
-        '专门的投稿审核状态尚未完全实现，这个模块当前仅预览带图的公开投稿。',
+      note: '专门的投稿审核状态尚未完全实现，这个模块当前仅预览带图的公开投稿。',
     },
     commentModeration: {
       pendingCount: 0,
@@ -235,7 +235,8 @@ function createFallbackDashboardData(): AdminDashboardData {
           id: 'fallback-comment-1',
           goodsSlug: 'aoi-ren-spring-bloom-foil-mini-shikishi',
           goodsName: 'Aoi and Ren Foil Mini Shikishi - Spring Bloom Ver.',
-          excerpt: 'Foil effect is strong in person, but binder storage still feels practical.',
+          excerpt:
+            'Foil effect is strong in person, but binder storage still feels practical.',
           status: 'visible',
           createdAt: new Date('2026-03-17T11:10:00.000Z'),
         },
@@ -243,13 +244,13 @@ function createFallbackDashboardData(): AdminDashboardData {
           id: 'fallback-comment-2',
           goodsSlug: 'aoi-tsukishiro-spring-bloom-acrylic-stand',
           goodsName: 'Aoi Tsukishiro Acrylic Stand - Spring Bloom Ver.',
-          excerpt: 'Base print quality is clean, though the package edge arrived slightly bent.',
+          excerpt:
+            'Base print quality is clean, though the package edge arrived slightly bent.',
           status: 'visible',
           createdAt: new Date('2026-03-16T18:40:00.000Z'),
         },
       ],
-      note:
-        '评论会在审核通过后显示在对应商品页中。',
+      note: '评论会在审核通过后显示在对应商品页中。',
     },
     exchangeModeration: {
       pendingCount: 0,
@@ -262,7 +263,8 @@ function createFallbackDashboardData(): AdminDashboardData {
           goodsSlug: 'ren-kagetsu-spring-bloom-glitter-can-badge',
           goodsName: 'Ren Kagetsu Glitter Can Badge - Spring Bloom Ver.',
           wantedGoodsName: 'Aoi Tsukishiro Acrylic Stand - Spring Bloom Ver.',
-          description: 'Have an extra badge. Prefer a direct swap for Aoi or similar event acrylic.',
+          description:
+            'Have an extra badge. Prefer a direct swap for Aoi or similar event acrylic.',
           status: 'open',
           fulfillmentMethod: 'either',
           createdAt: new Date('2026-03-18T09:05:00.000Z'),
@@ -272,14 +274,14 @@ function createFallbackDashboardData(): AdminDashboardData {
           goodsSlug: 'aoi-tsukishiro-spring-bloom-acrylic-stand',
           goodsName: 'Aoi Tsukishiro Acrylic Stand - Spring Bloom Ver.',
           wantedGoodsName: null,
-          description: 'Temporarily paused while checking local meetup options.',
+          description:
+            'Temporarily paused while checking local meetup options.',
           status: 'paused',
           fulfillmentMethod: 'meetup',
           createdAt: new Date('2026-03-15T20:15:00.000Z'),
         },
       ],
-      note:
-        '交换审核当前仍只停留在意向单层级，不包含支付、托管、仲裁或议价流程。',
+      note: '交换审核当前仍只停留在意向单层级，不包含支付、托管、仲裁或议价流程。',
     },
   };
 }
@@ -361,7 +363,10 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
         .innerJoin(goods, eq(posts.goodsId, goods.id))
         .leftJoin(
           postImages,
-          and(eq(postImages.postId, posts.id), eq(postImages.status, 'visible')),
+          and(
+            eq(postImages.postId, posts.id),
+            eq(postImages.status, 'visible'),
+          ),
         )
         .groupBy(
           posts.id,
@@ -414,7 +419,10 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
               sortOrder: goodsCharacters.sortOrder,
             })
             .from(goodsCharacters)
-            .innerJoin(characters, eq(goodsCharacters.characterId, characters.id))
+            .innerJoin(
+              characters,
+              eq(goodsCharacters.characterId, characters.id),
+            )
             .where(inArray(goodsCharacters.goodsId, goodsIds))
             .orderBy(
               asc(goodsCharacters.goodsId),
@@ -537,8 +545,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
             status: row.status,
             createdAt: row.createdAt,
           })),
-        note:
-          '投稿记录现在会流入专门的审核队列，由审核人明确决定通过或驳回。',
+        note: '投稿记录现在会流入专门的审核队列，由审核人明确决定通过或驳回。',
       },
       commentModeration: {
         pendingCount: 0,
@@ -552,8 +559,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
           status: row.status,
           createdAt: row.createdAt,
         })),
-        note:
-          '评论审核决定现在会进入专门队列，并在写回后刷新公开商品页与用户页。',
+        note: '评论审核决定现在会进入专门队列，并在写回后刷新公开商品页与用户页。',
       },
       exchangeModeration: {
         pendingCount: 0,
@@ -572,11 +578,14 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
           fulfillmentMethod: row.fulfillmentMethod,
           createdAt: row.createdAt,
         })),
-        note:
-          '交换审核仍停留在意向层，不引入资金、托管或仲裁行为。',
+        note: '交换审核仍停留在意向层，不引入资金、托管或仲裁行为。',
       },
     };
-  } catch {
+  } catch (error) {
+    if (!isDatabaseAccessConfigurationError(error)) {
+      throw error;
+    }
+
     return createFallbackDashboardData();
   }
 }

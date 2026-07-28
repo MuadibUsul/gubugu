@@ -16,7 +16,7 @@ import {
   type AdminGoodsPublicationStatus,
 } from '@/lib/admin-goods';
 import { getSingleSearchParamValue } from '@/lib/search-params';
-import { getDb } from '@/server/db/client';
+import { getDb, isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 const GOODS_LIST_LIMIT = 48;
 const TAG_LIBRARY_LIMIT = 96;
@@ -394,9 +394,9 @@ export async function getAdminGoodsManagementPageData(
 
     const stats = statsRows[0];
 
-      return {
-        mode: 'live',
-        statusNote: '保存后会同步更新商品图鉴、标签与图片内容。',
+    return {
+      mode: 'live',
+      statusNote: '保存后会同步更新商品图鉴、标签与图片内容。',
       filters: buildAdminGoodsManagementFilters(filters),
       editorMode:
         filters.mode === 'create' || !activeSelectedGoods ? 'create' : 'edit',
@@ -458,7 +458,11 @@ export async function getAdminGoodsManagementPageData(
       })),
       selectedGoods: activeSelectedGoods,
     } satisfies AdminGoodsManagementPageData;
-  } catch {
+  } catch (error) {
+    if (!isDatabaseAccessConfigurationError(error)) {
+      throw error;
+    }
+
     return createFallbackPageData(filters);
   }
 }

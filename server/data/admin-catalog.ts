@@ -3,14 +3,20 @@ import 'server-only';
 import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { characters, goods, goodsCharacters, ips, series } from '@/drizzle/schema';
+import {
+  characters,
+  goods,
+  goodsCharacters,
+  ips,
+  series,
+} from '@/drizzle/schema';
 import type {
   AdminCatalogEntity,
   AdminCatalogManagementFilters,
 } from '@/lib/admin-catalog';
 import type { AdminGoodsPublicationStatus } from '@/lib/admin-goods';
 import { getSingleSearchParamValue } from '@/lib/search-params';
-import { getDb } from '@/server/db/client';
+import { getDb, isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 const LIST_LIMIT = 48;
 
@@ -333,137 +339,151 @@ export async function getAdminCatalogPageData(
     const countDistinctCharacters = sql<number>`count(distinct ${characters.id})`;
     const countDistinctSeries = sql<number>`count(distinct ${series.id})`;
 
-    const [ipStatsRows, characterStatsRows, seriesStatsRows, ipOptionRows, ipRows, characterRows, seriesRows] =
-      await Promise.all([
-        db
-          .select({
-            total: sql<number>`count(${ips.id})`,
-            published: sql<number>`coalesce(sum(case when ${ips.status} = 'published' then 1 else 0 end), 0)`,
-          })
-          .from(ips),
-        db
-          .select({
-            total: sql<number>`count(${characters.id})`,
-            published: sql<number>`coalesce(sum(case when ${characters.status} = 'published' then 1 else 0 end), 0)`,
-          })
-          .from(characters),
-        db
-          .select({
-            total: sql<number>`count(${series.id})`,
-            published: sql<number>`coalesce(sum(case when ${series.status} = 'published' then 1 else 0 end), 0)`,
-          })
-          .from(series),
-        db
-          .select({
-            id: ips.id,
-            slug: ips.slug,
-            name: ips.name,
-            status: ips.status,
-          })
-          .from(ips)
-          .orderBy(asc(ips.name)),
-        db
-          .select({
-            id: ips.id,
-            slug: ips.slug,
-            name: ips.name,
-            nameLocalized: ips.nameLocalized,
-            status: ips.status,
-            characterCount: countDistinctCharacters,
-            seriesCount: countDistinctSeries,
-            goodsCount: countDistinctGoods,
-            updatedAt: ips.updatedAt,
-          })
-          .from(ips)
-          .leftJoin(characters, eq(characters.ipId, ips.id))
-          .leftJoin(series, eq(series.ipId, ips.id))
-          .leftJoin(goods, eq(goods.seriesId, series.id))
-          .where(
-            and(
-              filters.status ? eq(ips.status, filters.status) : undefined,
-              queryPattern
-                ? or(
-                    ilike(ips.name, queryPattern),
-                    ilike(ips.slug, queryPattern),
-                    ilike(ips.nameLocalized, queryPattern),
-                    ilike(ips.description, queryPattern),
-                  )
-                : undefined,
-            ),
-          )
-          .groupBy(ips.id)
-          .orderBy(desc(ips.updatedAt), asc(ips.name))
-          .limit(LIST_LIMIT),
-        db
-          .select({
-            id: characters.id,
-            slug: characters.slug,
-            name: characters.name,
-            nameLocalized: characters.nameLocalized,
-            status: characters.status,
-            goodsCount: sql<number>`count(distinct ${goodsCharacters.goodsId})`,
-            updatedAt: characters.updatedAt,
-            ipId: ips.id,
-            ipSlug: ips.slug,
-            ipName: ips.name,
-          })
-          .from(characters)
-          .innerJoin(ips, eq(characters.ipId, ips.id))
-          .leftJoin(goodsCharacters, eq(goodsCharacters.characterId, characters.id))
-          .where(
-            and(
-              filters.status ? eq(characters.status, filters.status) : undefined,
-              filters.ipId ? eq(characters.ipId, filters.ipId) : undefined,
-              queryPattern
-                ? or(
-                    ilike(characters.name, queryPattern),
-                    ilike(characters.slug, queryPattern),
-                    ilike(characters.nameLocalized, queryPattern),
-                    ilike(characters.description, queryPattern),
-                    ilike(ips.name, queryPattern),
-                  )
-                : undefined,
-            ),
-          )
-          .groupBy(characters.id, ips.id)
-          .orderBy(desc(characters.updatedAt), asc(characters.name))
-          .limit(LIST_LIMIT),
-        db
-          .select({
-            id: series.id,
-            slug: series.slug,
-            name: series.name,
-            seriesType: series.seriesType,
-            releaseDate: series.releaseDate,
-            status: series.status,
-            goodsCount: countDistinctGoods,
-            updatedAt: series.updatedAt,
-            ipId: ips.id,
-            ipSlug: ips.slug,
-            ipName: ips.name,
-          })
-          .from(series)
-          .innerJoin(ips, eq(series.ipId, ips.id))
-          .leftJoin(goods, eq(goods.seriesId, series.id))
-          .where(
-            and(
-              filters.status ? eq(series.status, filters.status) : undefined,
-              filters.ipId ? eq(series.ipId, filters.ipId) : undefined,
-              queryPattern
-                ? or(
-                    ilike(series.name, queryPattern),
-                    ilike(series.slug, queryPattern),
-                    ilike(series.description, queryPattern),
-                    ilike(series.seriesType, queryPattern),
-                    ilike(ips.name, queryPattern),
-                  )
-                : undefined,
-            ),
-          )
-          .groupBy(series.id, ips.id)
-          .orderBy(desc(series.updatedAt), desc(series.releaseDate), asc(series.name))
-          .limit(LIST_LIMIT),
-      ]);
+    const [
+      ipStatsRows,
+      characterStatsRows,
+      seriesStatsRows,
+      ipOptionRows,
+      ipRows,
+      characterRows,
+      seriesRows,
+    ] = await Promise.all([
+      db
+        .select({
+          total: sql<number>`count(${ips.id})`,
+          published: sql<number>`coalesce(sum(case when ${ips.status} = 'published' then 1 else 0 end), 0)`,
+        })
+        .from(ips),
+      db
+        .select({
+          total: sql<number>`count(${characters.id})`,
+          published: sql<number>`coalesce(sum(case when ${characters.status} = 'published' then 1 else 0 end), 0)`,
+        })
+        .from(characters),
+      db
+        .select({
+          total: sql<number>`count(${series.id})`,
+          published: sql<number>`coalesce(sum(case when ${series.status} = 'published' then 1 else 0 end), 0)`,
+        })
+        .from(series),
+      db
+        .select({
+          id: ips.id,
+          slug: ips.slug,
+          name: ips.name,
+          status: ips.status,
+        })
+        .from(ips)
+        .orderBy(asc(ips.name)),
+      db
+        .select({
+          id: ips.id,
+          slug: ips.slug,
+          name: ips.name,
+          nameLocalized: ips.nameLocalized,
+          status: ips.status,
+          characterCount: countDistinctCharacters,
+          seriesCount: countDistinctSeries,
+          goodsCount: countDistinctGoods,
+          updatedAt: ips.updatedAt,
+        })
+        .from(ips)
+        .leftJoin(characters, eq(characters.ipId, ips.id))
+        .leftJoin(series, eq(series.ipId, ips.id))
+        .leftJoin(goods, eq(goods.seriesId, series.id))
+        .where(
+          and(
+            filters.status ? eq(ips.status, filters.status) : undefined,
+            queryPattern
+              ? or(
+                  ilike(ips.name, queryPattern),
+                  ilike(ips.slug, queryPattern),
+                  ilike(ips.nameLocalized, queryPattern),
+                  ilike(ips.description, queryPattern),
+                )
+              : undefined,
+          ),
+        )
+        .groupBy(ips.id)
+        .orderBy(desc(ips.updatedAt), asc(ips.name))
+        .limit(LIST_LIMIT),
+      db
+        .select({
+          id: characters.id,
+          slug: characters.slug,
+          name: characters.name,
+          nameLocalized: characters.nameLocalized,
+          status: characters.status,
+          goodsCount: sql<number>`count(distinct ${goodsCharacters.goodsId})`,
+          updatedAt: characters.updatedAt,
+          ipId: ips.id,
+          ipSlug: ips.slug,
+          ipName: ips.name,
+        })
+        .from(characters)
+        .innerJoin(ips, eq(characters.ipId, ips.id))
+        .leftJoin(
+          goodsCharacters,
+          eq(goodsCharacters.characterId, characters.id),
+        )
+        .where(
+          and(
+            filters.status ? eq(characters.status, filters.status) : undefined,
+            filters.ipId ? eq(characters.ipId, filters.ipId) : undefined,
+            queryPattern
+              ? or(
+                  ilike(characters.name, queryPattern),
+                  ilike(characters.slug, queryPattern),
+                  ilike(characters.nameLocalized, queryPattern),
+                  ilike(characters.description, queryPattern),
+                  ilike(ips.name, queryPattern),
+                )
+              : undefined,
+          ),
+        )
+        .groupBy(characters.id, ips.id)
+        .orderBy(desc(characters.updatedAt), asc(characters.name))
+        .limit(LIST_LIMIT),
+      db
+        .select({
+          id: series.id,
+          slug: series.slug,
+          name: series.name,
+          seriesType: series.seriesType,
+          releaseDate: series.releaseDate,
+          status: series.status,
+          goodsCount: countDistinctGoods,
+          updatedAt: series.updatedAt,
+          ipId: ips.id,
+          ipSlug: ips.slug,
+          ipName: ips.name,
+        })
+        .from(series)
+        .innerJoin(ips, eq(series.ipId, ips.id))
+        .leftJoin(goods, eq(goods.seriesId, series.id))
+        .where(
+          and(
+            filters.status ? eq(series.status, filters.status) : undefined,
+            filters.ipId ? eq(series.ipId, filters.ipId) : undefined,
+            queryPattern
+              ? or(
+                  ilike(series.name, queryPattern),
+                  ilike(series.slug, queryPattern),
+                  ilike(series.description, queryPattern),
+                  ilike(series.seriesType, queryPattern),
+                  ilike(ips.name, queryPattern),
+                )
+              : undefined,
+          ),
+        )
+        .groupBy(series.id, ips.id)
+        .orderBy(
+          desc(series.updatedAt),
+          desc(series.releaseDate),
+          asc(series.name),
+        )
+        .limit(LIST_LIMIT),
+    ]);
 
     const ipList = ipRows.map((row) => ({
       id: row.id,
@@ -514,7 +534,10 @@ export async function getAdminCatalogPageData(
         : filters.entity === 'character'
           ? (characterList[0]?.id ?? null)
           : (seriesList[0]?.id ?? null);
-    const resolvedSelectedId = resolveSelectedRecordId(filters, fallbackSelectedId);
+    const resolvedSelectedId = resolveSelectedRecordId(
+      filters,
+      fallbackSelectedId,
+    );
 
     const [selectedIp, selectedCharacter, selectedSeries] = await Promise.all([
       filters.entity === 'ip' && resolvedSelectedId
@@ -528,9 +551,9 @@ export async function getAdminCatalogPageData(
         : Promise.resolve(null),
     ]);
 
-      return {
-        mode: 'live',
-        statusNote: '保存后会同步更新 IP、角色与系列图鉴内容。',
+    return {
+      mode: 'live',
+      statusNote: '保存后会同步更新 IP、角色与系列图鉴内容。',
       entity: filters.entity,
       filters: buildFilters(filters),
       editorMode:
@@ -565,7 +588,11 @@ export async function getAdminCatalogPageData(
         series: selectedSeries,
       },
     } satisfies AdminCatalogPageData;
-  } catch {
+  } catch (error) {
+    if (!isDatabaseAccessConfigurationError(error)) {
+      throw error;
+    }
+
     return createFallbackPageData(filters);
   }
 }

@@ -9,7 +9,7 @@ import {
   listUserExchangeListings,
   type ExchangeListingViewItem,
 } from '@/server/data/exchange';
-import { getDb } from '@/server/db/client';
+import { getDb, isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 const userProfilePageInputSchema = z.object({
   userId: z.string().uuid(),
@@ -317,7 +317,11 @@ export async function getUserProfilePageData(
         reservedModes: ['public', 'followers', 'private'],
       },
     } satisfies UserProfilePageData;
-  } catch {
+  } catch (error) {
+    if (!isDatabaseAccessConfigurationError(error)) {
+      throw error;
+    }
+
     return createFallbackUserProfilePageData(viewerMode);
   }
 }
