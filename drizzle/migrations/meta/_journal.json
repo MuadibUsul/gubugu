@@ -43,6 +43,13 @@
       "when": 1773916840403,
       "tag": "0005_silent_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785250734250,
+      "tag": "0006_unusual_kree",
+      "breakpoints": true
     }
   ]
 }

@@ -6,14 +6,23 @@ import { PageViewSwitch } from '@/components/layout/page-view-switch';
 import { UserExchangeListings } from '@/components/user/user-exchange-listings';
 import { UserGoodsShelf } from '@/components/user/user-goods-shelf';
 import { UserPhotoArchive } from '@/components/user/user-photo-archive';
-import { UserProfileHero } from '@/components/user/user-profile-hero';
+import {
+  UserProfileHero,
+  type UserNotebookProfile,
+} from '@/components/user/user-profile-hero';
 import { UserProgressOverview } from '@/components/user/user-progress-overview';
-import { demoViewers, type DemoViewerKey } from '@/lib/config/demo-viewers';
+import { demoViewers } from '@/lib/config/demo-viewers';
 import { getUserProfilePageData } from '@/server/data';
+import {
+  formatProfileHandle,
+  getProfileByHandle,
+  type ProfileDetail,
+} from '@/server/data/profiles';
+import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 type UserPageProps = {
   params: Promise<{
-    viewerKey: string;
+    handle: string;
   }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -24,14 +33,65 @@ const userPageSearchSchema = z.object({
     .default('owned'),
 });
 
-function resolveViewer(viewerKey: string) {
-  if (viewerKey in demoViewers) {
-    const key = viewerKey as DemoViewerKey;
+// Before profiles existed these pages were addressed by demo viewer key
+// (/users/collector). Those URLs still resolve so existing links do not break,
+// but the handle is the canonical address.
+function resolveDemoViewerFallback(handle: string): ProfileDetail | null {
+  const viewer =
+    handle in demoViewers
+      ? demoViewers[handle as keyof typeof demoViewers]
+      : Object.values(demoViewers).find(
+          (candidate) => candidate.handle.replace(/^@/, '') === handle,
+        );
 
-    return demoViewers[key];
+  if (!viewer) {
+    return null;
   }
 
-  return null;
+  return {
+    userId: viewer.userId,
+    handle: viewer.handle.replace(/^@/, ''),
+    displayName: viewer.displayName,
+    avatarImageUrl: null,
+    bio: viewer.bio,
+    city: viewer.city,
+    accentTitle: viewer.accentTitle,
+    visibility: 'public',
+  };
+}
+
+/**
+ * Returns a profile only when it is publicly browsable, so a non-public row
+ * never enters the component scope and cannot leak through the document title
+ * or the RSC payload.
+ *
+ * `followers` has no follow graph yet, so it is treated as private.
+ */
+async function resolvePublicProfile(handle: string) {
+  let profile: ProfileDetail | null = null;
+
+  try {
+    profile = await getProfileByHandle(handle);
+  } catch (error) {
+    if (!isDatabaseAccessConfigurationError(error)) {
+      throw error;
+    }
+  }
+
+  profile ??= resolveDemoViewerFallback(handle.replace(/^@/, '').toLowerCase());
+
+  return profile?.visibility === 'public' ? profile : null;
+}
+
+function toNotebookProfile(profile: ProfileDetail): UserNotebookProfile {
+  return {
+    label: '收藏者档案',
+    displayName: profile.displayName,
+    handle: formatProfileHandle(profile.handle),
+    bio: profile.bio,
+    city: profile.city,
+    accentTitle: profile.accentTitle ?? '收藏档案',
+  };
 }
 
 function getSingleValue(value: string | string[] | undefined) {
@@ -41,8 +101,8 @@ function getSingleValue(value: string | string[] | undefined) {
 export async function generateMetadata({
   params,
 }: UserPageProps): Promise<Metadata> {
-  const { viewerKey } = await params;
-  const profile = resolveViewer(viewerKey);
+  const { handle } = await params;
+  const profile = await resolvePublicProfile(handle);
 
   return {
     title: profile ? `${profile.displayName} 的收藏页` : '用户主页',
@@ -56,9 +116,9 @@ export default async function UserPage({
   params,
   searchParams,
 }: UserPageProps) {
-  const { viewerKey } = await params;
+  const { handle } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const profile = resolveViewer(viewerKey);
+  const profile = await resolvePublicProfile(handle);
 
   if (!profile) {
     notFound();
@@ -81,7 +141,7 @@ export default async function UserPage({
       <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--accent)_48%,white),transparent)] md:inset-x-10 xl:inset-x-16" />
 
       <div className="mx-auto flex min-h-screen w-full max-w-[94rem] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
-        <UserProfileHero data={data} profile={profile} />
+        <UserProfileHero data={data} profile={toNotebookProfile(profile)} />
         <UserProgressOverview data={data} />
         <PageViewSwitch
           items={[
@@ -89,35 +149,35 @@ export default async function UserPage({
               active: section === 'owned',
               badge: `${data.goods.owned.length}`,
               description: '主收藏架，只看已经拥有并点亮的 SKU。',
-              href: `/users/${viewerKey}?section=owned`,
+              href: `/users/${profile.handle}?section=owned`,
               label: '已拥有',
             },
             {
               active: section === 'wanted',
               badge: `${data.goods.wanted.length}`,
               description: '目标清单单独展开，不和主收藏混排。',
-              href: `/users/${viewerKey}?section=wanted`,
+              href: `/users/${profile.handle}?section=wanted`,
               label: '想要',
             },
             {
               active: section === 'exchange',
               badge: `${data.goods.exchange.length}`,
               description: '把可交换库存折叠成独立视图，浏览更快。',
-              href: `/users/${viewerKey}?section=exchange`,
+              href: `/users/${profile.handle}?section=exchange`,
               label: '交换库存',
             },
             {
               active: section === 'board',
               badge: `${data.exchangeListings.length}`,
               description: '直接进入交换板，查看挂单和目标。 ',
-              href: `/users/${viewerKey}?section=board`,
+              href: `/users/${profile.handle}?section=board`,
               label: '交换板',
             },
             {
               active: section === 'photos',
               badge: `${data.recentPhotoEntries.length}`,
               description: '图片归档独立出来，避免整页继续下拉。',
-              href: `/users/${viewerKey}?section=photos`,
+              href: `/users/${profile.handle}?section=photos`,
               label: '图片归档',
             },
           ]}

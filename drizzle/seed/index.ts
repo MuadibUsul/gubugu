@@ -14,6 +14,7 @@ import {
   ips,
   postImages,
   posts,
+  profiles,
   ratings,
   series,
   tags,
@@ -52,6 +53,7 @@ import {
   expandedUserGoodsSeed,
 } from './expanded-data';
 import { syncLocalSampleImages } from './local-sample-images';
+import { profileSeed } from './profiles';
 
 loadEnv({ path: '.env.local', override: false });
 loadEnv({ path: '.env', override: false });
@@ -95,6 +97,7 @@ const allExchangeListingSeed = [
 ];
 
 const demoSeedSummary = {
+  profiles: profileSeed.length,
   ips: allIpSeed.length,
   characters: allCharacterSeed.length,
   series: allSeriesSeed.length,
@@ -124,6 +127,25 @@ async function seed() {
   const syncedLocalSampleImages = syncLocalSampleImages();
 
   await db.transaction(async (tx) => {
+    for (const row of profileSeed) {
+      await tx
+        .insert(profiles)
+        .values(withTimestamps(row, now))
+        .onConflictDoUpdate({
+          target: profiles.id,
+          set: {
+            handle: row.handle,
+            displayName: row.displayName,
+            avatarImageUrl: row.avatarImageUrl,
+            bio: row.bio,
+            city: row.city,
+            accentTitle: row.accentTitle,
+            visibility: row.visibility,
+            updatedAt: now,
+          },
+        });
+    }
+
     for (const row of allIpSeed) {
       await tx
         .insert(ips)

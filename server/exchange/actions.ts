@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { exchangeListings, goods, userGoods } from '@/drizzle/schema';
-import { findDemoViewerKeyByUserId } from '@/lib/config/demo-viewers';
+import { getProfileByUserId } from '@/server/data/profiles';
 import { exchangeFulfillmentMethodSchema } from '@/lib/exchange-listing';
 import type { CreateExchangeListingActionState } from '@/server/exchange/action-state';
 import { requireAuthUser } from '@/server/auth/session';
@@ -158,10 +158,10 @@ export async function createExchangeListingAction(
   revalidatePath(nextPath);
   revalidatePath('/me/collection');
 
-  const demoViewerKey = findDemoViewerKeyByUserId(user.id);
+  const profile = await getProfileByUserId(user.id);
 
-  if (demoViewerKey) {
-    revalidatePath(`/users/${demoViewerKey}`);
+  if (profile) {
+    revalidatePath(`/users/${profile.handle}`);
   }
 
   redirect(

@@ -79,6 +79,12 @@ export const goodsImageEmbeddingStatusEnum = pgEnum(
   ['pending', 'ready', 'failed'],
 );
 
+export const profileVisibilityEnum = pgEnum('profile_visibility', [
+  'public',
+  'followers',
+  'private',
+]);
+
 export const ips = pgTable(
   'ips',
   {
@@ -324,8 +330,40 @@ export const goodsCharacters = pgTable(
   ],
 );
 
-// Supabase auth lives outside the app schema. These user_id columns remain
-// plain UUIDs here, while the SQL migration adds foreign keys to auth.users.
+// Supabase auth lives outside the app schema (auth.users), which Drizzle does
+// not manage, so every user_id column here is a plain UUID with no foreign key.
+// `profiles` is the app-side record for a user: it carries everything the
+// product needs to render an author or a collection page, keyed by the same id
+// Supabase issues. Join through it rather than adding more user_id columns.
+export const profiles = pgTable(
+  'profiles',
+  {
+    id: uuid('id').primaryKey(),
+    handle: varchar('handle', { length: 64 }).notNull(),
+    displayName: varchar('display_name', { length: 120 }).notNull(),
+    avatarImageUrl: text('avatar_image_url'),
+    bio: text('bio'),
+    city: varchar('city', { length: 64 }),
+    accentTitle: varchar('accent_title', { length: 120 }),
+    visibility: profileVisibilityEnum('visibility').notNull().default('public'),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex('profiles_handle_unique').on(table.handle),
+    index('profiles_visibility_idx').on(table.visibility),
+    // Handles appear in /users/<handle>, so keep them URL-safe and lowercase.
+    // The leading @ is presentation only and is not stored.
+    check(
+      'profiles_handle_format_check',
+      sql`${table.handle} ~ '^[a-z0-9][a-z0-9._-]*[a-z0-9]$'`,
+    ),
+    check(
+      'profiles_display_name_not_empty_check',
+      sql`char_length(trim(${table.displayName})) > 0`,
+    ),
+  ],
+);
+
 export const userGoods = pgTable(
   'user_goods',
   {
@@ -657,10 +695,21 @@ export const goodsCharactersRelations = relations(
   }),
 );
 
+export const profilesRelations = relations(profiles, ({ many }) => ({
+  userStates: many(userGoods),
+  posts: many(posts),
+  ratings: many(ratings),
+  exchangeListings: many(exchangeListings),
+}));
+
 export const userGoodsRelations = relations(userGoods, ({ one }) => ({
   goods: one(goods, {
     fields: [userGoods.goodsId],
     references: [goods.id],
+  }),
+  profile: one(profiles, {
+    fields: [userGoods.userId],
+    references: [profiles.id],
   }),
 }));
 
@@ -668,6 +717,10 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
   goods: one(goods, {
     fields: [posts.goodsId],
     references: [goods.id],
+  }),
+  profile: one(profiles, {
+    fields: [posts.userId],
+    references: [profiles.id],
   }),
   images: many(postImages),
 }));
@@ -684,11 +737,19 @@ export const ratingsRelations = relations(ratings, ({ one }) => ({
     fields: [ratings.goodsId],
     references: [goods.id],
   }),
+  profile: one(profiles, {
+    fields: [ratings.userId],
+    references: [profiles.id],
+  }),
 }));
 
 export const exchangeListingsRelations = relations(
   exchangeListings,
   ({ one }) => ({
+    profile: one(profiles, {
+      fields: [exchangeListings.userId],
+      references: [profiles.id],
+    }),
     goods: one(goods, {
       fields: [exchangeListings.goodsId],
       references: [goods.id],
@@ -709,6 +770,7 @@ export type Good = typeof goods.$inferSelect;
 export type GoodImage = typeof goodsImages.$inferSelect;
 export type GoodImageEmbedding = typeof goodsImageEmbeddings.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
+export type Profile = typeof profiles.$inferSelect;
 export type UserGood = typeof userGoods.$inferSelect;
 export type CatalogSubmission = typeof catalogSubmissions.$inferSelect;
 export type Post = typeof posts.$inferSelect;

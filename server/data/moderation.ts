@@ -9,7 +9,10 @@ import {
   postImages,
   posts,
 } from '@/drizzle/schema';
-import { getDemoViewerByUserId } from '@/lib/config/demo-viewers';
+import {
+  getProfileSummariesByUserIds,
+  resolveCollectorLabel,
+} from '@/server/data/profiles';
 import { buildDemoAssetUrl } from '@/lib/demo-assets';
 import type {
   CatalogSubmissionTargetType,
@@ -105,12 +108,6 @@ export type ModerationQueueData = {
     note: string;
   };
 };
-
-function toCollectorLabel(userId: string) {
-  return (
-    getDemoViewerByUserId(userId)?.displayName ?? `收藏者 ${userId.slice(0, 8)}`
-  );
-}
 
 function truncateText(value: string, maxLength: number) {
   const normalized = value.trim();
@@ -394,6 +391,14 @@ export async function getModerationQueueData(): Promise<ModerationQueueData> {
       wantedGoodsRows.map((row) => [row.id, row.name]),
     );
 
+    // One lookup for every queue rather than one per row.
+    const profileSummaries = await getProfileSummariesByUserIds([
+      ...catalogRows.map((row) => row.userId),
+      ...photoRows.map((row) => row.userId),
+      ...commentRows.map((row) => row.userId),
+      ...exchangeRows.map((row) => row.userId),
+    ]);
+
     const catalogCountsRow = catalogCountsRows[0];
     const photoCountsRow = photoCountsRows[0];
     const commentCountsRow = commentCountsRows[0];
@@ -465,7 +470,7 @@ export async function getModerationQueueData(): Promise<ModerationQueueData> {
           targetEntityId: row.targetEntityId,
           moderationStatus: row.moderationStatus,
           reviewNote: row.reviewNote,
-          submitterLabel: toCollectorLabel(row.userId),
+          submitterLabel: resolveCollectorLabel(row.userId, profileSummaries),
           createdAt: row.createdAt,
         })),
         note: '通过与驳回现在会直接更新审核字段，但图鉴 payload 仍需要额外的人工合并步骤。',
@@ -480,7 +485,7 @@ export async function getModerationQueueData(): Promise<ModerationQueueData> {
           noteExcerpt: truncateText(row.body, 110),
           moderationStatus: row.moderationStatus,
           reviewNote: row.reviewNote,
-          submitterLabel: toCollectorLabel(row.userId),
+          submitterLabel: resolveCollectorLabel(row.userId, profileSummaries),
           createdAt: row.createdAt,
         })),
         note: '图片已有独立审核字段，因此可以与评论审核解耦独立演进。',
@@ -493,7 +498,7 @@ export async function getModerationQueueData(): Promise<ModerationQueueData> {
           body: truncateText(row.body, 150),
           moderationStatus: row.moderationStatus,
           reviewNote: row.reviewNote,
-          submitterLabel: toCollectorLabel(row.userId),
+          submitterLabel: resolveCollectorLabel(row.userId, profileSummaries),
           createdAt: row.createdAt,
         })),
         note: '公开 SKU 页面只展示已通过评论，待审与驳回内容会保留在这里。',
@@ -509,7 +514,7 @@ export async function getModerationQueueData(): Promise<ModerationQueueData> {
           description: truncateText(row.description, 150),
           moderationStatus: row.moderationStatus,
           reviewNote: row.reviewNote,
-          submitterLabel: toCollectorLabel(row.userId),
+          submitterLabel: resolveCollectorLabel(row.userId, profileSummaries),
           createdAt: row.createdAt,
         })),
         note: '已通过的交换意向后续可以公开显示，驳回项则继续停留在 SKU 页之外。',

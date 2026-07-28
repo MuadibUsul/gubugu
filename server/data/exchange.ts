@@ -9,7 +9,10 @@ import {
   type ExchangeFulfillmentMethod,
   type ExchangeListingStatus,
 } from '@/lib/exchange-listing';
-import { getDemoViewerByUserId } from '@/lib/config/demo-viewers';
+import {
+  getProfileSummariesByUserIds,
+  resolveCollectorLabel,
+} from '@/server/data/profiles';
 import {
   getPublishedGoodsCardsByIds,
   type GoodsCardData,
@@ -53,6 +56,7 @@ export type ExchangeListingViewItem = {
   id: string;
   userId: string;
   ownerLabel: string;
+  ownerHandle: string | null;
   status: ExchangeListingStatus;
   note: string;
   conditionNote: string | null;
@@ -81,13 +85,6 @@ type ExchangeListingRow = {
   createdAt: Date;
   updatedAt: Date;
 };
-
-function getCollectorLabel(userId: string) {
-  return (
-    getDemoViewerByUserId(userId)?.displayName ??
-    `Collector ${userId.slice(0, 8)}`
-  );
-}
 
 function toExchangeGoodsOption(goodsCard: GoodsCardData): ExchangeGoodsOption {
   return {
@@ -120,7 +117,10 @@ async function buildExchangeListingItems(rows: ExchangeListingRow[]) {
       ),
     ),
   );
-  const goodsCards = await getPublishedGoodsCardsByIds(goodsIds);
+  const [goodsCards, profileSummaries] = await Promise.all([
+    getPublishedGoodsCardsByIds(goodsIds),
+    getProfileSummariesByUserIds(rows.map((row) => row.userId)),
+  ]);
   const goodsCardById = new Map(goodsCards.map((item) => [item.id, item]));
 
   const items: Array<ExchangeListingViewItem | null> = rows.map((row) => {
@@ -133,7 +133,8 @@ async function buildExchangeListingItems(rows: ExchangeListingRow[]) {
     return {
       id: row.id,
       userId: row.userId,
-      ownerLabel: getCollectorLabel(row.userId),
+      ownerLabel: resolveCollectorLabel(row.userId, profileSummaries),
+      ownerHandle: profileSummaries.get(row.userId)?.handle ?? null,
       status: row.status,
       note: row.description,
       conditionNote: row.conditionNote,
