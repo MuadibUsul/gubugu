@@ -1,8 +1,5 @@
 import { reviewModerationItemAction } from '@/server/admin/moderation/actions';
-import type {
-  ModerationQueueModule,
-  ModerationStatus,
-} from '@/lib/moderation';
+import type { ModerationQueueModule, ModerationStatus } from '@/lib/moderation';
 
 type AdminModerationActionFormProps = {
   module: ModerationQueueModule;

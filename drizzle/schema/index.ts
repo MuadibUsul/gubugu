@@ -225,7 +225,9 @@ export const goodsImageEmbeddings = pgTable(
         onDelete: 'cascade',
         onUpdate: 'cascade',
       }),
-    status: goodsImageEmbeddingStatusEnum('status').notNull().default('pending'),
+    status: goodsImageEmbeddingStatusEnum('status')
+      .notNull()
+      .default('pending'),
     provider: varchar('provider', { length: 64 }).notNull(),
     model: varchar('model', { length: 128 }).notNull(),
     modelVersion: varchar('model_version', { length: 64 }),
@@ -553,9 +555,7 @@ export const exchangeListings = pgTable(
     index('exchange_listings_wanted_goods_id_idx').on(table.wantedGoodsId),
     index('exchange_listings_user_id_idx').on(table.userId),
     index('exchange_listings_status_idx').on(table.status),
-    index('exchange_listings_moderation_status_idx').on(
-      table.moderationStatus,
-    ),
+    index('exchange_listings_moderation_status_idx').on(table.moderationStatus),
     index('exchange_listings_fulfillment_method_idx').on(
       table.fulfillmentMethod,
     ),

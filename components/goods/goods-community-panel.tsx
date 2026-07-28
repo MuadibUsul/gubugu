@@ -61,19 +61,25 @@ export function GoodsCommunityPanel({
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">总分</p>
+              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                总分
+              </p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.averageScore?.toFixed(2) ?? 'N/A'}
               </p>
             </div>
             <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">值得入手</p>
+              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                值得入手
+              </p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.worthBuyingRate ?? 0}%
               </p>
             </div>
             <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">我的评分</p>
+              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                我的评分
+              </p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.userRating
                   ? community.ratingSummary.userRating.overallScore.toFixed(2)

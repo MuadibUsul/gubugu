@@ -9,8 +9,7 @@ import {
 
 export const metadata: Metadata = {
   title: '商品库管理',
-  description:
-    '用于管理 SKU 记录、基础属性、标签与官方图集的后台商品库页面。',
+  description: '用于管理 SKU 记录、基础属性、标签与官方图集的后台商品库页面。',
 };
 
 export const dynamic = 'force-dynamic';

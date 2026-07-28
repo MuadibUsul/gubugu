@@ -52,7 +52,11 @@ export async function getLocalDemoAuthUser(): Promise<AuthUser | null> {
 export async function setLocalDemoAuthSession(viewerKey: DemoViewerKey) {
   const cookieStore = await cookies();
 
-  cookieStore.set(LOCAL_DEMO_AUTH_COOKIE_NAME, viewerKey, localDemoCookieOptions);
+  cookieStore.set(
+    LOCAL_DEMO_AUTH_COOKIE_NAME,
+    viewerKey,
+    localDemoCookieOptions,
+  );
 }
 
 export async function clearLocalDemoAuthSession() {

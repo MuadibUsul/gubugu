@@ -9,8 +9,7 @@ import {
 
 export const metadata: Metadata = {
   title: '核心图鉴管理',
-  description:
-    '用于管理 IP、角色和系列图鉴记录的后台页面。',
+  description: '用于管理 IP、角色和系列图鉴记录的后台页面。',
 };
 
 export const dynamic = 'force-dynamic';

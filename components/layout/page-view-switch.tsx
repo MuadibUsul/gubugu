@@ -15,10 +15,7 @@ type PageViewSwitchProps = {
   className?: string;
 };
 
-export function PageViewSwitch({
-  items,
-  className,
-}: PageViewSwitchProps) {
+export function PageViewSwitch({ items, className }: PageViewSwitchProps) {
   return (
     <nav
       aria-label="Page section navigation"
@@ -33,7 +30,7 @@ export function PageViewSwitch({
             'group min-w-0 basis-full rounded-[1.4rem] border px-4 py-3 transition duration-300 sm:basis-[calc(50%-0.375rem)] lg:flex-1',
             item.active
               ? 'border-[color:color-mix(in_oklab,var(--accent)_52%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,white),color-mix(in_oklab,var(--background)_88%,var(--card)))] shadow-[0_18px_40px_-28px_color-mix(in_oklab,var(--accent)_30%,transparent)]'
-              : 'border-border/70 bg-background/72 hover:border-[color:color-mix(in_oklab,var(--primary)_28%,var(--border))] hover:bg-card/82',
+              : 'border-border/70 bg-background/72 hover:bg-card/82 hover:border-[color:color-mix(in_oklab,var(--primary)_28%,var(--border))]',
           )}
           href={item.href}
           key={item.href}

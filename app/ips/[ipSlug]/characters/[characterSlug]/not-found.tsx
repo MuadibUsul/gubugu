@@ -16,8 +16,8 @@ export default function NotFound() {
               这个角色暂时还没有收录进图鉴
             </h1>
             <p className="text-muted-foreground max-w-2xl text-sm leading-7 sm:text-base">
-              当前路径下没有找到对应的角色图鉴。可以先回到首页或搜索页，
-              继续从 IP、角色名或 SKU 线索进入。
+              当前路径下没有找到对应的角色图鉴。可以先回到首页或搜索页， 继续从
+              IP、角色名或 SKU 线索进入。
             </p>
           </div>
 

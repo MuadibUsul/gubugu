@@ -52,7 +52,12 @@ export function SearchCardActions({
         <Button asChild size={compact ? 'sm' : 'default'} variant="secondary">
           <Link href={`/goods/${goodsSlug}`}>这就是它</Link>
         </Button>
-        <Button name="status" size={compact ? 'sm' : 'default'} type="submit" value="owned">
+        <Button
+          name="status"
+          size={compact ? 'sm' : 'default'}
+          type="submit"
+          value="owned"
+        >
           已拥有
         </Button>
         <Button

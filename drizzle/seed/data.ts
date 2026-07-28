@@ -254,7 +254,10 @@ export const goodsImageSeed: GoodImageSeed[] = [
   {
     id: ids.goodsImageDuoFront,
     goodsId: ids.goodsDuoShikishi,
-    imageUrl: resolveSeedImageUrl(3, 'neon-requiem/goods/duo-shikishi/front.svg'),
+    imageUrl: resolveSeedImageUrl(
+      3,
+      'neon-requiem/goods/duo-shikishi/front.svg',
+    ),
     altText: 'Front product shot of the Aoi and Ren duo mini shikishi.',
     sortOrder: 0,
     isPrimary: true,
@@ -515,7 +518,10 @@ export const postImageSeed: PostImageSeed[] = [
   {
     id: ids.postImageAoiDesk,
     postId: ids.postAoiReview,
-    imageUrl: resolveSeedImageUrl(1, 'neon-requiem/community/aoi-stand-desk-1.svg'),
+    imageUrl: resolveSeedImageUrl(
+      1,
+      'neon-requiem/community/aoi-stand-desk-1.svg',
+    ),
     storagePath: resolveSeedStoragePath(
       1,
       'legacy/demo/neon-requiem/community/aoi-stand-desk-1.webp',

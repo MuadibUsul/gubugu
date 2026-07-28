@@ -460,9 +460,7 @@ async function syncGoodsImages(
 
   for (const image of images) {
     if (image.id && !existingIds.has(image.id)) {
-      throw new Error(
-        '提交的图片行不属于当前商品记录。',
-      );
+      throw new Error('提交的图片行不属于当前商品记录。');
     }
   }
 
@@ -587,8 +585,7 @@ export async function saveAdminGoodsAction(
   if (!parsed.success) {
     return {
       status: 'error',
-      message:
-        parsed.error.issues[0]?.message ?? '商品管理请求参数无效。',
+      message: parsed.error.issues[0]?.message ?? '商品管理请求参数无效。',
     };
   }
 
@@ -626,8 +623,7 @@ export async function saveAdminGoodsAction(
   } catch {
     return {
       status: 'error',
-      message:
-        '管理商品前必须先配置 DATABASE_URL。',
+      message: '管理商品前必须先配置 DATABASE_URL。',
     };
   }
 

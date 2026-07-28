@@ -1,7 +1,10 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
-import type { GoodsSearchFilterOptions, GoodsSearchResult } from '@/server/data';
+import type {
+  GoodsSearchFilterOptions,
+  GoodsSearchResult,
+} from '@/server/data';
 
 import {
   buildSearchHref,

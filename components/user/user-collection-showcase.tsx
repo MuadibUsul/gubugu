@@ -7,7 +7,11 @@ type UserCollectionShowcaseProps = {
 };
 
 function pickRareItems(data: UserProfilePageData) {
-  const all = [...data.goods.owned, ...data.goods.wanted, ...data.goods.exchange];
+  const all = [
+    ...data.goods.owned,
+    ...data.goods.wanted,
+    ...data.goods.exchange,
+  ];
   const rareKeywords = ['限定', 'foil', 'special', '会场', '签名', '特典'];
 
   return all
@@ -30,7 +34,11 @@ function renderLinks(
   }
 
   return items.map((item) => (
-    <Link className="block text-sm font-semibold" href={`/goods/${item.slug}`} key={item.id}>
+    <Link
+      className="block text-sm font-semibold"
+      href={`/goods/${item.slug}`}
+      key={item.id}
+    >
       {item.name}
     </Link>
   ));
@@ -92,7 +100,9 @@ export function UserCollectionShowcase({ data }: UserCollectionShowcaseProps) {
           </p>
           <div className="mt-4 space-y-3">
             <p className="text-foreground text-lg font-semibold">
-              已拥有 {data.summary.ownedCount} 件，想要 {data.summary.wantedCount} 件，可交换 {data.summary.exchangeCount} 件。
+              已拥有 {data.summary.ownedCount} 件，想要{' '}
+              {data.summary.wantedCount} 件，可交换 {data.summary.exchangeCount}{' '}
+              件。
             </p>
             <p className="text-muted-foreground text-sm leading-7">
               这不是普通列表，它正在呈现你的偏好和收藏方向。

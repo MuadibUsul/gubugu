@@ -15,7 +15,8 @@ export default function NotFound() {
               这个 SKU 还没有被收录
             </h1>
             <p className="text-muted-foreground max-w-2xl text-sm leading-7 sm:text-base">
-              当前请求的商品详情路径没有匹配到已发布的 SKU。你可以返回搜索页或首页，从有效的图鉴条目继续浏览。
+              当前请求的商品详情路径没有匹配到已发布的
+              SKU。你可以返回搜索页或首页，从有效的图鉴条目继续浏览。
             </p>
           </div>
 

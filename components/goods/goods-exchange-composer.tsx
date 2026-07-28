@@ -76,7 +76,9 @@ export function GoodsExchangeComposer({
           </div>
 
           <Button asChild>
-            <Link href={`/login?next=${encodeURIComponent(`${nextPath}#exchange-desk`)}`}>
+            <Link
+              href={`/login?next=${encodeURIComponent(`${nextPath}#exchange-desk`)}`}
+            >
               登录
             </Link>
           </Button>
@@ -121,7 +123,9 @@ export function GoodsExchangeComposer({
             <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
               我有
             </p>
-            <p className="text-foreground mt-2 text-sm font-semibold">{goodsName}</p>
+            <p className="text-foreground mt-2 text-sm font-semibold">
+              {goodsName}
+            </p>
           </div>
           <div className="border-border/70 bg-card/74 rounded-[1.45rem] border px-4 py-4">
             <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
@@ -219,7 +223,11 @@ export function GoodsExchangeComposer({
               </p>
               <div className="grid gap-2 sm:grid-cols-3">
                 {exchangeFulfillmentMethodValues.map((method) => (
-                  <label className="cursor-pointer" htmlFor={`exchange-fulfillment-${method}`} key={method}>
+                  <label
+                    className="cursor-pointer"
+                    htmlFor={`exchange-fulfillment-${method}`}
+                    key={method}
+                  >
                     <input
                       className="peer sr-only"
                       defaultChecked={method === 'either'}
@@ -247,15 +255,29 @@ export function GoodsExchangeComposer({
               </p>
               <div className="grid gap-3">
                 <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[1.25rem] border px-4 py-4">
-                  <input className="border-border mt-1 size-4 rounded" name="allowMulti" type="checkbox" value="1" />
+                  <input
+                    className="border-border mt-1 size-4 rounded"
+                    name="allowMulti"
+                    type="checkbox"
+                    value="1"
+                  />
                   <div>
-                    <p className="text-foreground text-sm font-semibold">接受多换一</p>
+                    <p className="text-foreground text-sm font-semibold">
+                      接受多换一
+                    </p>
                   </div>
                 </label>
                 <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[1.25rem] border px-4 py-4">
-                  <input className="border-border mt-1 size-4 rounded" name="allowCash" type="checkbox" value="1" />
+                  <input
+                    className="border-border mt-1 size-4 rounded"
+                    name="allowCash"
+                    type="checkbox"
+                    value="1"
+                  />
                   <div>
-                    <p className="text-foreground text-sm font-semibold">接受补差</p>
+                    <p className="text-foreground text-sm font-semibold">
+                      接受补差
+                    </p>
                   </div>
                 </label>
               </div>

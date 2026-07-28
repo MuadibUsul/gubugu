@@ -96,7 +96,8 @@ export function CharacterCompletionPanel({
                     系列
                   </p>
                   <p className="font-heading text-foreground mt-2 text-3xl leading-none">
-                    {character.completedSeriesCount}/{character.totalSeriesCount}
+                    {character.completedSeriesCount}/
+                    {character.totalSeriesCount}
                   </p>
                 </div>
                 <div className="border-border/60 bg-card/74 rounded-[1.3rem] border px-4 py-3">

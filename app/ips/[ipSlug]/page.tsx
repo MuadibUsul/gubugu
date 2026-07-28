@@ -66,7 +66,8 @@ export default async function IpPage({ params }: IpPageProps) {
                 <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
                   {data.ip.name}
                 </h1>
-                {data.ip.nameLocalized && data.ip.nameLocalized !== data.ip.name ? (
+                {data.ip.nameLocalized &&
+                data.ip.nameLocalized !== data.ip.name ? (
                   <p className="text-muted-foreground text-lg font-semibold">
                     {data.ip.nameLocalized}
                   </p>

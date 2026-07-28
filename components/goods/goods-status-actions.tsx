@@ -51,7 +51,7 @@ function StatusToggleButton({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-foreground text-lg font-semibold leading-tight">
+          <p className="text-foreground text-lg leading-tight font-semibold">
             {label}
           </p>
           <p className="text-muted-foreground mt-2 text-sm leading-6">

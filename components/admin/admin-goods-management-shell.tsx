@@ -282,7 +282,9 @@ export function AdminGoodsManagementShell({
                               <span
                                 className={`${getAdminGoodsStatusBadgeClass(item.status)} ${statusBadgeClassName}`}
                               >
-                                {getAdminGoodsPublicationStatusLabel(item.status)}
+                                {getAdminGoodsPublicationStatusLabel(
+                                  item.status,
+                                )}
                               </span>
                             </div>
 
@@ -304,9 +306,7 @@ export function AdminGoodsManagementShell({
                             </div>
 
                             <div className="grid gap-2 text-sm text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))] sm:grid-cols-2">
-                              <p>
-                                发售：{formatCatalogDate(item.releaseDate)}
-                              </p>
+                              <p>发售：{formatCatalogDate(item.releaseDate)}</p>
                               <p>更新：{formatTimestamp(item.updatedAt)}</p>
                               <p>图片：{item.imageCount}</p>
                               <p>标签：{item.tagCount}</p>
@@ -324,9 +324,7 @@ export function AdminGoodsManagementShell({
                               </Link>
                             </Button>
                             <Button asChild size="sm" variant="outline">
-                              <Link href={`/goods/${item.slug}`}>
-                                打开页面
-                              </Link>
+                              <Link href={`/goods/${item.slug}`}>打开页面</Link>
                             </Button>
                           </div>
                         </div>

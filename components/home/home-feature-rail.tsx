@@ -51,7 +51,7 @@ export function HomeFeatureRail() {
               <p className="text-[0.66rem] font-semibold tracking-[0.26em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
                 {item.eyebrow}
               </p>
-              <h3 className="text-foreground text-xl font-semibold leading-tight">
+              <h3 className="text-foreground text-xl leading-tight font-semibold">
                 {item.title}
               </h3>
               <p className="text-sm font-semibold text-[color:color-mix(in_oklab,var(--accent)_72%,var(--foreground))]">
@@ -68,7 +68,10 @@ export function HomeFeatureRail() {
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {statusChips.map((chip) => (
-            <span className="hud-chip text-muted-foreground px-3 py-1 text-xs" key={chip}>
+            <span
+              className="hud-chip text-muted-foreground px-3 py-1 text-xs"
+              key={chip}
+            >
               {chip}
             </span>
           ))}

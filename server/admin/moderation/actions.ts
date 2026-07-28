@@ -157,7 +157,10 @@ async function applyModerationDecision(input: {
   } else if (module === 'comment') {
     await db.update(posts).set(reviewPatch).where(eq(posts.id, itemId));
   } else if (module === 'photo-upload') {
-    await db.update(postImages).set(reviewPatch).where(eq(postImages.id, itemId));
+    await db
+      .update(postImages)
+      .set(reviewPatch)
+      .where(eq(postImages.id, itemId));
   } else {
     await db
       .update(exchangeListings)
@@ -209,8 +212,7 @@ export async function saveModerationDecisionAction(
   if (!parsed.success) {
     return {
       status: 'error',
-      message:
-        parsed.error.issues[0]?.message ?? '审核决定请求参数无效。',
+      message: parsed.error.issues[0]?.message ?? '审核决定请求参数无效。',
     };
   }
 

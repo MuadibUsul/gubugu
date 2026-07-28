@@ -63,8 +63,9 @@ export function getLocalSampleImageAssets(): LocalSampleImageAsset[] {
 
 export function getLocalSampleImageAsset(sampleIndex: number) {
   return (
-    getLocalSampleImageAssets().find((item) => item.sampleIndex === sampleIndex) ??
-    null
+    getLocalSampleImageAssets().find(
+      (item) => item.sampleIndex === sampleIndex,
+    ) ?? null
   );
 }
 

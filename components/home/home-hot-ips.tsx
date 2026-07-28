@@ -50,7 +50,6 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
               作品入口
             </span>
           </div>
-
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">

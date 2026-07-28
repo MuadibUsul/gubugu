@@ -165,9 +165,9 @@ export function UserGoodsShelf({
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
                 {title}
               </h2>
-            <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              {description}
-            </p>
+              <p className="text-muted-foreground mt-3 text-sm sm:text-base">
+                {description}
+              </p>
             </div>
           </div>
           <div className="border-border/70 bg-background/76 text-muted-foreground rounded-full border px-4 py-2 text-sm">

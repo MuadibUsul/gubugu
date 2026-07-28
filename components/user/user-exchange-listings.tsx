@@ -61,7 +61,10 @@ export function UserExchangeListings({
       {items.length > 0 ? (
         <div className="grid gap-4 2xl:grid-cols-2">
           {items.map((item) => (
-            <article className="collection-panel overflow-hidden p-5" key={item.id}>
+            <article
+              className="collection-panel overflow-hidden p-5"
+              key={item.id}
+            >
               <div className="space-y-5">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
@@ -79,7 +82,9 @@ export function UserExchangeListings({
                     className="border-border/70 bg-background/78 block rounded-[1.45rem] border p-4 transition hover:-translate-y-0.5"
                     href={`/goods/${item.offeredGoods.slug}`}
                   >
-                    <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">我有</p>
+                    <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                      我有
+                    </p>
                     <p className="text-foreground mt-2 text-sm font-semibold">
                       {item.offeredGoods.name}
                     </p>
@@ -93,7 +98,9 @@ export function UserExchangeListings({
                       className="border-border/70 bg-card/76 block rounded-[1.45rem] border p-4 transition hover:-translate-y-0.5"
                       href={`/goods/${item.wantedGoods.slug}`}
                     >
-                      <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">想换</p>
+                      <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                        想换
+                      </p>
                       <p className="text-foreground mt-2 text-sm font-semibold">
                         {item.wantedGoods.name}
                       </p>
@@ -112,7 +119,10 @@ export function UserExchangeListings({
 
                 <div className="flex flex-wrap gap-2">
                   <span className="border-border/70 bg-card/72 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {exchangeFulfillmentMethodMeta[item.fulfillmentMethod].label}
+                    {
+                      exchangeFulfillmentMethodMeta[item.fulfillmentMethod]
+                        .label
+                    }
                   </span>
                   {item.allowMulti ? (
                     <span className="border-border/70 bg-card/72 text-muted-foreground rounded-full border px-3 py-1 text-xs">

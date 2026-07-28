@@ -35,7 +35,11 @@ export function HomeHero() {
 
             <div className="flex flex-wrap gap-2">
               {browseLinks.map((item) => (
-                <Link className="hud-chip px-3 py-1.5 text-sm" href={item.href} key={item.href}>
+                <Link
+                  className="hud-chip px-3 py-1.5 text-sm"
+                  href={item.href}
+                  key={item.href}
+                >
                   {item.label}
                 </Link>
               ))}

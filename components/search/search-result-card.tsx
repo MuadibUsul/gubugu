@@ -36,7 +36,13 @@ export function SearchResultCard({
           : 'panel-float group relative overflow-hidden rounded-[1.9rem] border border-[color:color-mix(in_oklab,var(--accent)_18%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_88%,transparent),color-mix(in_oklab,var(--surface-soft)_86%,var(--background)))] shadow-[0_28px_78px_-40px_color-mix(in_oklab,var(--shadow-tint)_76%,transparent)]'
       }
     >
-      <div className={isFeatured ? 'grid gap-0 xl:grid-cols-[minmax(22rem,0.92fr)_minmax(0,1.08fr)]' : ''}>
+      <div
+        className={
+          isFeatured
+            ? 'grid gap-0 xl:grid-cols-[minmax(22rem,0.92fr)_minmax(0,1.08fr)]'
+            : ''
+        }
+      >
         <div
           className={
             isFeatured
@@ -80,8 +86,12 @@ export function SearchResultCard({
             </div>
 
             <div className="hud-card max-w-[20rem] px-4 py-3 backdrop-blur">
-              <p className="text-foreground text-sm font-semibold">{item.series.name}</p>
-              <p className="text-muted-foreground mt-1 text-xs">{item.ip.name}</p>
+              <p className="text-foreground text-sm font-semibold">
+                {item.series.name}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {item.ip.name}
+              </p>
             </div>
           </div>
         </div>
@@ -90,7 +100,10 @@ export function SearchResultCard({
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
               {item.characters.slice(0, 2).map((character) => (
-                <span className="hud-chip text-muted-foreground px-3 py-1 text-xs" key={character.id}>
+                <span
+                  className="hud-chip text-muted-foreground px-3 py-1 text-xs"
+                  key={character.id}
+                >
                   {character.name}
                 </span>
               ))}
@@ -104,7 +117,10 @@ export function SearchResultCard({
                     : 'font-heading text-foreground text-3xl leading-none'
                 }
               >
-                <Link className="hover:text-primary relative z-20 transition-colors" href={detailsHref}>
+                <Link
+                  className="hover:text-primary relative z-20 transition-colors"
+                  href={detailsHref}
+                >
                   {item.name}
                 </Link>
               </h2>
@@ -126,7 +142,10 @@ export function SearchResultCard({
               </span>
             ))}
             {item.tags.slice(0, 2).map((tag) => (
-              <span className="hud-chip text-foreground/84 px-3 py-1 text-xs" key={tag.id}>
+              <span
+                className="hud-chip text-foreground/84 px-3 py-1 text-xs"
+                key={tag.id}
+              >
                 {tag.name}
               </span>
             ))}

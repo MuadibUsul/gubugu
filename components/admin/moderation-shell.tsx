@@ -233,7 +233,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 ) : null}
 
                 {isLive ? (
-                  <div className="mt-4 border-t border-border/60 pt-4">
+                  <div className="border-border/60 mt-4 border-t pt-4">
                     <AdminModerationDecisionForm
                       reviewNote={item.reviewNote}
                       subjectId={item.id}
@@ -281,7 +281,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                     </div>
 
                     <Link
-                      className="text-foreground inline-flex text-lg font-semibold transition hover:text-primary"
+                      className="text-foreground hover:text-primary inline-flex text-lg font-semibold transition"
                       href={`/goods/${item.goodsSlug}`}
                     >
                       {item.goodsName}
@@ -297,7 +297,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                     ) : null}
 
                     {isLive ? (
-                      <div className="border-t border-border/60 pt-4">
+                      <div className="border-border/60 border-t pt-4">
                         <AdminModerationDecisionForm
                           reviewNote={item.reviewNote}
                           subjectId={item.id}
@@ -337,7 +337,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 </div>
 
                 <Link
-                  className="text-foreground mt-4 inline-flex text-lg font-semibold transition hover:text-primary"
+                  className="text-foreground hover:text-primary mt-4 inline-flex text-lg font-semibold transition"
                   href={`/goods/${item.goodsSlug}`}
                 >
                   {item.goodsName}
@@ -353,7 +353,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 ) : null}
 
                 {isLive ? (
-                  <div className="mt-4 border-t border-border/60 pt-4">
+                  <div className="border-border/60 mt-4 border-t pt-4">
                     <AdminModerationDecisionForm
                       reviewNote={item.reviewNote}
                       subjectId={item.id}
@@ -391,7 +391,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 </div>
 
                 <Link
-                  className="text-foreground mt-4 inline-flex text-lg font-semibold transition hover:text-primary"
+                  className="text-foreground hover:text-primary mt-4 inline-flex text-lg font-semibold transition"
                   href={`/goods/${item.goodsSlug}`}
                 >
                   {item.goodsName}
@@ -410,7 +410,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 ) : null}
 
                 {isLive ? (
-                  <div className="mt-4 border-t border-border/60 pt-4">
+                  <div className="border-border/60 mt-4 border-t pt-4">
                     <AdminModerationDecisionForm
                       reviewNote={item.reviewNote}
                       subjectId={item.id}

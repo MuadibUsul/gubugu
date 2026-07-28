@@ -64,13 +64,16 @@ export function AdminGoodsTable({
               SKU 条目看板
             </h2>
             <p className="text-muted-foreground max-w-3xl text-sm leading-7">
-              这是当前 SKU 手动录入的工作台。表格已针对快速扫读优化，并直接串联创建、编辑、标签与图片管理流程。
+              这是当前 SKU
+              手动录入的工作台。表格已针对快速扫读优化，并直接串联创建、编辑、标签与图片管理流程。
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <Button asChild size="sm">
-              <Link href={buildAdminGoodsManagementHref({}, { mode: 'create' })}>
+              <Link
+                href={buildAdminGoodsManagementHref({}, { mode: 'create' })}
+              >
                 新建商品条目
               </Link>
             </Button>
@@ -159,7 +162,9 @@ export function AdminGoodsTable({
                         <p className="text-foreground text-sm font-semibold">
                           {item.seriesName}
                         </p>
-                        <p className="text-muted-foreground text-sm">{item.ipName}</p>
+                        <p className="text-muted-foreground text-sm">
+                          {item.ipName}
+                        </p>
                       </div>
 
                       <div>

@@ -19,7 +19,9 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-function buildNotebookProfile(user: Awaited<ReturnType<typeof requireAuthUser>>) {
+function buildNotebookProfile(
+  user: Awaited<ReturnType<typeof requireAuthUser>>,
+) {
   return {
     label: '当前账户',
     displayName: user.displayLabel,

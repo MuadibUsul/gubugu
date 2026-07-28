@@ -5,7 +5,10 @@ import { SearchFilters } from '@/components/search/search-filters';
 import { SearchResults } from '@/components/search/search-results';
 import { Button } from '@/components/ui/button';
 import type { SearchPageControls } from '@/components/search/search-query';
-import { getSingleSearchParamValue, getMultiSearchParamValues } from '@/lib/search-params';
+import {
+  getSingleSearchParamValue,
+  getMultiSearchParamValues,
+} from '@/lib/search-params';
 import { getAuthUser } from '@/server/auth/session';
 import { getGoodsSearchPageData } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';

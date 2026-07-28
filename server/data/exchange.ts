@@ -124,39 +124,37 @@ async function buildExchangeListingItems(rows: ExchangeListingRow[]) {
   const goodsCardById = new Map(goodsCards.map((item) => [item.id, item]));
 
   const items: Array<ExchangeListingViewItem | null> = rows.map((row) => {
-      const offeredGoods = goodsCardById.get(row.goodsId);
+    const offeredGoods = goodsCardById.get(row.goodsId);
 
-      if (!offeredGoods) {
-        return null;
-      }
+    if (!offeredGoods) {
+      return null;
+    }
 
-      return {
-        id: row.id,
-        userId: row.userId,
-        ownerLabel: getCollectorLabel(row.userId),
-        status: row.status,
-        note: row.description,
-        conditionNote: row.conditionNote,
-        locationHint: row.locationHint,
-        allowMulti: row.allowMulti,
-        allowCash: row.allowCash,
-        fulfillmentMethod: row.fulfillmentMethod,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        offeredGoods: toExchangeGoodsOption(offeredGoods),
-        wantedGoods: row.wantedGoodsId
-          ? (() => {
-              const wantedGoods = goodsCardById.get(row.wantedGoodsId);
+    return {
+      id: row.id,
+      userId: row.userId,
+      ownerLabel: getCollectorLabel(row.userId),
+      status: row.status,
+      note: row.description,
+      conditionNote: row.conditionNote,
+      locationHint: row.locationHint,
+      allowMulti: row.allowMulti,
+      allowCash: row.allowCash,
+      fulfillmentMethod: row.fulfillmentMethod,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      offeredGoods: toExchangeGoodsOption(offeredGoods),
+      wantedGoods: row.wantedGoodsId
+        ? (() => {
+            const wantedGoods = goodsCardById.get(row.wantedGoodsId);
 
-              return wantedGoods ? toExchangeGoodsOption(wantedGoods) : null;
-            })()
-          : null,
-      } satisfies ExchangeListingViewItem;
-    });
+            return wantedGoods ? toExchangeGoodsOption(wantedGoods) : null;
+          })()
+        : null,
+    } satisfies ExchangeListingViewItem;
+  });
 
-  return items.filter(
-    (row): row is ExchangeListingViewItem => row !== null,
-  );
+  return items.filter((row): row is ExchangeListingViewItem => row !== null);
 }
 
 export async function listGoodsExchangeListings(
@@ -263,7 +261,9 @@ export async function listExchangeGoodsOptions(
     .orderBy(desc(goods.releaseDate), desc(goods.createdAt), asc(goods.name))
     .limit(limit);
 
-  const goodsCards = await getPublishedGoodsCardsByIds(rows.map((row) => row.id));
+  const goodsCards = await getPublishedGoodsCardsByIds(
+    rows.map((row) => row.id),
+  );
 
   return goodsCards.map((goodsCard) => toExchangeGoodsOption(goodsCard));
 }

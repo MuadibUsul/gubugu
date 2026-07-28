@@ -6,8 +6,7 @@ import { getAdminDashboardData } from '@/server/data';
 
 export const metadata: Metadata = {
   title: '管理工作台',
-  description:
-    '用于图鉴管理、审核处理和轻量运营统计的内部管理工作台。',
+  description: '用于图鉴管理、审核处理和轻量运营统计的内部管理工作台。',
 };
 
 export const dynamic = 'force-dynamic';

@@ -36,7 +36,7 @@ function ShelfHighlightCard({ item }: { item: HomeShelfItem }) {
                 <p className="text-[0.66rem] font-semibold tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_50%,var(--background))] uppercase">
                   {item.skuCode}
                 </p>
-                <p className="mt-2 text-base font-semibold text-foreground">
+                <p className="text-foreground mt-2 text-base font-semibold">
                   {item.series.name}
                 </p>
               </div>

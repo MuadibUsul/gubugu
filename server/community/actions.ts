@@ -246,8 +246,7 @@ export async function createGoodsPostAction(
   if (!parsed.success) {
     return {
       status: 'error',
-      message:
-        parsed.error.issues[0]?.message ?? '社区投稿参数无效。',
+      message: parsed.error.issues[0]?.message ?? '社区投稿参数无效。',
     };
   }
 
@@ -351,10 +350,7 @@ export async function createGoodsPostAction(
 
     return {
       status: 'error',
-      message:
-        error instanceof Error
-          ? error.message
-          : '社区笔记发布失败。',
+      message: error instanceof Error ? error.message : '社区笔记发布失败。',
     };
   }
 

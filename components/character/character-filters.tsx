@@ -116,9 +116,7 @@ export function CharacterFilters({
               <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
                 标签
               </p>
-              <span className="text-muted-foreground text-xs">
-                可多选
-              </span>
+              <span className="text-muted-foreground text-xs">可多选</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {data.filters.tags.map((tag) => {
@@ -175,9 +173,7 @@ export function CharacterFilters({
               <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
                 扩展浏览
               </p>
-              <span className="text-muted-foreground text-xs">
-                更多维度
-              </span>
+              <span className="text-muted-foreground text-xs">更多维度</span>
             </div>
             <div className="grid gap-3">
               {[

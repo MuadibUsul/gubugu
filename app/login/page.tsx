@@ -36,7 +36,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const routeError = getSingleSearchParamValue(resolvedSearchParams.error);
   const authMode = getSupabaseAuthConfig() ? 'supabase' : 'local-demo';
-  const heroTitle = authMode === 'supabase' ? '登录后继续。' : '选择一个收藏档案。';
+  const heroTitle =
+    authMode === 'supabase' ? '登录后继续。' : '选择一个收藏档案。';
   const panelTitle = authMode === 'supabase' ? '登录' : '选择档案';
   const extensionChips =
     authMode === 'supabase'

@@ -58,7 +58,9 @@ export function GoodsCommunityComposer({
           </div>
 
           <Button asChild>
-            <Link href={`/login?next=${encodeURIComponent(`${nextPath}#community`)}`}>
+            <Link
+              href={`/login?next=${encodeURIComponent(`${nextPath}#community`)}`}
+            >
               登录
             </Link>
           </Button>
@@ -126,12 +128,16 @@ export function GoodsCommunityComposer({
               name="images"
               onChange={(event) => {
                 setSelectedFiles(
-                  Array.from(event.currentTarget.files ?? []).map((file) => file.name),
+                  Array.from(event.currentTarget.files ?? []).map(
+                    (file) => file.name,
+                  ),
                 );
               }}
               type="file"
             />
-            <p className="text-muted-foreground text-sm">最多 4 张，每张不超过 5 MB。</p>
+            <p className="text-muted-foreground text-sm">
+              最多 4 张，每张不超过 5 MB。
+            </p>
             {selectedFiles.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {selectedFiles.map((fileName) => (

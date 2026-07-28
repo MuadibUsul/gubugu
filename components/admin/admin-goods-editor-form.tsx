@@ -527,7 +527,8 @@ export function AdminGoodsEditorForm({
                 value={metadataText}
               />
               <p className="text-muted-foreground text-sm leading-6">
-                这里必须是 JSON 对象。如果当前条目还不需要扩展结构字段，可以留空。
+                这里必须是 JSON
+                对象。如果当前条目还不需要扩展结构字段，可以留空。
               </p>
             </div>
           </div>

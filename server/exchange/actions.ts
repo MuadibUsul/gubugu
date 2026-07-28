@@ -95,8 +95,7 @@ export async function createExchangeListingAction(
   if (!parsed.success) {
     return {
       status: 'error',
-      message:
-        parsed.error.issues[0]?.message ?? '交换意向参数无效。',
+      message: parsed.error.issues[0]?.message ?? '交换意向参数无效。',
     };
   }
 

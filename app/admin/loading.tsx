@@ -1,5 +1,9 @@
 function LoadingBlock({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-[1.4rem] bg-muted/70 ${className}`} />;
+  return (
+    <div
+      className={`bg-muted/70 animate-pulse rounded-[1.4rem] ${className}`}
+    />
+  );
 }
 
 export default function Loading() {

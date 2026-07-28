@@ -73,7 +73,7 @@ export function AdminModerationDecisionForm({
           审核备注
         </label>
         <textarea
-          className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-[92px] w-full rounded-[1rem] border px-4 py-3 text-sm leading-6 outline-none transition focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-[92px] w-full rounded-[1rem] border px-4 py-3 text-sm leading-6 transition outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
           defaultValue={reviewNote ?? ''}
           disabled={disabled}
           id={`${subjectType}-${subjectId}-review-note`}

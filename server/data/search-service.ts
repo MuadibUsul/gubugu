@@ -317,7 +317,10 @@ export async function getGoodsSearchFilterOptions(
       })
       .from(characters)
       .innerJoin(ips, eq(characters.ipId, ips.id))
-      .innerJoin(goodsCharacters, eq(goodsCharacters.characterId, characters.id))
+      .innerJoin(
+        goodsCharacters,
+        eq(goodsCharacters.characterId, characters.id),
+      )
       .innerJoin(goods, eq(goodsCharacters.goodsId, goods.id))
       .innerJoin(series, eq(goods.seriesId, series.id))
       .where(characterFacetWhereClause)

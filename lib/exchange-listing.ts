@@ -20,7 +20,8 @@ export type ExchangeFulfillmentMethod = z.infer<
   typeof exchangeFulfillmentMethodSchema
 >;
 
-export type ExchangeListingStatus = (typeof exchangeListingStatusValues)[number];
+export type ExchangeListingStatus =
+  (typeof exchangeListingStatusValues)[number];
 
 export const exchangeFulfillmentMethodMeta: Record<
   ExchangeFulfillmentMethod,

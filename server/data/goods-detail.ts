@@ -68,27 +68,27 @@ export async function getGoodsDetailViewData(
 
   const [viewerState, community, exchangeListings, wantedGoodsOptions] =
     await Promise.all([
-    userId
-      ? getUserGoodsStateForGood({
-          userId,
-          goodsId: goods.id,
-        })
-      : Promise.resolve(null),
-    getGoodsCommunityData({
-      goodsId: goods.id,
-      userId,
-      page: 1,
-      pageSize: 12,
-    }),
-    listGoodsExchangeListings({
-      goodsId: goods.id,
-      limit: 6,
-    }),
-    listExchangeGoodsOptions({
-      excludeGoodsId: goods.id,
-      limit: 18,
-    }),
-  ]);
+      userId
+        ? getUserGoodsStateForGood({
+            userId,
+            goodsId: goods.id,
+          })
+        : Promise.resolve(null),
+      getGoodsCommunityData({
+        goodsId: goods.id,
+        userId,
+        page: 1,
+        pageSize: 12,
+      }),
+      listGoodsExchangeListings({
+        goodsId: goods.id,
+        limit: 6,
+      }),
+      listExchangeGoodsOptions({
+        excludeGoodsId: goods.id,
+        limit: 18,
+      }),
+    ]);
 
   const resolvedState =
     viewerState ?? createEmptyUserGoodsStateSnapshot(goods.id);

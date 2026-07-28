@@ -1,0 +1,13 @@
+# The repository already stores LF. Without this, core.autocrlf=true checks out
+# CRLF working copies on Windows and `pnpm format:check` fails on every file,
+# because Prettier defaults to endOfLine: "lf".
+* text=auto eol=lf
+
+# Binary assets must never be line-ending normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.jfif binary
+*.webp binary
+*.avif binary
+*.ico binary

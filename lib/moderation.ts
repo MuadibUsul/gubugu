@@ -54,13 +54,9 @@ export const moderationSubjectTypeValues = [
   'exchangeIntent',
 ] as const;
 
-export const moderationSubjectTypeSchema = z.enum(
-  moderationSubjectTypeValues,
-);
+export const moderationSubjectTypeSchema = z.enum(moderationSubjectTypeValues);
 
-export type ModerationSubjectType = z.infer<
-  typeof moderationSubjectTypeSchema
->;
+export type ModerationSubjectType = z.infer<typeof moderationSubjectTypeSchema>;
 
 export const moderationSubjectTypeMeta: Record<
   ModerationSubjectType,
@@ -91,9 +87,7 @@ export const catalogSubmissionTypeValues = ['create', 'update'] as const;
 
 export const catalogSubmissionTypeSchema = z.enum(catalogSubmissionTypeValues);
 
-export type CatalogSubmissionType = z.infer<
-  typeof catalogSubmissionTypeSchema
->;
+export type CatalogSubmissionType = z.infer<typeof catalogSubmissionTypeSchema>;
 
 export const catalogSubmissionTypeMeta: Record<
   CatalogSubmissionType,

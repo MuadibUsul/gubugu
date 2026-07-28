@@ -63,11 +63,15 @@ export function RecognitionCandidatesPanel({
   onConfirmCandidate,
   onRetake,
 }: RecognitionCandidatesPanelProps) {
-  const limitedCandidates = candidates.slice(0, recognitionCandidateDisplayLimit);
+  const limitedCandidates = candidates.slice(
+    0,
+    recognitionCandidateDisplayLimit,
+  );
   const [topCandidate, ...otherCandidates] = limitedCandidates;
   const confirmedCandidate =
-    limitedCandidates.find((candidate) => candidate.id === confirmedCandidateId) ??
-    null;
+    limitedCandidates.find(
+      (candidate) => candidate.id === confirmedCandidateId,
+    ) ?? null;
   const resultTone = getResultTone(limitedCandidates);
 
   return (
@@ -133,7 +137,7 @@ export function RecognitionCandidatesPanel({
               <p className="text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
                 {resultTone.eyebrow}
               </p>
-              <h3 className="text-foreground mt-2 text-2xl font-semibold leading-tight">
+              <h3 className="text-foreground mt-2 text-2xl leading-tight font-semibold">
                 {resultTone.title}
               </h3>
               <p className="mt-3 text-sm leading-7">{resultTone.description}</p>
@@ -176,11 +180,11 @@ export function RecognitionCandidatesPanel({
             ) : null}
 
             {confirmedCandidate ? (
-              <div className="border-[color:color-mix(in_oklab,var(--accent)_46%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,white),color-mix(in_oklab,var(--background)_95%,var(--card)))] rounded-[1.6rem] border px-4 py-5">
+              <div className="rounded-[1.6rem] border border-[color:color-mix(in_oklab,var(--accent)_46%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,white),color-mix(in_oklab,var(--background)_95%,var(--card)))] px-4 py-5">
                 <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
                   已确认
                 </p>
-                <h3 className="text-foreground mt-2 text-xl font-semibold leading-tight">
+                <h3 className="text-foreground mt-2 text-xl leading-tight font-semibold">
                   {confirmedCandidate.goods.name}
                 </h3>
                 <p className="mt-2 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))]">

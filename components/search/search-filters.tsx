@@ -135,7 +135,8 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                 <option value="">全部商品类型</option>
                 {(filterOptions?.goodsTypes ?? []).map((goodsType) => (
                   <option key={goodsType.value} value={goodsType.value}>
-                    {formatGoodsTypeLabel(goodsType.value)} ({goodsType.goodsCount})
+                    {formatGoodsTypeLabel(goodsType.value)} (
+                    {goodsType.goodsCount})
                   </option>
                 ))}
               </select>
@@ -152,7 +153,11 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                     const isChecked = controls.tagSlugs.includes(tag.slug);
 
                     return (
-                      <label className="cursor-pointer" htmlFor={inputId} key={tag.id}>
+                      <label
+                        className="cursor-pointer"
+                        htmlFor={inputId}
+                        key={tag.id}
+                      >
                         <input
                           className="peer sr-only"
                           defaultChecked={isChecked}
@@ -188,7 +193,9 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
               </div>
               <div className="flex flex-wrap gap-2">
                 {controls.ipSlug ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">IP · {controls.ipSlug}</span>
+                  <span className="hud-chip px-3 py-1.5 text-sm">
+                    IP · {controls.ipSlug}
+                  </span>
                 ) : null}
                 {controls.characterSlug ? (
                   <span className="hud-chip px-3 py-1.5 text-sm">
@@ -196,7 +203,9 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                   </span>
                 ) : null}
                 {controls.seriesSlug ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">系列 · {controls.seriesSlug}</span>
+                  <span className="hud-chip px-3 py-1.5 text-sm">
+                    系列 · {controls.seriesSlug}
+                  </span>
                 ) : null}
                 {controls.goodsType ? (
                   <span className="hud-chip px-3 py-1.5 text-sm">

@@ -7,4 +7,3 @@ Place future database assets here:
 - `seed/` for idempotent seed scripts
 
 Keep every schema change migration-driven.
-

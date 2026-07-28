@@ -92,11 +92,7 @@ export function AdminCatalogEditorForm({
             type="hidden"
             value={initialRecord?.id ?? ''}
           />
-          <input
-            name="returnQuery"
-            type="hidden"
-            value={filters.query ?? ''}
-          />
+          <input name="returnQuery" type="hidden" value={filters.query ?? ''} />
           <input
             name="returnStatus"
             type="hidden"
@@ -210,7 +206,9 @@ export function AdminCatalogEditorForm({
                 </label>
                 <input
                   className={inputClassName}
-                  defaultValue={formatDateInputValue(initialSeries?.releaseDate ?? null)}
+                  defaultValue={formatDateInputValue(
+                    initialSeries?.releaseDate ?? null,
+                  )}
                   id="admin-catalog-release-date"
                   name="releaseDate"
                   type="date"
@@ -220,10 +218,7 @@ export function AdminCatalogEditorForm({
           ) : null}
 
           <section className="space-y-3">
-            <label
-              className={labelClassName}
-              htmlFor="admin-catalog-image-url"
-            >
+            <label className={labelClassName} htmlFor="admin-catalog-image-url">
               {entity === 'character' ? '头像图片地址' : '封面图片地址'}
             </label>
             <input

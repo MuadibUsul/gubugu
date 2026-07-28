@@ -114,8 +114,8 @@ export async function getIpEncyclopediaPageData(
   const characterGoodsCountSql = sql<number>`count(distinct case when ${series.id} is not null then ${goods.id} end)`;
   const seriesGoodsCountSql = sql<number>`count(distinct ${goods.id})`;
 
-  const [summaryRows, characterRows, seriesRows, goodsRows] =
-    await Promise.all([
+  const [summaryRows, characterRows, seriesRows, goodsRows] = await Promise.all(
+    [
       db
         .select({
           characterCount: sql<number>`count(distinct ${characters.id})`,
@@ -165,7 +165,10 @@ export async function getIpEncyclopediaPageData(
           ),
         )
         .where(
-          and(eq(characters.ipId, ipRecord.id), eq(characters.status, 'published')),
+          and(
+            eq(characters.ipId, ipRecord.id),
+            eq(characters.status, 'published'),
+          ),
         )
         .groupBy(characters.id)
         .orderBy(desc(characterGoodsCountSql), asc(characters.name)),
@@ -183,9 +186,15 @@ export async function getIpEncyclopediaPageData(
           goods,
           and(eq(goods.seriesId, series.id), eq(goods.status, 'published')),
         )
-        .where(and(eq(series.ipId, ipRecord.id), eq(series.status, 'published')))
+        .where(
+          and(eq(series.ipId, ipRecord.id), eq(series.status, 'published')),
+        )
         .groupBy(series.id)
-        .orderBy(desc(series.releaseDate), desc(seriesGoodsCountSql), asc(series.name)),
+        .orderBy(
+          desc(series.releaseDate),
+          desc(seriesGoodsCountSql),
+          asc(series.name),
+        ),
       db
         .selectDistinct({
           goodsId: goods.id,
@@ -203,9 +212,14 @@ export async function getIpEncyclopediaPageData(
           ),
         )
         .where(eq(goods.status, 'published'))
-        .orderBy(desc(goods.releaseDate), desc(goods.createdAt), asc(goods.name))
+        .orderBy(
+          desc(goods.releaseDate),
+          desc(goods.createdAt),
+          asc(goods.name),
+        )
         .limit(limit),
-    ]);
+    ],
+  );
 
   const goodsCards = await getPublishedGoodsCardsByIds(
     goodsRows.map((row) => row.goodsId),
@@ -242,9 +256,8 @@ export async function getSeriesEncyclopediaPageData(
   input: z.input<typeof seriesEncyclopediaInputSchema>,
 ) {
   const db = getDb();
-  const { ipSlug, seriesSlug, limit } = seriesEncyclopediaInputSchema.parse(
-    input,
-  );
+  const { ipSlug, seriesSlug, limit } =
+    seriesEncyclopediaInputSchema.parse(input);
 
   const seriesRows = await db
     .select({

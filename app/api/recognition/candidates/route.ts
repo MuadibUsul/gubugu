@@ -69,9 +69,7 @@ export async function POST(request: Request) {
   if (!metadata.success) {
     return buildErrorResponse({
       code: 'INVALID_PAYLOAD',
-      message:
-        metadata.error.issues[0]?.message ??
-        '识别元数据无效。',
+      message: metadata.error.issues[0]?.message ?? '识别元数据无效。',
       retryable: false,
       status: 400,
     });

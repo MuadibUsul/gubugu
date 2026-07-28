@@ -110,7 +110,8 @@ export function GoodsRatingComposer({
             多维评分
           </h2>
           <p className="text-muted-foreground text-sm leading-7">
-            每个用户对每个 SKU 只保留一条评分记录。总分由五个维度自动计算，同时保留总评标签和“是否值得买”两个分析信号。
+            每个用户对每个 SKU
+            只保留一条评分记录。总分由五个维度自动计算，同时保留总评标签和“是否值得买”两个分析信号。
           </p>
         </div>
 

@@ -34,9 +34,9 @@ export function HomePrimarySearch() {
       return searchSuggestions.slice(0, 5);
     }
 
-    return searchSuggestions.filter((item) =>
-      item.toLowerCase().includes(normalized),
-    ).slice(0, 5);
+    return searchSuggestions
+      .filter((item) => item.toLowerCase().includes(normalized))
+      .slice(0, 5);
   }, [query]);
 
   function submit(nextQuery: string) {

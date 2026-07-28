@@ -80,7 +80,9 @@ export function GoodsExchangePanel({
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-foreground text-sm font-semibold">想换</p>
+                        <p className="text-foreground text-sm font-semibold">
+                          想换
+                        </p>
                         {listing.wantedGoods ? (
                           <Link
                             className="group border-border/70 bg-card/72 block rounded-[1.35rem] border p-4 transition hover:-translate-y-0.5"

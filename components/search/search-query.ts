@@ -66,9 +66,6 @@ export function formatGoodsTypeLabel(goodsType: string) {
 
   return (
     goodsTypeLabelMap[goodsType] ??
-    goodsType
-      .split(/[-_]/g)
-      .filter(Boolean)
-      .join(' / ')
+    goodsType.split(/[-_]/g).filter(Boolean).join(' / ')
   );
 }

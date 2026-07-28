@@ -152,9 +152,7 @@ function buildReturnPath(
   return `/admin/catalog?${params.toString()}`;
 }
 
-function mapDatabaseError(
-  error: unknown,
-): SaveAdminCatalogEntityActionState {
+function mapDatabaseError(error: unknown): SaveAdminCatalogEntityActionState {
   if (error instanceof Error) {
     if (error.message.includes('ips_slug_unique')) {
       return {
@@ -180,8 +178,7 @@ function mapDatabaseError(
 
   return {
     status: 'error',
-    message:
-      '保存图鉴数据失败，请检查提交字段后重试。',
+    message: '保存图鉴数据失败，请检查提交字段后重试。',
   };
 }
 
@@ -212,8 +209,7 @@ export async function saveAdminCatalogEntityAction(
   if (!parsed.success) {
     return {
       status: 'error',
-      message:
-        parsed.error.issues[0]?.message ?? '图鉴管理请求参数无效。',
+      message: parsed.error.issues[0]?.message ?? '图鉴管理请求参数无效。',
     };
   }
 
@@ -249,7 +245,10 @@ export async function saveAdminCatalogEntityAction(
           })
           .from(ips)
           .where(
-            and(eq(ips.slug, slug), recordId ? ne(ips.id, recordId) : undefined),
+            and(
+              eq(ips.slug, slug),
+              recordId ? ne(ips.id, recordId) : undefined,
+            ),
           )
           .limit(1),
       ]);

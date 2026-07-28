@@ -141,9 +141,9 @@ export function RecognitionShell() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [recognitionResponse, setRecognitionResponse] =
     useState<RecognitionSuccessResponse | null>(null);
-  const [confirmedCandidateId, setConfirmedCandidateId] = useState<string | null>(
-    null,
-  );
+  const [confirmedCandidateId, setConfirmedCandidateId] = useState<
+    string | null
+  >(null);
 
   const statusCopy = getCameraStatusCopy(cameraState, errorMessage);
   const resultHeadline = getResultHeadline(resultState);
@@ -155,9 +155,7 @@ export function RecognitionShell() {
     }
 
     if (previewSource === 'camera') {
-      return captureMode === 'auto'
-        ? '自动拍摄预览'
-        : '手动拍摄预览';
+      return captureMode === 'auto' ? '自动拍摄预览' : '手动拍摄预览';
     }
 
     if (cameraState === 'live') {
@@ -276,57 +274,63 @@ export function RecognitionShell() {
     }
   }
 
-  const captureFrame = useCallback((source: Exclude<PreviewSource, null>, mode: CaptureMode) => {
-    const videoElement = videoRef.current;
-    const canvasElement = canvasRef.current;
+  const captureFrame = useCallback(
+    (source: Exclude<PreviewSource, null>, mode: CaptureMode) => {
+      const videoElement = videoRef.current;
+      const canvasElement = canvasRef.current;
 
-    if (!videoElement || !canvasElement || videoElement.videoWidth === 0) {
-      setErrorMessage('相机实时画面还没有准备好。');
-      setCameraState('error');
+      if (!videoElement || !canvasElement || videoElement.videoWidth === 0) {
+        setErrorMessage('相机实时画面还没有准备好。');
+        setCameraState('error');
+        setCountdown(null);
+        return;
+      }
+
+      const frame = clampFrameSize(
+        videoElement.videoWidth,
+        videoElement.videoHeight,
+      );
+
+      canvasElement.width = 960;
+      canvasElement.height = 1200;
+
+      const context = canvasElement.getContext('2d');
+
+      if (!context) {
+        setErrorMessage('无法创建预览画布。');
+        setCameraState('error');
+        setCountdown(null);
+        return;
+      }
+
+      context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      context.drawImage(
+        videoElement,
+        frame.sx,
+        frame.sy,
+        frame.sw,
+        frame.sh,
+        0,
+        0,
+        canvasElement.width,
+        canvasElement.height,
+      );
+
+      const url = canvasElement.toDataURL('image/jpeg', 0.92);
+
+      stopCamera();
+      clearUploadPreviewUrl();
+      setPreviewUrl(url);
+      setPreviewSource(source);
+      setCaptureMode(mode);
+      setCapturedAt(new Date());
+      resetResult();
+      setCameraState('preview');
       setCountdown(null);
-      return;
-    }
-
-    const frame = clampFrameSize(videoElement.videoWidth, videoElement.videoHeight);
-
-    canvasElement.width = 960;
-    canvasElement.height = 1200;
-
-    const context = canvasElement.getContext('2d');
-
-    if (!context) {
-      setErrorMessage('无法创建预览画布。');
-      setCameraState('error');
-      setCountdown(null);
-      return;
-    }
-
-    context.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    context.drawImage(
-      videoElement,
-      frame.sx,
-      frame.sy,
-      frame.sw,
-      frame.sh,
-      0,
-      0,
-      canvasElement.width,
-      canvasElement.height,
-    );
-
-    const url = canvasElement.toDataURL('image/jpeg', 0.92);
-
-    stopCamera();
-    clearUploadPreviewUrl();
-    setPreviewUrl(url);
-    setPreviewSource(source);
-    setCaptureMode(mode);
-    setCapturedAt(new Date());
-    resetResult();
-    setCameraState('preview');
-    setCountdown(null);
-    setErrorMessage(null);
-  }, []);
+      setErrorMessage(null);
+    },
+    [],
+  );
 
   function handleArmAutoCapture() {
     if (cameraState !== 'live') {
@@ -454,9 +458,7 @@ export function RecognitionShell() {
     } catch (error) {
       setResultState('error');
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : '识别请求失败。',
+        error instanceof Error ? error.message : '识别请求失败。',
       );
     }
   }
@@ -550,29 +552,31 @@ export function RecognitionShell() {
                         <p className="font-heading text-foreground text-3xl leading-none">
                           等待输入
                         </p>
-                        <p className="text-muted-foreground text-sm">启动相机或上传图片。</p>
+                        <p className="text-muted-foreground text-sm">
+                          启动相机或上传图片。
+                        </p>
                       </div>
                     </div>
                   )}
 
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_32%,color-mix(in_oklab,var(--background)_52%,transparent)_100%)]" />
                   <div className="pointer-events-none absolute inset-[11%] rounded-[1.8rem] border border-[color:color-mix(in_oklab,var(--accent)_70%,white)] shadow-[0_0_0_1px_color-mix(in_oklab,white_18%,transparent),0_0_64px_-26px_color-mix(in_oklab,var(--accent)_42%,transparent)]">
-                    <div className="absolute -left-px -top-px h-12 w-12 rounded-tl-[1.8rem] border-l-2 border-t-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
-                    <div className="absolute -right-px -top-px h-12 w-12 rounded-tr-[1.8rem] border-r-2 border-t-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
+                    <div className="absolute -top-px -left-px h-12 w-12 rounded-tl-[1.8rem] border-t-2 border-l-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
+                    <div className="absolute -top-px -right-px h-12 w-12 rounded-tr-[1.8rem] border-t-2 border-r-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
                     <div className="absolute -bottom-px -left-px h-12 w-12 rounded-bl-[1.8rem] border-b-2 border-l-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
-                    <div className="absolute -bottom-px -right-px h-12 w-12 rounded-br-[1.8rem] border-b-2 border-r-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
+                    <div className="absolute -right-px -bottom-px h-12 w-12 rounded-br-[1.8rem] border-r-2 border-b-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
                     {cameraState === 'live' && countdown === null ? (
                       <div className="recognition-scan-line absolute inset-x-5 top-5 bottom-5 overflow-hidden rounded-[1.4rem]" />
                     ) : null}
                   </div>
 
-                  <div className="pointer-events-none absolute left-4 top-4">
+                  <div className="pointer-events-none absolute top-4 left-4">
                     <span className="border-border/70 bg-background/74 text-foreground inline-flex rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase backdrop-blur">
                       取景框
                     </span>
                   </div>
 
-                  <div className="pointer-events-none absolute bottom-4 left-4 right-4 flex items-center justify-between gap-4">
+                  <div className="pointer-events-none absolute right-4 bottom-4 left-4 flex items-center justify-between gap-4">
                     <span className="border-border/70 bg-background/74 text-muted-foreground inline-flex rounded-full border px-3 py-1 text-xs backdrop-blur">
                       尽量居中。
                     </span>
@@ -643,7 +647,7 @@ export function RecognitionShell() {
                         onClick={handleArmAutoCapture}
                         type="button"
                         variant="outline"
-                        >
+                      >
                         自动拍摄
                       </Button>
                     ) : (
@@ -703,7 +707,9 @@ export function RecognitionShell() {
                 <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
                   上传入口
                 </p>
-                <p className="text-muted-foreground mt-3 text-sm">相机不可用时可直接上传。</p>
+                <p className="text-muted-foreground mt-3 text-sm">
+                  相机不可用时可直接上传。
+                </p>
               </div>
             </aside>
           </div>
@@ -739,7 +745,7 @@ export function RecognitionShell() {
                   <div
                     className={
                       isActive
-                        ? 'border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_10%,white)] rounded-[1.35rem] border px-4 py-4'
+                        ? 'rounded-[1.35rem] border border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_10%,white)] px-4 py-4'
                         : 'border-border/70 bg-background/78 rounded-[1.35rem] border px-4 py-4'
                     }
                     key={step.key}

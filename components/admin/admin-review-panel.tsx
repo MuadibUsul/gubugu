@@ -36,7 +36,9 @@ export function AdminReviewPanel({
           <h2 className="font-heading text-foreground text-3xl leading-none">
             {title}
           </h2>
-          <p className="text-muted-foreground text-sm leading-7">{description}</p>
+          <p className="text-muted-foreground text-sm leading-7">
+            {description}
+          </p>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -59,7 +61,7 @@ export function AdminReviewPanel({
           <p className="text-muted-foreground text-[0.65rem] tracking-[0.22em] uppercase">
             说明
           </p>
-          <p className="text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))] mt-2 text-sm leading-7">
+          <p className="mt-2 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))]">
             {note}
           </p>
         </div>

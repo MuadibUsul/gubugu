@@ -26,7 +26,13 @@ export async function SiteNavigation() {
       >
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {primaryLinks.map((link) => (
-            <Button asChild className="rounded-full" key={link.href} size="sm" variant="ghost">
+            <Button
+              asChild
+              className="rounded-full"
+              key={link.href}
+              size="sm"
+              variant="ghost"
+            >
               <Link href={link.href}>{link.label}</Link>
             </Button>
           ))}
@@ -34,17 +40,32 @@ export async function SiteNavigation() {
 
         <div className="flex flex-wrap items-center gap-2">
           {user ? (
-            <Button asChild className="rounded-full" size="sm" variant="secondary">
+            <Button
+              asChild
+              className="rounded-full"
+              size="sm"
+              variant="secondary"
+            >
               <Link href="/me/collection">我的收藏</Link>
             </Button>
           ) : (
-            <Button asChild className="rounded-full" size="sm" variant="secondary">
+            <Button
+              asChild
+              className="rounded-full"
+              size="sm"
+              variant="secondary"
+            >
               <Link href="/login?next=%2Fme%2Fcollection">登录后管理收藏</Link>
             </Button>
           )}
 
           {adminRole ? (
-            <Button asChild className="rounded-full" size="sm" variant="outline">
+            <Button
+              asChild
+              className="rounded-full"
+              size="sm"
+              variant="outline"
+            >
               <Link href="/admin">{getAdminEntryLabel(adminRole)}</Link>
             </Button>
           ) : null}
