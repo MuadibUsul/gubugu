@@ -100,6 +100,11 @@ export const ips = pgTable(
   (table) => [
     uniqueIndex('ips_slug_unique').on(table.slug),
     index('ips_status_idx').on(table.status),
+    index('ips_name_trgm_idx').using('gin', sql`${table.name} gin_trgm_ops`),
+    index('ips_name_localized_trgm_idx').using(
+      'gin',
+      sql`${table.nameLocalized} gin_trgm_ops`,
+    ),
   ],
 );
 
@@ -125,6 +130,10 @@ export const characters = pgTable(
     uniqueIndex('characters_ip_id_slug_unique').on(table.ipId, table.slug),
     index('characters_ip_id_idx').on(table.ipId),
     index('characters_status_idx').on(table.status),
+    index('characters_name_trgm_idx').using(
+      'gin',
+      sql`${table.name} gin_trgm_ops`,
+    ),
   ],
 );
 
@@ -153,6 +162,7 @@ export const series = pgTable(
     uniqueIndex('series_ip_id_slug_unique').on(table.ipId, table.slug),
     index('series_ip_id_idx').on(table.ipId),
     index('series_status_idx').on(table.status),
+    index('series_name_trgm_idx').using('gin', sql`${table.name} gin_trgm_ops`),
   ],
 );
 
@@ -187,6 +197,20 @@ export const goods = pgTable(
     index('goods_series_id_idx').on(table.seriesId),
     index('goods_goods_type_idx').on(table.goodsType),
     index('goods_status_idx').on(table.status),
+    // Search matches with a leading wildcard, which no btree index can serve.
+    // pg_trgm is the only option that also works on Chinese: the built-in text
+    // search parser treats a run of Han characters as a single token, so
+    // to_tsvector cannot match a substring, and zhparser/pg_bigm are not
+    // available on managed Postgres.
+    index('goods_name_trgm_idx').using('gin', sql`${table.name} gin_trgm_ops`),
+    index('goods_sku_code_trgm_idx').using(
+      'gin',
+      sql`${table.skuCode} gin_trgm_ops`,
+    ),
+    index('goods_description_trgm_idx').using(
+      'gin',
+      sql`${table.description} gin_trgm_ops`,
+    ),
     check(
       'goods_msrp_amount_non_negative_check',
       sql`${table.msrpAmount} is null or ${table.msrpAmount} >= 0`,
@@ -273,6 +297,7 @@ export const tags = pgTable(
   (table) => [
     uniqueIndex('tags_slug_unique').on(table.slug),
     uniqueIndex('tags_name_unique').on(table.name),
+    index('tags_name_trgm_idx').using('gin', sql`${table.name} gin_trgm_ops`),
   ],
 );
 

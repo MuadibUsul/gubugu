@@ -50,6 +50,13 @@
       "when": 1785250734250,
       "tag": "0006_unusual_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785251559456,
+      "tag": "0007_nebulous_proteus",
+      "breakpoints": true
     }
   ]
 }
