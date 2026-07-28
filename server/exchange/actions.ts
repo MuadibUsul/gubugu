@@ -1,12 +1,13 @@
 'use server';
 
 import { and, eq } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { exchangeListings, goods, userGoods } from '@/drizzle/schema';
 import { getProfileByUserId } from '@/server/data/profiles';
+import { goodsCacheTag } from '@/lib/cache-tags';
 import { exchangeFulfillmentMethodSchema } from '@/lib/exchange-listing';
 import type { CreateExchangeListingActionState } from '@/server/exchange/action-state';
 import { requireAuthUser } from '@/server/auth/session';
@@ -155,6 +156,8 @@ export async function createExchangeListingAction(
       });
   });
 
+  // The cached goods detail carries the open-exchange count.
+  updateTag(goodsCacheTag(offeredGoods.slug));
   revalidatePath(nextPath);
   revalidatePath('/me/collection');
 

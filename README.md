@@ -104,7 +104,8 @@ pnpm format
 
 Current note:
 
-- the root project does not currently define a `pnpm test` script
+- `pnpm test` runs the Vitest suite over the pure logic in `lib/` and `server/`
+- `pnpm db:verify-rls` checks the row level security policies against a real database, and needs `DATABASE_URL` plus a migrated and seeded schema
 
 ## Environment
 

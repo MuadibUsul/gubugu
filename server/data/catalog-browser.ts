@@ -11,7 +11,14 @@ import {
   series,
 } from '@/drizzle/schema';
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
+import { unstable_cache } from 'next/cache';
+
+import { catalogCacheTag, ipCacheTag, seriesCacheTag } from '@/lib/cache-tags';
 import { getDb } from '@/server/db/client';
+
+// Mirrors server/data/catalog.ts: tags drive invalidation, the window is a
+// backstop for writes that bypass the app.
+const CATALOG_REVALIDATE_SECONDS = 300;
 
 const ipEncyclopediaInputSchema = z.object({
   ipSlug: z.string().trim().min(1),
@@ -89,8 +96,23 @@ export type SeriesEncyclopediaPageData = {
 export async function getIpEncyclopediaPageData(
   input: z.input<typeof ipEncyclopediaInputSchema>,
 ) {
-  const db = getDb();
   const { ipSlug, limit } = ipEncyclopediaInputSchema.parse(input);
+
+  return unstable_cache(
+    () => getIpEncyclopediaPageDataUncached(ipSlug, limit),
+    ['ip-page', ipSlug, `${limit}`],
+    {
+      tags: [catalogCacheTag, ipCacheTag(ipSlug)],
+      revalidate: CATALOG_REVALIDATE_SECONDS,
+    },
+  )();
+}
+
+async function getIpEncyclopediaPageDataUncached(
+  ipSlug: string,
+  limit: number,
+) {
+  const db = getDb();
 
   const ipRows = await db
     .select({
@@ -255,9 +277,25 @@ export async function getIpEncyclopediaPageData(
 export async function getSeriesEncyclopediaPageData(
   input: z.input<typeof seriesEncyclopediaInputSchema>,
 ) {
-  const db = getDb();
   const { ipSlug, seriesSlug, limit } =
     seriesEncyclopediaInputSchema.parse(input);
+
+  return unstable_cache(
+    () => getSeriesEncyclopediaPageDataUncached(ipSlug, seriesSlug, limit),
+    ['series-page', ipSlug, seriesSlug, `${limit}`],
+    {
+      tags: [catalogCacheTag, seriesCacheTag(ipSlug, seriesSlug)],
+      revalidate: CATALOG_REVALIDATE_SECONDS,
+    },
+  )();
+}
+
+async function getSeriesEncyclopediaPageDataUncached(
+  ipSlug: string,
+  seriesSlug: string,
+  limit: number,
+) {
+  const db = getDb();
 
   const seriesRows = await db
     .select({

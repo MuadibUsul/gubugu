@@ -1,11 +1,12 @@
 'use server';
 
 import { and, eq, ne } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { characters, ips, series } from '@/drizzle/schema';
+import { catalogCacheTag } from '@/lib/cache-tags';
 import { slugifyText } from '@/lib/slug';
 import type { SaveAdminCatalogEntityActionState } from '@/server/admin/catalog/action-state';
 import { requireAdminAccess } from '@/server/auth/admin';
@@ -296,6 +297,8 @@ export async function saveAdminCatalogEntityAction(
         });
       }
 
+      updateTag(catalogCacheTag);
+
       revalidatePath('/admin');
       revalidatePath('/admin/catalog');
       revalidatePath('/search');
@@ -409,6 +412,8 @@ export async function saveAdminCatalogEntityAction(
           status,
         });
       }
+
+      updateTag(catalogCacheTag);
 
       revalidatePath('/admin');
       revalidatePath('/admin/catalog');
@@ -525,6 +530,8 @@ export async function saveAdminCatalogEntityAction(
         status,
       });
     }
+
+    updateTag(catalogCacheTag);
 
     revalidatePath('/admin');
     revalidatePath('/admin/catalog');

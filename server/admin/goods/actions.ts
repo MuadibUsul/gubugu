@@ -1,11 +1,12 @@
 'use server';
 
 import { and, eq, inArray, ne, or } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { goods, goodsImages, goodsTags, series, tags } from '@/drizzle/schema';
+import { catalogCacheTag } from '@/lib/cache-tags';
 import { slugifyText } from '@/lib/slug';
 import type { SaveAdminGoodsActionState } from '@/server/admin/goods/action-state';
 import { requireAdminAccess } from '@/server/auth/admin';
@@ -766,6 +767,9 @@ export async function saveAdminGoodsAction(
     return mapDatabaseError(error);
   }
 
+  // A goods edit can change any encyclopedia surface that lists it, so drop
+  // the whole catalog cache rather than trying to enumerate the pages.
+  updateTag(catalogCacheTag);
   revalidatePath('/admin');
   revalidatePath('/admin/goods');
   revalidatePath('/search');

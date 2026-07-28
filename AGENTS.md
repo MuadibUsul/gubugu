@@ -243,7 +243,8 @@ Use the repository commands below when relevant to the task:
 
 Testing note:
 
-- the current root `package.json` does not define a `pnpm test` script
-- if tests are added later, run `pnpm test` for tasks that affect tested behavior
+- `pnpm test` runs Vitest; run it for tasks that affect tested behaviour
+- tests live next to their subject as `*.test.ts` under `lib/` and `server/`
+- `pnpm db:verify-rls` exercises the row level security policies and needs a migrated, seeded database
 
 For implementation tasks, run the relevant checks when possible and report what was or was not executed.

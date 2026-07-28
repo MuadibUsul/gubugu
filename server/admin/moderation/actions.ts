@@ -1,7 +1,7 @@
 'use server';
 
 import { eq } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { z } from 'zod';
 
 import {
@@ -11,6 +11,7 @@ import {
   postImages,
   posts,
 } from '@/drizzle/schema';
+import { goodsCacheTag } from '@/lib/cache-tags';
 import {
   moderationQueueModuleSchema,
   moderationStatusSchema,
@@ -76,6 +77,7 @@ async function revalidateGoodsPathForModule(input: {
       .limit(1);
 
     if (rows[0]?.goodsSlug) {
+      updateTag(goodsCacheTag(rows[0].goodsSlug));
       revalidatePath(`/goods/${rows[0].goodsSlug}`);
     }
 
@@ -94,6 +96,7 @@ async function revalidateGoodsPathForModule(input: {
       .limit(1);
 
     if (rows[0]?.goodsSlug) {
+      updateTag(goodsCacheTag(rows[0].goodsSlug));
       revalidatePath(`/goods/${rows[0].goodsSlug}`);
     }
 
@@ -110,6 +113,7 @@ async function revalidateGoodsPathForModule(input: {
     .limit(1);
 
   if (rows[0]?.goodsSlug) {
+    updateTag(goodsCacheTag(rows[0].goodsSlug));
     revalidatePath(`/goods/${rows[0].goodsSlug}`);
   }
 }

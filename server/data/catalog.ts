@@ -16,7 +16,18 @@ import {
   series,
   tags,
 } from '@/drizzle/schema';
+import { unstable_cache } from 'next/cache';
+
+import {
+  catalogCacheTag,
+  characterCacheTag,
+  goodsCacheTag,
+} from '@/lib/cache-tags';
 import { getDb } from '@/server/db/client';
+
+// Encyclopedia records change through admin edits, which revalidate by tag.
+// The window is a backstop for anything written outside the app.
+const CATALOG_REVALIDATE_SECONDS = 300;
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
 import {
   getUserGoodsStateMap,
@@ -214,8 +225,20 @@ export type GoodsDetailPageData = {
 export async function listHotIps(
   input?: z.input<typeof listHotIpsInputSchema>,
 ) {
-  const db = getDb();
   const { limit } = listHotIpsInputSchema.parse(input ?? {});
+
+  return unstable_cache(
+    () => listHotIpsUncached(limit),
+    ['hot-ips', `${limit}`],
+    {
+      tags: [catalogCacheTag],
+      revalidate: CATALOG_REVALIDATE_SECONDS,
+    },
+  )();
+}
+
+async function listHotIpsUncached(limit: number) {
+  const db = getDb();
 
   const goodsCountSql = sql<number>`count(distinct ${goods.id})`;
   const seriesCountSql = sql<number>`count(distinct ${series.id})`;
@@ -261,9 +284,33 @@ export async function listHotIps(
 export async function getCharacterEncyclopediaPageData(
   input: z.input<typeof characterPageInputSchema>,
 ) {
-  const db = getDb();
   const { characterSlug, ipSlug, limit } =
     characterPageInputSchema.parse(input);
+
+  // ipSlug is optional: a character can be addressed without disambiguating by
+  // IP. Without it there is no specific character tag to attach, so the entry
+  // relies on the catalog tag and the revalidate window.
+  const tags = ipSlug
+    ? [catalogCacheTag, characterCacheTag(ipSlug, characterSlug)]
+    : [catalogCacheTag];
+
+  return unstable_cache(
+    () =>
+      getCharacterEncyclopediaPageDataUncached(ipSlug, characterSlug, limit),
+    ['character-page', ipSlug ?? '', characterSlug, `${limit}`],
+    {
+      tags,
+      revalidate: CATALOG_REVALIDATE_SECONDS,
+    },
+  )();
+}
+
+async function getCharacterEncyclopediaPageDataUncached(
+  ipSlug: string | undefined,
+  characterSlug: string,
+  limit: number,
+) {
+  const db = getDb();
 
   const characterRows = await db
     .select({
@@ -400,8 +447,23 @@ export async function getCharacterEncyclopediaPageData(
 export async function getGoodsDetailPageData(
   input: z.input<typeof goodsDetailInputSchema>,
 ) {
-  const db = getDb();
   const { goodsSlug } = goodsDetailInputSchema.parse(input);
+
+  // The tag depends on the slug, so the cached function is built per call.
+  // unstable_cache folds the key parts into the entry, so this does not defeat
+  // the cache.
+  return unstable_cache(
+    () => getGoodsDetailPageDataUncached(goodsSlug),
+    ['goods-detail', goodsSlug],
+    {
+      tags: [catalogCacheTag, goodsCacheTag(goodsSlug)],
+      revalidate: CATALOG_REVALIDATE_SECONDS,
+    },
+  )();
+}
+
+async function getGoodsDetailPageDataUncached(goodsSlug: string) {
+  const db = getDb();
 
   const goodsRows = await db
     .select({

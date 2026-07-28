@@ -3,10 +3,11 @@
 import { and, eq } from 'drizzle-orm';
 import type { InferInsertModel } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { z } from 'zod';
 
 import { goods, postImages, posts, ratings } from '@/drizzle/schema';
+import { goodsCacheTag } from '@/lib/cache-tags';
 import {
   calculateGoodsRatingScore,
   goodsRatingValueSchema,
@@ -228,6 +229,8 @@ export async function saveGoodsRatingAction(
       },
     });
 
+  // The cached goods detail carries the rating aggregate.
+  updateTag(goodsCacheTag(targetGoods.slug));
   revalidatePath(nextPath);
   revalidatePath('/me/collection');
   redirect(`${nextPath}#community`);
@@ -354,6 +357,10 @@ export async function createGoodsPostAction(
     };
   }
 
+  // The post is pending moderation so it is not public yet, but the cached
+  // goods detail counts approved posts and must be refreshed on approval too;
+  // see server/admin/moderation/actions.ts.
+  updateTag(goodsCacheTag(targetGoods.slug));
   revalidatePath(nextPath);
   revalidatePath('/me/collection');
   redirect(
