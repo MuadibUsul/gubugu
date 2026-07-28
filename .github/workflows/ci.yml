@@ -70,6 +70,10 @@ jobs:
 
       - run: pnpm db:seed
 
+      # The app connects as the table owner, which bypasses RLS, so nothing on
+      # the request path would notice if these policies broke.
+      - run: pnpm db:verify-rls
+
       # A clean migrate must leave the schema matching drizzle/schema. If this
       # fails, someone edited the schema without generating a migration.
       - name: Check for undeclared schema drift
