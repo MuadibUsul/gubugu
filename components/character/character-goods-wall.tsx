@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 
+import { toCssUrl } from '@/lib/css-url';
 import type { CharacterCollectionGoodsCard } from '@/server/data';
 
 import {
@@ -21,46 +23,33 @@ function CharacterGoodsCard({
   controls: CharacterPageControls;
 }) {
   const detailsHref = `/goods/${item.slug}`;
+  const artUrl = toCssUrl(item.primaryImageUrl);
 
   return (
     <article
-      className={
-        item.isOwned
-          ? 'group relative overflow-hidden rounded-[1.9rem] border border-[color:color-mix(in_oklab,var(--accent)_60%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] shadow-[0_30px_84px_-42px_color-mix(in_oklab,var(--accent)_34%,transparent)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_36px_90px_-40px_color-mix(in_oklab,var(--accent)_40%,transparent)]'
-          : 'group border-border/70 bg-card/78 relative overflow-hidden rounded-[1.9rem] border shadow-[0_26px_70px_-42px_color-mix(in_oklab,var(--foreground)_28%,transparent)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_32px_82px_-38px_color-mix(in_oklab,var(--primary)_30%,transparent)]'
-      }
+      className={`goods-card group ${item.isOwned ? 'goods-card--lit' : 'goods-card--dormant'}`}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,color-mix(in_oklab,white_16%,transparent)_42%,transparent_100%)]" />
-
-      <div className="border-border/70 relative h-56 overflow-hidden border-b sm:h-64">
-        <div
-          className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,transparent),transparent_34%,color-mix(in_oklab,var(--background)_78%,var(--card))_100%)] bg-cover bg-center"
-          style={
-            item.primaryImageUrl
-              ? {
-                  backgroundImage: `linear-gradient(180deg, color-mix(in oklab, var(--accent) 12%, transparent), transparent 34%, color-mix(in oklab, var(--background) 78%, var(--card)) 100%), url(${item.primaryImageUrl})`,
-                }
-              : undefined
-          }
-        />
-
-        <div className="relative flex h-full flex-col justify-between p-5">
+      <div
+        className="goods-card__art border-border/70 h-56 border-b sm:h-64"
+        style={
+          artUrl ? ({ '--goods-card-art': artUrl } as CSSProperties) : undefined
+        }
+      >
+        <div className="goods-card__art-content flex h-full flex-col justify-between p-5">
           <div className="flex items-start justify-between gap-4">
             <span
-              className={
-                item.isOwned
-                  ? 'text-foreground rounded-full border border-[color:color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_18%,white)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase'
-                  : 'border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase'
-              }
+              className={`hud-chip px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase ${
+                item.isOwned ? 'hud-chip--lit' : 'text-muted-foreground'
+              }`}
             >
               {item.isOwned ? '已点亮' : '未点亮'}
             </span>
-            <span className="border-border/70 bg-card/80 text-muted-foreground rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
+            <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
               {formatGoodsTypeLabel(item.goodsType)}
             </span>
           </div>
 
-          <div className="max-w-[17rem] rounded-[1.35rem] bg-[color:color-mix(in_oklab,var(--background)_72%,transparent)] px-4 py-3 backdrop-blur">
+          <div className="hud-card max-w-[17rem] px-4 py-3 backdrop-blur">
             <p className="text-muted-foreground text-[0.66rem] font-semibold tracking-[0.28em] uppercase">
               {item.skuCode}
             </p>
@@ -113,7 +102,7 @@ function CharacterGoodsCard({
             </span>
           ) : null}
           {item.isOwned ? (
-            <span className="text-foreground rounded-full border border-[color:color-mix(in_oklab,var(--accent)_60%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-xs">
+            <span className="hud-chip hud-chip--lit px-3 py-1 text-xs">
               已拥有并点亮补全
             </span>
           ) : null}

@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 
+import { toCssUrl } from '@/lib/css-url';
 import type { GoodsCardData } from '@/server/data/_shared';
 
 import { formatGoodsTypeLabel } from './search-query';
@@ -27,14 +29,11 @@ export function SearchResultCard({
   const detailsHref = `/goods/${item.slug}`;
   const isFeatured = priority === 'featured';
   const trustSignals = buildTrustSignals(item);
+  const artUrl = toCssUrl(item.primaryImageUrl);
 
   return (
     <article
-      className={
-        isFeatured
-          ? 'panel-float group relative overflow-hidden rounded-[2.2rem] border border-[color:color-mix(in_oklab,var(--accent)_34%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,transparent),color-mix(in_oklab,var(--surface-strong)_90%,var(--background)))] shadow-[0_34px_90px_-44px_color-mix(in_oklab,var(--accent)_42%,transparent)]'
-          : 'panel-float group relative overflow-hidden rounded-[1.9rem] border border-[color:color-mix(in_oklab,var(--accent)_18%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_88%,transparent),color-mix(in_oklab,var(--surface-soft)_86%,var(--background)))] shadow-[0_28px_78px_-40px_color-mix(in_oklab,var(--shadow-tint)_76%,transparent)]'
-      }
+      className={`goods-card group ${isFeatured ? 'goods-card--lit' : ''}`}
     >
       <div
         className={
@@ -44,35 +43,26 @@ export function SearchResultCard({
         }
       >
         <div
-          className={
+          className={`goods-card__art border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] ${
             isFeatured
-              ? 'relative min-h-[22rem] overflow-hidden border-b border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] xl:min-h-full xl:border-r xl:border-b-0'
-              : 'relative h-56 overflow-hidden border-b border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] sm:h-64'
+              ? 'min-h-[22rem] border-b xl:min-h-full xl:border-r xl:border-b-0'
+              : 'h-56 border-b sm:h-64'
+          }`}
+          style={
+            artUrl
+              ? ({ '--goods-card-art': artUrl } as CSSProperties)
+              : undefined
           }
         >
           <Link className="absolute inset-0 z-10" href={detailsHref}>
             <span className="sr-only">打开 {item.name}</span>
           </Link>
 
-          <div
-            className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,transparent),transparent_34%,color-mix(in_oklab,var(--background)_76%,var(--card))_100%)]"
-            style={
-              item.primaryImageUrl
-                ? {
-                    backgroundImage: `linear-gradient(180deg, color-mix(in oklab, var(--accent) 16%, transparent), transparent 34%, color-mix(in oklab, var(--background) 76%, var(--card)) 100%), url(${item.primaryImageUrl})`,
-                    backgroundPosition: 'center',
-                    backgroundSize: 'cover',
-                  }
-                : undefined
-            }
-          />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,color-mix(in_oklab,white_18%,transparent)_40%,transparent_100%)]" />
-
-          <div className="relative flex h-full flex-col justify-between p-5 sm:p-6">
+          <div className="goods-card__art-content flex h-full flex-col justify-between p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-wrap gap-2">
                 {isFeatured ? (
-                  <span className="hud-chip border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+                  <span className="hud-chip hud-chip--lit px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
                     最佳匹配
                   </span>
                 ) : null}

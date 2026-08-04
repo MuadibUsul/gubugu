@@ -28,6 +28,7 @@
   --panel-glow: color-mix(in oklab, var(--primary) 10%, transparent);
   --panel-glow-warm: color-mix(in oklab, var(--accent) 10%, transparent);
   --radius: 1.35rem;
+  --radius-card: clamp(1.5rem, 2.4vw, 1.9rem);
   --font-heading-family:
     'Hiragino Mincho ProN', 'Yu Mincho', 'BIZ UDPMincho', 'Palatino Linotype',
     Georgia, serif;
@@ -475,6 +476,200 @@
       0 38px 96px -98px var(--panel-glow-warm) inset;
   }
 
+  /* Shared shell for every goods card (search results, character wall, user
+     shelf). These cards previously each hand-rolled the same arbitrary-value
+     Tailwind strings, so a visual change had to be repeated in four files. */
+  .goods-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    border: 1px solid color-mix(in oklab, var(--border) 86%, white 6%);
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--surface-strong) 90%, transparent) 0%,
+      color-mix(in oklab, var(--surface-soft) 88%, var(--background)) 100%
+    );
+    box-shadow:
+      0 26px 72px -44px var(--panel-shadow),
+      inset 0 1px 0 color-mix(in oklab, white 7%, transparent);
+    transition:
+      transform var(--duration-soft) var(--ease-fluid),
+      box-shadow var(--duration-soft) var(--ease-fluid),
+      border-color var(--duration-soft) var(--ease-fluid);
+  }
+
+  /* The diagonal sheen that makes the card read as a physical object. */
+  .goods-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      color-mix(in oklab, white 14%, transparent) 42%,
+      transparent 100%
+    );
+    opacity: 0.6;
+    transition: opacity var(--duration-soft) var(--ease-fluid);
+  }
+
+  .goods-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 34px 86px -44px var(--panel-shadow),
+      inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
+  }
+
+  .goods-card:hover::before {
+    opacity: 0.85;
+  }
+
+  /* Owned / lit. A lit collectible emits light, so the card body stays dark and
+     gains an accent rim plus outer glow. Mixing the surface toward white (the
+     previous treatment) reads as faded rather than lit on a dark theme. */
+  .goods-card--lit {
+    border-color: color-mix(in oklab, var(--accent) 48%, var(--border));
+    box-shadow:
+      0 26px 72px -44px var(--panel-shadow),
+      0 0 0 1px color-mix(in oklab, var(--accent) 26%, transparent) inset,
+      inset 0 1px 0 color-mix(in oklab, var(--accent) 30%, white 40%),
+      0 22px 68px -40px color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+
+  .goods-card--lit:hover {
+    border-color: color-mix(in oklab, var(--accent) 62%, var(--border));
+    box-shadow:
+      0 34px 86px -44px var(--panel-shadow),
+      0 0 0 1px color-mix(in oklab, var(--accent) 34%, transparent) inset,
+      inset 0 1px 0 color-mix(in oklab, var(--accent) 38%, white 46%),
+      0 30px 84px -38px color-mix(in oklab, var(--accent) 52%, transparent);
+  }
+
+  /* The emissive top edge — the actual "lit" tell, readable at grid scale. */
+  .goods-card--lit::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    z-index: 3;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--accent) 78%, white) 50%,
+      transparent
+    );
+    box-shadow: 0 0 18px -2px
+      color-mix(in oklab, var(--accent) 62%, transparent);
+  }
+
+  /* Not owned. Reads as an empty slot in the binder rather than a second
+     equally-bright card. */
+  .goods-card--dormant {
+    border-color: color-mix(in oklab, var(--border) 92%, transparent);
+  }
+
+  .goods-card--dormant:hover {
+    border-color: color-mix(in oklab, var(--primary) 26%, var(--border));
+  }
+
+  /* Art plate. The image comes in through --goods-card-art so the gradient
+     treatment lives here instead of being rebuilt at each call site. */
+  .goods-card__art {
+    position: relative;
+    overflow: hidden;
+    background-color: color-mix(in oklab, var(--background) 86%, var(--card));
+  }
+
+  .goods-card__art::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: var(--goods-card-art, none);
+    background-position: center;
+    background-size: cover;
+    transition:
+      filter var(--duration-soft) var(--ease-fluid),
+      transform 620ms var(--ease-fluid);
+  }
+
+  .goods-card:hover .goods-card__art::before {
+    transform: scale(1.045);
+  }
+
+  /* Dormant art is desaturated and dimmed; this is the strongest lighting cue
+     on the wall, far more legible than a badge alone. */
+  .goods-card--dormant .goods-card__art::before {
+    filter: saturate(0.42) brightness(0.62) contrast(0.94);
+  }
+
+  .goods-card--dormant:hover .goods-card__art::before {
+    filter: saturate(0.72) brightness(0.82) contrast(0.97);
+  }
+
+  /* Sits above the art so the gradient never washes out the overlaid chips. */
+  .goods-card__art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent) 12%, transparent) 0%,
+      transparent 34%,
+      color-mix(in oklab, var(--background) 80%, var(--card)) 100%
+    );
+  }
+
+  .goods-card--lit .goods-card__art::after {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent) 20%, transparent) 0%,
+      transparent 36%,
+      color-mix(in oklab, var(--background) 76%, var(--card)) 100%
+    );
+  }
+
+  /* Applied to the content wrapper only. A `> *` rule here would also hit the
+     absolutely-positioned overlay link the search card lays over the art and
+     force it back to static flow, destroying the click target. */
+  .goods-card__art-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Detail-page gallery. The card gradient exists to keep overlaid chips
+     readable; there are none here, and darkening the lower third of a product
+     shot works against the one screen where the object itself is the subject.
+     Swap it for a display-case sheen. */
+  .goods-plate .goods-card__art::after {
+    background:
+      linear-gradient(
+        135deg,
+        transparent 0%,
+        color-mix(in oklab, white 12%, transparent) 44%,
+        transparent 100%
+      ),
+      radial-gradient(
+        ellipse at 50% 108%,
+        color-mix(in oklab, var(--accent) 16%, transparent),
+        transparent 62%
+      );
+  }
+
+  .goods-plate .goods-card__art {
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 12%, transparent),
+      inset 0 0 42px -18px color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+
   .hud-chip {
     border: 1px solid color-mix(in oklab, var(--border) 90%, white 6%);
     border-radius: 999px;
@@ -485,6 +680,21 @@
     );
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
     backdrop-filter: blur(10px);
+  }
+
+  /* Accent chip for lit / owned state. Tints toward the accent instead of
+     toward white, so it stays legible against the dark card. */
+  .hud-chip--lit {
+    border-color: color-mix(in oklab, var(--accent) 56%, var(--border));
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent) 26%, var(--surface-strong)) 0%,
+      color-mix(in oklab, var(--accent) 14%, var(--surface-soft)) 100%
+    );
+    color: color-mix(in oklab, var(--foreground) 88%, var(--accent));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 16%, transparent),
+      0 0 18px -6px color-mix(in oklab, var(--accent) 54%, transparent);
   }
 
   .hud-card {

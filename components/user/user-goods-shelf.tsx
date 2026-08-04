@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 
+import { toCssUrl } from '@/lib/css-url';
 import type { UserProfileGoodsCard } from '@/server/data';
 
 type UserGoodsShelfProps = {
@@ -10,29 +12,33 @@ type UserGoodsShelfProps = {
   items: UserProfileGoodsCard[];
 };
 
+const statusLabels = {
+  owned: '已拥有',
+  wanted: '想要',
+  exchange: '可交换',
+} as const satisfies Record<UserGoodsShelfProps['status'], string>;
+
 function getShelfAccent(status: UserGoodsShelfProps['status']) {
   switch (status) {
+    // Owned is the only lit state: the item is actually in the collection.
     case 'owned':
       return {
         sectionLabel: '点亮收藏',
-        cardClass:
-          'border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] shadow-[0_28px_76px_-42px_color-mix(in_oklab,var(--accent)_32%,transparent)]',
-        badgeClass:
-          'border-[color:color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_18%,white)] text-foreground',
+        cardClass: 'goods-card--lit',
+        badgeClass: 'hud-chip--lit',
       };
+    // Wanted is not owned yet, so it stays dormant like an unfilled slot.
     case 'wanted':
       return {
         sectionLabel: '目标收藏',
-        cardClass:
-          'border-border/70 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--secondary)_46%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] shadow-[0_26px_68px_-42px_color-mix(in_oklab,var(--foreground)_22%,transparent)]',
-        badgeClass: 'border-border/70 bg-background/78 text-muted-foreground',
+        cardClass: 'goods-card--dormant',
+        badgeClass: 'text-muted-foreground',
       };
     case 'exchange':
       return {
         sectionLabel: '轮换库存',
-        cardClass:
-          'border-border/70 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_10%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] shadow-[0_26px_68px_-42px_color-mix(in_oklab,var(--primary)_24%,transparent)]',
-        badgeClass: 'border-border/70 bg-background/78 text-muted-foreground',
+        cardClass: '',
+        badgeClass: 'text-muted-foreground',
       };
   }
 }
@@ -46,38 +52,29 @@ function UserGoodsCard({
 }) {
   const accent = getShelfAccent(status);
   const primaryCharacter = item.characters[0];
+  const artUrl = toCssUrl(item.primaryImageUrl);
 
   return (
-    <article
-      className={`group relative overflow-hidden rounded-[1.9rem] border ${accent.cardClass} transition duration-300 hover:-translate-y-1`}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,color-mix(in_oklab,white_16%,transparent)_42%,transparent_100%)]" />
-
-      <div className="border-border/70 relative h-52 overflow-hidden border-b sm:h-60">
-        <div
-          className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,transparent),transparent_34%,color-mix(in_oklab,var(--background)_78%,var(--card))_100%)] bg-cover bg-center"
-          style={
-            item.primaryImageUrl
-              ? {
-                  backgroundImage: `linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, transparent), transparent 34%, color-mix(in oklab, var(--background) 78%, var(--card)) 100%), url(${item.primaryImageUrl})`,
-                }
-              : undefined
-          }
-        />
-
-        <div className="relative flex h-full flex-col justify-between p-5">
+    <article className={`goods-card group ${accent.cardClass}`}>
+      <div
+        className="goods-card__art border-border/70 h-52 border-b sm:h-60"
+        style={
+          artUrl ? ({ '--goods-card-art': artUrl } as CSSProperties) : undefined
+        }
+      >
+        <div className="goods-card__art-content flex h-full flex-col justify-between p-5">
           <div className="flex items-start justify-between gap-4">
             <span
-              className={`rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase ${accent.badgeClass}`}
+              className={`hud-chip px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase ${accent.badgeClass}`}
             >
-              {status}
+              {statusLabels[status]}
             </span>
-            <span className="border-border/70 bg-card/80 text-muted-foreground rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
+            <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
               {item.goodsType}
             </span>
           </div>
 
-          <div className="max-w-[16rem] rounded-[1.35rem] bg-[color:color-mix(in_oklab,var(--background)_72%,transparent)] px-4 py-3 backdrop-blur">
+          <div className="hud-card max-w-[16rem] px-4 py-3 backdrop-blur">
             <p className="text-muted-foreground text-[0.66rem] font-semibold tracking-[0.28em] uppercase">
               {item.skuCode}
             </p>
