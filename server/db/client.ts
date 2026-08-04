@@ -35,6 +35,11 @@ const globalForDatabase = globalThis as typeof globalThis & {
   __gubuguDatabase?: DatabaseContext;
 };
 
+// The pool must be cached in every environment, not just development. getDb()
+// is called once per query function (38 call sites), so without this each call
+// would construct a fresh pg.Pool that is never ended — a single page render
+// opens several pools and leaks their connections until the database refuses
+// new ones. Caching in development additionally survives HMR module reloads.
 function getDatabaseContext() {
   if (globalForDatabase.__gubuguDatabase) {
     return globalForDatabase.__gubuguDatabase;
@@ -42,9 +47,7 @@ function getDatabaseContext() {
 
   const database = createDatabase();
 
-  if (process.env.NODE_ENV !== 'production') {
-    globalForDatabase.__gubuguDatabase = database;
-  }
+  globalForDatabase.__gubuguDatabase = database;
 
   return database;
 }
