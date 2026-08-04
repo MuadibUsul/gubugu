@@ -27,6 +27,13 @@
   --panel-shadow: color-mix(in oklab, var(--shadow-tint) 74%, transparent);
   --panel-glow: color-mix(in oklab, var(--primary) 10%, transparent);
   --panel-glow-warm: color-mix(in oklab, var(--accent) 10%, transparent);
+  /* Every other surface token in this theme carries a warm tint — --muted is
+     oklch(0.3 0.016 14), a desaturated red rather than a grey. Dormant cards
+     need genuinely neutral surfaces (chroma 0) so an uncollected SKU reads as
+     grey next to the warm lit cards instead of merely darker. */
+  --dormant-surface: oklch(0.24 0 0);
+  --dormant-surface-soft: oklch(0.19 0 0);
+  --dormant-line: oklch(0.42 0 0);
   --radius: 1.35rem;
   --radius-card: clamp(1.5rem, 2.4vw, 1.9rem);
   --font-heading-family:
@@ -572,7 +579,29 @@
   /* Not owned. Reads as an empty slot in the binder rather than a second
      equally-bright card. */
   .goods-card--dormant {
-    border-color: color-mix(in oklab, var(--border) 92%, transparent);
+    border-color: var(--dormant-line);
+    background: linear-gradient(
+      180deg,
+      var(--dormant-surface) 0%,
+      var(--dormant-surface-soft) 100%
+    );
+    box-shadow:
+      0 24px 66px -46px var(--panel-shadow),
+      inset 0 1px 0 color-mix(in oklab, white 4%, transparent);
+  }
+
+  /* Chips inside a dormant card inherit the warm hud-chip surface; flatten them
+     so the whole card reads as one dormant object rather than a grey card with
+     warm jewellery on it. */
+  .goods-card--dormant .hud-chip,
+  .goods-card--dormant .hud-card {
+    border-color: color-mix(in oklab, var(--dormant-line) 76%, transparent);
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--dormant-surface) 88%, white 6%) 0%,
+      var(--dormant-surface-soft) 100%
+    );
+    color: color-mix(in oklab, white 62%, var(--dormant-line));
   }
 
   .goods-card--dormant:hover {
@@ -604,14 +633,16 @@
     transform: scale(1.045);
   }
 
-  /* Dormant art is desaturated and dimmed; this is the strongest lighting cue
-     on the wall, far more legible than a badge alone. */
+  /* Dormant art goes fully grey. Partial desaturation left the colour still
+     readable, so an uncollected SKU sat too close to a collected one at grid
+     scale; the wall has to be scannable at a glance. Hover brings the colour
+     part of the way back as a preview of the lit state. */
   .goods-card--dormant .goods-card__art::before {
-    filter: saturate(0.42) brightness(0.62) contrast(0.94);
+    filter: grayscale(1) brightness(0.58) contrast(0.92);
   }
 
   .goods-card--dormant:hover .goods-card__art::before {
-    filter: saturate(0.72) brightness(0.82) contrast(0.97);
+    filter: grayscale(0.35) brightness(0.86) contrast(0.97);
   }
 
   /* Sits above the art so the gradient never washes out the overlaid chips. */
@@ -634,6 +665,18 @@
       color-mix(in oklab, var(--accent) 20%, transparent) 0%,
       transparent 36%,
       color-mix(in oklab, var(--background) 76%, var(--card)) 100%
+    );
+  }
+
+  /* The shared gradient carries an accent tint at the top. Left in place it
+     puts warm light back over art that was just made grey, which is what kept
+     the two states looking alike. Neutralise it for dormant cards. */
+  .goods-card--dormant .goods-card__art::after {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--dormant-line) 22%, transparent) 0%,
+      transparent 34%,
+      var(--dormant-surface-soft) 100%
     );
   }
 
