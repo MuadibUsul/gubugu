@@ -1,21 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
-
-import { Button } from '@/components/ui/button';
+import { useMemo, useRef, useState } from 'react';
 
 const searchSuggestions = [
   '亚克力立牌',
   '徽章',
   '迷你色纸',
   '春日主题',
-  '双人图',
   'Aoi Tsukishiro',
-  'Kaito Asagiri',
   'Ren Kagetsu',
-  'Winter Archive',
-  'Spring Bloom',
 ] as const;
 
 export function HomePrimarySearch() {
@@ -23,9 +17,8 @@ export function HomePrimarySearch() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = useState('');
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  // 不做挂载时 autofocus：首页一打开就抢焦点，移动端会把页面直接滚到输入框，
+  // 用户还没读到这是什么就被推到了操作上。
 
   const suggestions = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -51,12 +44,11 @@ export function HomePrimarySearch() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+    <div>
+      <div className="border-input flex border focus-within:border-[var(--shu)]">
         <input
           autoComplete="off"
-          className="ui-field-lg h-16 px-5 text-lg"
-          id="home-search-query"
+          className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[15px] focus-visible:shadow-none"
           name="query"
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -65,25 +57,26 @@ export function HomePrimarySearch() {
               submit(query);
             }
           }}
-          placeholder="角色名、系列名、SKU 编号"
+          placeholder="商品名、型号，或者角色名"
           ref={inputRef}
           type="search"
           value={query}
         />
-        <Button
-          className="h-16 rounded-[var(--radius)] px-8 text-base"
+        <button
+          className="shrink-0 bg-[var(--shu)] px-6 text-[14px] font-medium text-[var(--shu-ink)]"
           onClick={() => submit(query)}
-          size="lg"
           type="button"
         >
-          立即搜索
-        </Button>
+          搜索
+        </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      {/* 建议词排成一行文字，不是一排胶囊 —— 索引的做法 */}
+      <div className="text-muted-foreground mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[13px]">
+        <span className="lbl">试试</span>
         {suggestions.map((item) => (
           <button
-            className="hud-chip panel-float text-foreground/86 px-3 py-1.5 text-sm"
+            className="underline-offset-4 hover:text-[var(--shu)] hover:underline"
             key={item}
             onClick={() => submit(item)}
             type="button"

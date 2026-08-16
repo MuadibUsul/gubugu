@@ -1,89 +1,67 @@
-function HeroLoadingCard() {
+/**
+ * 骨架屏要画的是**这一页的**形状 —— 扉、目次、近収蔵。
+ * 旧版画的是已经不存在的 hero 卡与统计卡组，那会让首屏先闪一个完全不同的
+ * 布局再跳到真实内容。
+ */
+function Line({ className }: { className: string }) {
+  return <div className={`bg-muted animate-pulse ${className}`} />;
+}
+
+export default function HomeLoading() {
   return (
-    <section className="collection-panel px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.72fr)]">
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div className="bg-muted h-3 w-40 animate-pulse rounded-full" />
-            <div className="bg-muted/80 h-16 w-full max-w-4xl animate-pulse rounded-[var(--radius)]" />
-            <div className="bg-muted/65 h-16 w-full max-w-3xl animate-pulse rounded-[var(--radius)]" />
-            <div className="bg-muted/55 h-5 w-full max-w-2xl animate-pulse rounded-full" />
+    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
+      {/* 扉 */}
+      <section className="spread border-border border-b pb-16">
+        <div>
+          <Line className="h-3 w-10" />
+        </div>
+        <div className="min-w-0 space-y-5">
+          <Line className="h-12 w-full max-w-[34rem]" />
+          <Line className="h-12 w-full max-w-[28rem]" />
+          <Line className="h-px w-full max-w-[22rem]" />
+          <div className="flex gap-10">
+            <Line className="h-4 w-24" />
+            <Line className="h-4 w-20" />
           </div>
+          <Line className="h-12 w-full max-w-[540px]" />
+        </div>
+      </section>
 
-          <div className="border-border/70 bg-background/72 rounded-[var(--radius)] border p-3">
-            <div className="bg-muted mb-3 h-3 w-60 animate-pulse rounded-full" />
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="bg-muted/80 h-15 animate-pulse rounded-[var(--radius)]" />
-              <div className="bg-muted/70 h-15 w-full animate-pulse rounded-[var(--radius)] lg:w-36" />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div
-                  className="bg-muted/65 h-8 w-20 animate-pulse rounded-full"
-                  key={index}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
+      {/* 目次 */}
+      <section className="spread border-border border-b py-16">
+        <div>
+          <Line className="h-3 w-10" />
+        </div>
+        <div className="min-w-0">
+          <Line className="h-7 w-40" />
+          <div className="mt-6 space-y-0">
+            {Array.from({ length: 3 }).map((_, index) => (
               <div
-                className="border-border/60 bg-card/70 h-36 animate-pulse rounded-[var(--radius)] border"
+                className="border-border flex items-baseline gap-4 border-b py-5"
                 key={index}
-              />
+              >
+                <Line className="h-3 w-8 shrink-0" />
+                <Line className="h-6 w-48" />
+              </div>
             ))}
           </div>
         </div>
+      </section>
 
-        <div className="border-border/70 bg-card/80 h-[28rem] animate-pulse rounded-[var(--radius)] border" />
-      </div>
-    </section>
-  );
-}
-
-export default function Loading() {
-  return (
-    <main className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[38rem] bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--accent)_14%,transparent),transparent_58%)]" />
-      <div className="mx-auto flex min-h-screen w-full max-w-[90rem] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
-        <HeroLoadingCard />
-
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.42fr)_minmax(320px,0.78fr)]">
-          <div className="collection-panel p-6 sm:p-8">
-            <div className="space-y-3">
-              <div className="bg-muted h-3 w-28 animate-pulse rounded-full" />
-              <div className="bg-muted/80 h-10 w-52 animate-pulse rounded-full" />
-              <div className="bg-muted/60 h-5 w-full max-w-2xl animate-pulse rounded-full" />
-            </div>
-            <div className="mt-6 grid gap-4 xl:grid-cols-2">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  className="border-border/70 bg-card/70 h-[18rem] animate-pulse rounded-[var(--radius)] border"
-                  key={index}
-                />
-              ))}
-            </div>
+      {/* 近収蔵 */}
+      <section className="spread py-16">
+        <div>
+          <Line className="h-3 w-10" />
+        </div>
+        <div className="min-w-0">
+          <Line className="h-7 w-32" />
+          <div className="mt-6 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Line className="aspect-[3/4] w-full" key={index} />
+            ))}
           </div>
-
-          <div className="collection-panel p-6 sm:p-8">
-            <div className="space-y-4">
-              <div className="bg-muted h-3 w-36 animate-pulse rounded-full" />
-              <div className="bg-muted/80 h-12 w-56 animate-pulse rounded-[var(--radius)]" />
-              <div className="bg-muted/70 h-12 w-48 animate-pulse rounded-[var(--radius)]" />
-              <div className="bg-muted/55 h-5 w-full animate-pulse rounded-full" />
-            </div>
-            <div className="mt-8 grid gap-3">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  className="border-border/70 bg-card/70 h-16 animate-pulse rounded-[var(--radius)] border"
-                  key={index}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

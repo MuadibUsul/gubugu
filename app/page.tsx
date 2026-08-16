@@ -1,39 +1,61 @@
 import { Suspense } from 'react';
 
-import { HomeFeatureRail } from '@/components/home/home-feature-rail';
-import { HomeHero } from '@/components/home/home-hero';
 import {
-  HomeShelfHighlightsFallback,
-  HomeShelfHighlightsSection,
-} from '@/components/home/home-shelf-highlights';
+  HomeAccessionsFallback,
+  HomeAccessionsSection,
+} from '@/components/home/home-accessions';
 import {
-  HomeHotIpsFallback,
-  HomeHotIpsSection,
-} from '@/components/home/home-hot-ips';
+  HomeContentsFallback,
+  HomeContentsSection,
+} from '@/components/home/home-contents';
+import { HomeFrontispiece } from '@/components/home/home-frontispiece';
+import { HomeIndexSection } from '@/components/home/home-index';
+import { listHotIps, searchGoodsCatalog } from '@/server/data';
+import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
-export default function Home() {
+/**
+ * 首页读作一本图录的前几页：扉 → 目次 → 近収蔵 → 索引。
+ *
+ * 不是 hero + 侧栏 + 卡片墙。这个顺序有它的道理：先说明这是什么、收了多少，
+ * 再给出可以从哪儿翻进去，最后才是最近新增。
+ */
+async function loadFrontispieceCounts() {
+  try {
+    const [ips, goods] = await Promise.all([
+      listHotIps({ limit: 24 }),
+      searchGoodsCatalog({ pageSize: 1 }),
+    ]);
+
+    return { ipCount: ips.length, goodsCount: goods.total };
+  } catch (error) {
+    if (!isDatabaseAccessConfigurationError(error)) {
+      console.error(error);
+    }
+
+    // 数字读不出来时给 0 而不是让整页失败 —— 扉页的其余部分仍然有用。
+    return { ipCount: 0, goodsCount: 0 };
+  }
+}
+
+export default async function Home() {
+  const counts = await loadFrontispieceCounts();
+
   return (
-    <main className="relative isolate overflow-x-clip">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[52rem] bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--primary)_14%,transparent),transparent_52%)]" />
-      <div className="pointer-events-none absolute top-[-8rem] right-[-14rem] size-[34rem] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--accent)_14%,transparent),transparent_68%)] blur-2xl" />
-      <div className="pointer-events-none absolute top-[18rem] left-[-10rem] size-[26rem] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--secondary)_14%,transparent),transparent_72%)] blur-3xl" />
-      <div className="pointer-events-none absolute bottom-[8rem] left-[16%] h-40 w-40 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_72%)] blur-[110px]" />
-      <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--surface-line)_88%,transparent),transparent)] md:inset-x-12 xl:inset-x-16" />
+    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
+      <HomeFrontispiece
+        goodsCount={counts.goodsCount}
+        ipCount={counts.ipCount}
+      />
 
-      <div className="mx-auto flex min-h-screen w-full max-w-[112rem] flex-col gap-14 px-6 py-[6.5rem] md:px-10 md:py-24 xl:px-14 xl:py-28">
-        <HomeHero />
+      <Suspense fallback={<HomeContentsFallback />}>
+        <HomeContentsSection />
+      </Suspense>
 
-        <section className="grid gap-x-8 gap-y-10 xl:grid-cols-[minmax(0,1.52fr)_minmax(22rem,0.78fr)] xl:items-start">
-          <Suspense fallback={<HomeHotIpsFallback />}>
-            <HomeHotIpsSection />
-          </Suspense>
-          <HomeFeatureRail />
-        </section>
+      <Suspense fallback={<HomeAccessionsFallback />}>
+        <HomeAccessionsSection />
+      </Suspense>
 
-        <Suspense fallback={<HomeShelfHighlightsFallback />}>
-          <HomeShelfHighlightsSection />
-        </Suspense>
-      </div>
+      <HomeIndexSection />
     </main>
   );
 }
