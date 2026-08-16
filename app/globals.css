@@ -608,28 +608,29 @@
     border-color: color-mix(in oklab, var(--primary) 26%, var(--border));
   }
 
-  /* Art plate. The image comes in through --goods-card-art so the gradient
-     treatment lives here instead of being rebuilt at each call site. */
+  /* Art plate. Holds a real <img>/next-image element rather than a CSS
+     background, so the art gets lazy loading, a srcset and an alt text. The
+     lighting treatment stays here so it is not rebuilt at each call site. */
   .goods-card__art {
     position: relative;
     overflow: hidden;
     background-color: color-mix(in oklab, var(--background) 86%, var(--card));
   }
 
-  .goods-card__art::before {
-    content: '';
+  .goods-card__art-image {
     position: absolute;
     inset: 0;
     z-index: 0;
-    background-image: var(--goods-card-art, none);
-    background-position: center;
-    background-size: cover;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    object-position: center;
     transition:
       filter var(--duration-soft) var(--ease-fluid),
       transform 620ms var(--ease-fluid);
   }
 
-  .goods-card:hover .goods-card__art::before {
+  .goods-card:hover .goods-card__art-image {
     transform: scale(1.045);
   }
 
@@ -637,11 +638,11 @@
      readable, so an uncollected SKU sat too close to a collected one at grid
      scale; the wall has to be scannable at a glance. Hover brings the colour
      part of the way back as a preview of the lit state. */
-  .goods-card--dormant .goods-card__art::before {
+  .goods-card--dormant .goods-card__art-image {
     filter: grayscale(1) brightness(0.58) contrast(0.92);
   }
 
-  .goods-card--dormant:hover .goods-card__art::before {
+  .goods-card--dormant:hover .goods-card__art-image {
     filter: grayscale(0.35) brightness(0.86) contrast(0.97);
   }
 

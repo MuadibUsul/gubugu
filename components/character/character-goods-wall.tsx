@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
 
-import { toCssUrl } from '@/lib/css-url';
+import { GoodsCardArt } from '@/components/goods/goods-card-art';
 import type { CharacterCollectionGoodsCard } from '@/server/data';
 
 import {
@@ -23,17 +22,16 @@ function CharacterGoodsCard({
   controls: CharacterPageControls;
 }) {
   const detailsHref = `/goods/${item.slug}`;
-  const artUrl = toCssUrl(item.primaryImageUrl);
 
   return (
     <article
       className={`goods-card group ${item.isOwned ? 'goods-card--lit' : 'goods-card--dormant'}`}
     >
-      <div
-        className="goods-card__art border-border/70 h-56 border-b sm:h-64"
-        style={
-          artUrl ? ({ '--goods-card-art': artUrl } as CSSProperties) : undefined
-        }
+      <GoodsCardArt
+        alt={item.name}
+        className="border-border/70 h-56 border-b sm:h-64"
+        imageUrl={item.primaryImageUrl}
+        sizes="(max-width: 1535px) 100vw, 50vw"
       >
         <div className="goods-card__art-content flex h-full flex-col justify-between p-5">
           <div className="flex items-start justify-between gap-4">
@@ -56,7 +54,7 @@ function CharacterGoodsCard({
             <p className="text-foreground mt-2 text-sm">{item.series.name}</p>
           </div>
         </div>
-      </div>
+      </GoodsCardArt>
 
       <div className="space-y-5 p-5">
         <div className="space-y-3">

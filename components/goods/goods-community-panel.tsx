@@ -1,3 +1,4 @@
+import { RemoteImage } from '@/components/ui/remote-image';
 import { formatCatalogDate } from '@/lib/formatters';
 import {
   goodsRatingDimensionMeta,
@@ -168,12 +169,14 @@ export function GoodsCommunityPanel({
                   className="border-border/70 bg-background/80 overflow-hidden rounded-[1.4rem] border"
                   key={image.id}
                 >
-                  <div
-                    className="aspect-[1/1] bg-cover bg-center"
-                    style={{
-                      backgroundImage: `url(${image.imageUrl})`,
-                    }}
-                  />
+                  <div className="relative aspect-[1/1]">
+                    <RemoteImage
+                      alt={image.altText ?? '用户上传的商品图片'}
+                      className="size-full object-cover object-center"
+                      sizes="(max-width: 639px) 100vw, 22vw"
+                      src={image.imageUrl}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -228,12 +231,14 @@ export function GoodsCommunityPanel({
                         className="border-border/70 bg-card/72 overflow-hidden rounded-[1.2rem] border"
                         key={image.id}
                       >
-                        <div
-                          className="aspect-[1/1] bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url(${image.imageUrl})`,
-                          }}
-                        />
+                        <div className="relative aspect-[1/1]">
+                          <RemoteImage
+                            alt={image.altText ?? '用户上传的商品图片'}
+                            className="size-full object-cover object-center"
+                            sizes="(max-width: 639px) 100vw, 15vw"
+                            src={image.imageUrl}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>

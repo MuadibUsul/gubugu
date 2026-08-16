@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import { HomeSectionState } from '@/components/home/home-section-state';
 import { Button } from '@/components/ui/button';
+import { toCssUrl } from '@/lib/css-url';
 import { listHotIps, type HomeHotIp } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
@@ -16,15 +17,21 @@ function getIpCardAccent(index: number) {
 }
 
 function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
+  const coverUrl = toCssUrl(ip.coverImageUrl);
+
   return (
     <article
       className={`panel-float group relative overflow-hidden rounded-[2rem] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-gradient-to-br ${getIpCardAccent(index)} p-6 shadow-[0_30px_78px_-42px_color-mix(in_oklab,var(--shadow-tint)_44%,transparent)]`}
     >
-      {ip.coverImageUrl ? (
+      {/* Decorative backdrop at 18% opacity behind the card text, not content —
+          it stays a background image, but the URL still has to be escaped or a
+          cover path containing a space silently drops the declaration. */}
+      {coverUrl ? (
         <div
+          aria-hidden="true"
           className="absolute inset-y-0 right-0 w-[46%] bg-cover bg-center opacity-[0.18] transition duration-500 group-hover:scale-[1.02] group-hover:opacity-[0.24]"
           style={{
-            backgroundImage: `linear-gradient(270deg, transparent 0%, color-mix(in oklab, var(--background) 40%, transparent) 58%, color-mix(in oklab, var(--background) 96%, transparent) 100%), url(${ip.coverImageUrl})`,
+            backgroundImage: `linear-gradient(270deg, transparent 0%, color-mix(in oklab, var(--background) 40%, transparent) 58%, color-mix(in oklab, var(--background) 96%, transparent) 100%), ${coverUrl}`,
           }}
         />
       ) : null}

@@ -1,6 +1,4 @@
-import type { CSSProperties } from 'react';
-
-import { toCssUrl } from '@/lib/css-url';
+import { GoodsCardArt } from '@/components/goods/goods-card-art';
 import type { GoodsDetailPageData } from '@/server/data';
 
 type GoodsGalleryProps = {
@@ -13,18 +11,20 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
   const secondaryImages = goods.images.filter(
     (image) => image.id !== primaryImage?.id,
   );
-  const primaryArtUrl = toCssUrl(primaryImage?.imageUrl);
 
   return (
     <section className="space-y-4">
       <div className="collection-panel goods-plate relative overflow-hidden p-4">
-        <div
-          className="goods-card__art border-border/70 aspect-[4/5] rounded-[1.8rem] border"
-          style={
-            primaryArtUrl
-              ? ({ '--goods-card-art': primaryArtUrl } as CSSProperties)
-              : undefined
-          }
+        <GoodsCardArt
+          // Falls back to the SKU name when the record has no alt text, so the
+          // image is never announced as unlabelled.
+          alt={primaryImage?.altText ?? goods.name}
+          className="border-border/70 aspect-[4/5] rounded-[1.8rem] border"
+          imageUrl={primaryImage?.imageUrl ?? null}
+          // The largest element above the fold on a SKU page, and the LCP
+          // candidate — it must not be lazy loaded.
+          priority
+          sizes="(max-width: 1023px) 100vw, 40vw"
         >
           {!primaryImage ? (
             <div className="goods-card__art-content flex h-full items-end p-5">
@@ -38,30 +38,24 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
               </div>
             </div>
           ) : null}
-        </div>
+        </GoodsCardArt>
       </div>
 
       {secondaryImages.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-3">
-          {secondaryImages.map((image) => {
-            const artUrl = toCssUrl(image.imageUrl);
-
-            return (
-              <div
-                className="collection-panel goods-plate relative overflow-hidden p-3"
-                key={image.id}
-              >
-                <div
-                  className="goods-card__art border-border/70 aspect-[1/1] rounded-[1.35rem] border"
-                  style={
-                    artUrl
-                      ? ({ '--goods-card-art': artUrl } as CSSProperties)
-                      : undefined
-                  }
-                />
-              </div>
-            );
-          })}
+          {secondaryImages.map((image) => (
+            <div
+              className="collection-panel goods-plate relative overflow-hidden p-3"
+              key={image.id}
+            >
+              <GoodsCardArt
+                alt={image.altText ?? goods.name}
+                className="border-border/70 aspect-[1/1] rounded-[1.35rem] border"
+                imageUrl={image.imageUrl}
+                sizes="(max-width: 639px) 100vw, 15vw"
+              />
+            </div>
+          ))}
         </div>
       ) : null}
     </section>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { RemoteImage } from '@/components/ui/remote-image';
 import type { CharacterEncyclopediaViewData } from '@/server/data';
 
 import type { CharacterPageControls } from './character-query';
@@ -121,16 +122,16 @@ export function CharacterHero({
             <div className="border-border/70 relative overflow-hidden rounded-[1.8rem] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,white),color-mix(in_oklab,var(--background)_94%,var(--card)))] p-5">
               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,color-mix(in_oklab,white_24%,transparent)_42%,transparent_100%)]" />
               <div className="relative flex items-center gap-4">
-                <div
-                  className="border-border/70 size-28 shrink-0 rounded-[1.6rem] border bg-[color:color-mix(in_oklab,var(--background)_72%,transparent)] bg-cover bg-center shadow-[0_20px_40px_-26px_color-mix(in_oklab,var(--foreground)_30%,transparent)]"
-                  style={
-                    data.character.avatarImageUrl
-                      ? {
-                          backgroundImage: `url(${data.character.avatarImageUrl})`,
-                        }
-                      : undefined
-                  }
-                />
+                <div className="border-border/70 relative size-28 shrink-0 overflow-hidden rounded-[1.6rem] border bg-[color:color-mix(in_oklab,var(--background)_72%,transparent)] shadow-[0_20px_40px_-26px_color-mix(in_oklab,var(--foreground)_30%,transparent)]">
+                  {data.character.avatarImageUrl ? (
+                    <RemoteImage
+                      alt={data.character.name}
+                      className="size-full object-cover object-center"
+                      sizes="7rem"
+                      src={data.character.avatarImageUrl}
+                    />
+                  ) : null}
+                </div>
                 <div className="space-y-2">
                   <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
                     角色立绘区

@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
 
-import { toCssUrl } from '@/lib/css-url';
+import { GoodsCardArt } from '@/components/goods/goods-card-art';
 import type { GoodsCardData } from '@/server/data/_shared';
 
 import { formatGoodsTypeLabel } from './search-query';
@@ -29,7 +28,6 @@ export function SearchResultCard({
   const detailsHref = `/goods/${item.slug}`;
   const isFeatured = priority === 'featured';
   const trustSignals = buildTrustSignals(item);
-  const artUrl = toCssUrl(item.primaryImageUrl);
 
   return (
     <article
@@ -42,16 +40,21 @@ export function SearchResultCard({
             : ''
         }
       >
-        <div
-          className={`goods-card__art border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] ${
+        <GoodsCardArt
+          alt={item.name}
+          className={`border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] ${
             isFeatured
               ? 'min-h-[22rem] border-b xl:min-h-full xl:border-r xl:border-b-0'
               : 'h-56 border-b sm:h-64'
           }`}
-          style={
-            artUrl
-              ? ({ '--goods-card-art': artUrl } as CSSProperties)
-              : undefined
+          imageUrl={item.primaryImageUrl}
+          // The featured result is the largest thing above the fold on /search,
+          // so it should not wait for the lazy-loading observer.
+          priority={isFeatured}
+          sizes={
+            isFeatured
+              ? '(max-width: 1279px) 100vw, 45vw'
+              : '(max-width: 1279px) 100vw, 30vw'
           }
         >
           <Link className="absolute inset-0 z-10" href={detailsHref}>
@@ -84,7 +87,7 @@ export function SearchResultCard({
               </p>
             </div>
           </div>
-        </div>
+        </GoodsCardArt>
 
         <div className={isFeatured ? 'space-y-6 p-6 sm:p-7' : 'space-y-5 p-5'}>
           <div className="space-y-3">

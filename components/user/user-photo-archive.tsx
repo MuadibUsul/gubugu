@@ -1,3 +1,4 @@
+import { RemoteImage } from '@/components/ui/remote-image';
 import type { UserPhotoEntry } from '@/server/data';
 
 type UserPhotoArchiveProps = {
@@ -44,15 +45,19 @@ export function UserPhotoArchive({ items }: UserPhotoArchiveProps) {
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   {item.images.length > 0 ? (
-                    item.images
-                      .slice(0, 3)
-                      .map((image) => (
-                        <div
-                          className="border-border/70 from-accent/10 to-background/82 h-28 rounded-[1.35rem] border bg-gradient-to-br bg-cover bg-center"
-                          key={image.id}
-                          style={{ backgroundImage: `url(${image.imageUrl})` }}
+                    item.images.slice(0, 3).map((image) => (
+                      <div
+                        className="border-border/70 from-accent/10 to-background/82 relative h-28 overflow-hidden rounded-[1.35rem] border bg-gradient-to-br"
+                        key={image.id}
+                      >
+                        <RemoteImage
+                          alt={image.altText ?? '用户上传的收藏图片'}
+                          className="size-full object-cover object-center"
+                          sizes="(max-width: 639px) 33vw, 12rem"
+                          src={image.imageUrl}
                         />
-                      ))
+                      </div>
+                    ))
                   ) : (
                     <div className="border-border/65 bg-background/72 text-muted-foreground col-span-full rounded-[1.35rem] border border-dashed px-4 py-6 text-sm">
                       暂无图片
