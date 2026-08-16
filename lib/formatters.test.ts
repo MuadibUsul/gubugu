@@ -11,6 +11,26 @@ describe('formatCatalogDate', () => {
     expect(formatCatalogDate(null)).toBe('暂未收录');
   });
 
+  // An invalid Date passes the null check, then throws RangeError inside
+  // Intl.format — which crashed the SKU detail page's info panel.
+  it('falls back on an invalid date instead of throwing', () => {
+    expect(formatCatalogDate(new Date('not a date'))).toBe('暂未收录');
+    expect(formatCatalogDate(new Date(Number.NaN))).toBe('暂未收录');
+  });
+
+  // The schema types release_date as Date, but node-postgres returns a `date`
+  // column as a 'YYYY-MM-DD' string, so Date methods threw on the real value.
+  it('accepts the string a date column actually returns', () => {
+    const formatted = formatCatalogDate('2026-03-05');
+
+    expect(formatted).not.toBe('暂未收录');
+    expect(formatted).toContain('2026');
+  });
+
+  it('falls back on an unparseable string', () => {
+    expect(formatCatalogDate('not a date')).toBe('暂未收录');
+  });
+
   it('formats a real date and keeps the year', () => {
     const formatted = formatCatalogDate(new Date('2024-03-05T00:00:00Z'));
 

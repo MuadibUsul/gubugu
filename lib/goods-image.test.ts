@@ -22,6 +22,18 @@ describe('isOptimizableImageUrl', () => {
     expect(isOptimizableImageUrl('/local-sample-images/a.jpg')).toBe(true);
   });
 
+  // The demo-assets route generates an SVG for any path it is given, so a
+  // demo asset whose URL ends in .jfif slips past next/image's suffix-based
+  // SVG check and comes back 400 from the optimiser.
+  it('rejects demo assets, which are always generated SVG', () => {
+    expect(
+      isOptimizableImageUrl('/demo-assets/local-sample-images/a.jfif'),
+    ).toBe(false);
+    expect(
+      isOptimizableImageUrl('/demo-assets/neon-requiem/goods/x/front.svg'),
+    ).toBe(false);
+  });
+
   it('accepts a URL on the configured Supabase host', () => {
     expect(
       isOptimizableImageUrl(

@@ -4,13 +4,15 @@
 
 ## 1. 上线前必须知道的三件事
 
-### 识别功能不能跑在 serverless 上
+### 识别功能需要常驻进程
 
-识别已接入真实的 CLIP 图像向量匹配（见 `docs/recognition-options.md`），但**模型冷加载实测约 142 秒**。放进 serverless function 会在每次冷启动重复付出这个代价。
+识别已接入真实的 CLIP 图像向量匹配（见 `docs/recognition-options.md`）。**模型冷加载实测约 142 秒**，热态单图推理 60–90ms。
 
-需要常驻 Node 进程。如果主站部署在 Vercel，识别接口要拆到独立的常驻服务上，主站转发 —— **当前代码没有做这个拆分**。
+部署方案为自建服务器，因此模型可以直接活在主应用进程里，142 秒只在服务启动时付一次，不需要把识别接口拆出去。**这也是不能用 serverless 的原因** —— 那种形态下每次冷启动都要重新付这个代价。
 
-上线前还必须运行 `pnpm db:embed` 给图鉴图片建索引。没有索引时识别会降级到占位结果，界面会明确标注为「占位结果 · 非真实识别」，不会伪装成真实匹配。
+启动后建议主动预热，避免第一个真实请求等待模型加载：`server/recognition/embedding.ts` 导出了 `warmEmbeddingPipeline()`。
+
+上线前必须运行 `pnpm db:embed` 给图鉴图片建索引。没有索引时识别会降级到占位结果，界面会明确标注为「占位结果 · 非真实识别」，不会伪装成真实匹配。
 
 ### 生产环境不配 Supabase 会拒绝启动
 
@@ -82,17 +84,21 @@ RLS 策略已经启用，但**当前不在请求路径上**。应用通过 `DATA
 
 `pnpm db:verify-rls` 可以验证策略本身是否正确，它会创建一个 `app_client` 角色来模拟 anon/authenticated。
 
-## 5. 托管平台
+## 5. 托管：自建服务器
 
-仓库里没有任何平台配置文件（无 `vercel.json` / `Dockerfile` / `fly.toml`）。Next.js 16 App Router 的默认选择是 Vercel，且与 Supabase 组合常见。
+部署方案为自建服务器上的常驻 Node 进程。这个选择由识别功能决定 —— 见第 1 节。
 
-Vercel 上需要注意：
+仓库里还**没有** `Dockerfile`，也没在 `next.config.ts` 里设置 `output: 'standalone'`。容器化之前需要补这两样。
 
-- 环境变量按第 2 节配置，`NEXT_PUBLIC_SUPABASE_URL` 记得勾选 Build 阶段可见。
-- `DATABASE_URL` 使用 Supabase 的 pooler 连接串。
-- 构建命令用默认的 `pnpm build` 即可，CI 已验证该命令不需要任何密钥。
+自建需要注意的点：
 
-若改用容器部署，需要自行添加 `Dockerfile` 并在 `next.config.ts` 中设置 `output: 'standalone'`。
+- **`NEXT_PUBLIC_SUPABASE_URL` 必须在构建阶段就存在**，理由见第 2 节。容器化时要作为构建参数传入，只在运行时注入无效。
+- 进程要有守护（systemd / PM2 / 容器重启策略）。识别的模型单例存在进程内存里，进程重启就要重新加载。
+- 模型权重首次会从 `huggingface.co` 下载并缓存。服务器若通过代理出网，Node 的 fetch 默认不读代理变量，需要 `NODE_USE_ENV_PROXY=1`。**离线服务器需要预先把模型缓存目录一起部署上去。**
+- 内存要留够 ONNX 运行时和模型常驻的量。
+- `DATABASE_URL` 直连即可，不需要 Vercel 那种 serverless 的 pooler 考量。连接池由 `server/db/client.ts` 在进程内复用。
+
+> 注：本文档早前版本按 Vercel 编写。改为自建后，原先「把识别拆成独立服务」的要求不再需要。
 
 ## 6. 上线检查表
 
@@ -108,7 +114,6 @@ Vercel 上需要注意：
 
 - [ ] 生产库已执行 `pnpm db:migrate`（走直连）
 - [ ] 确认**没有**对生产库跑过 `pnpm db:seed`
-- [ ] 运行时连接串走 pooler
 
 Supabase：
 
@@ -133,9 +138,11 @@ Supabase：
 识别：
 
 - [ ] 已运行 `pnpm db:embed` 建立图鉴图像索引
-- [ ] 识别接口跑在常驻进程上，不是 serverless
+- [ ] 服务启动后调用了 `warmEmbeddingPipeline()` 预热
 - [ ] 抽查识别结果的来源标签是「图像特征匹配」而非「占位结果」
+- [ ] 服务器能访问 `huggingface.co`，或已预置模型缓存目录
 
 已知未解决：
 
-- [ ] 识别接口与主站的拆分尚未实现，Vercel 部署需要自行处理
+- [ ] 仓库缺 `Dockerfile` 与 `next.config.ts` 的 `output: 'standalone'`，容器化前需补
+- [ ] 启动时的预热调用尚未接进 `instrumentation.ts`，目前需要自行调用

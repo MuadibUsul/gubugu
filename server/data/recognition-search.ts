@@ -7,6 +7,7 @@ import {
   recognitionWeakMatchThreshold,
   type RecognitionCandidate,
 } from '@/lib/recognition';
+import { toAbsoluteImageUrl } from '@/lib/goods-image';
 import { rankByCosineSimilarity } from '@/lib/vector-similarity';
 import {
   characters,
@@ -115,6 +116,9 @@ export async function findRecognitionCandidates(queryVector: number[]) {
   return top.map((entry, index) => {
     const row = entry.item;
     const score = Number(entry.score.toFixed(4));
+    // The response schema requires absolute URLs, but seeded rows store
+    // same-origin paths.
+    const imageUrl = toAbsoluteImageUrl(row.imageUrl);
 
     return {
       id: row.embeddingId,
@@ -135,11 +139,11 @@ export async function findRecognitionCandidates(queryVector: number[]) {
         material: row.material,
         sizeLabel: row.sizeLabel,
         edition: row.edition,
-        primaryImageUrl: row.imageUrl,
+        primaryImageUrl: imageUrl,
       },
       similarity: {
         matchedGoodsImageId: row.goodsImageId,
-        matchedImageUrl: row.imageUrl,
+        matchedImageUrl: imageUrl,
         score,
         // Cosine distance, the complement of the similarity.
         distance: Number((1 - score).toFixed(4)),

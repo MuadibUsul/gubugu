@@ -1,5 +1,20 @@
-export function formatCatalogDate(value: Date | null) {
+/**
+ * Accepts a string as well as a Date because the schema's type does not match
+ * what arrives at runtime: `date('release_date', { mode: 'date' })` is typed as
+ * Date, but node-postgres hands a `date` column back as a 'YYYY-MM-DD' string.
+ * Calling Date methods on it threw and took down the whole SKU info panel.
+ *
+ * An invalid Date is also an object, so it survives a null check and then makes
+ * Intl.format throw RangeError — both cases fall back instead.
+ */
+export function formatCatalogDate(value: Date | string | null | undefined) {
   if (!value) {
+    return '暂未收录';
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
     return '暂未收录';
   }
 
@@ -7,7 +22,7 @@ export function formatCatalogDate(value: Date | null) {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(value);
+  }).format(date);
 }
 
 export function formatCatalogCurrency(

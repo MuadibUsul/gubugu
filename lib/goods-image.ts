@@ -8,6 +8,45 @@
  * Callers use this to decide: optimisable URLs go through next/image, the rest
  * fall back to a plain lazy <img>, which still avoids blocking render.
  */
+const defaultAppUrl = 'http://127.0.0.1:3000';
+
+function getAppUrl() {
+  const configured =
+    process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? defaultAppUrl;
+
+  return configured.replace(/\/+$/, '');
+}
+
+/**
+ * Resolves a stored image URL to an absolute one.
+ *
+ * goods_images.image_url holds same-origin paths for seeded data and absolute
+ * URLs for anything uploaded, but the recognition response schema requires
+ * absolute URLs — a relative path fails validation and takes the whole request
+ * down with it.
+ */
+export function toAbsoluteImageUrl(url: string | null | undefined) {
+  if (!url) {
+    return null;
+  }
+
+  const trimmed = url.trim();
+
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return `${getAppUrl()}${trimmed}`;
+  }
+
+  try {
+    return new URL(trimmed).toString();
+  } catch {
+    return null;
+  }
+}
+
 export function isOptimizableImageUrl(url: string | null | undefined) {
   if (!url) {
     return false;
@@ -16,6 +55,15 @@ export function isOptimizableImageUrl(url: string | null | undefined) {
   const trimmed = url.trim();
 
   if (trimmed.length === 0) {
+    return false;
+  }
+
+  // app/demo-assets/[...asset]/route.ts is a placeholder generator, not a file
+  // server: every path under it returns a generated SVG whatever the extension
+  // says. next/image refuses to optimise SVG unless dangerouslyAllowSVG is set,
+  // and it decides by the URL suffix — so a demo asset ending in .jfif gets sent
+  // to the optimiser and comes back 400, leaving a blank card.
+  if (trimmed.startsWith('/demo-assets/')) {
     return false;
   }
 

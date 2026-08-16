@@ -114,7 +114,11 @@ export async function POST(request: Request) {
     return NextResponse.json(response, {
       status: 200,
     });
-  } catch {
+  } catch (error) {
+    // The response deliberately says nothing specific, so without this the
+    // failure leaves no trace anywhere and a 500 here is undebuggable.
+    console.error('[recognition] 识别失败', error);
+
     return buildErrorResponse({
       code: 'INTERNAL_ERROR',
       message: '识别服务暂时不可用，请稍后重试。',
