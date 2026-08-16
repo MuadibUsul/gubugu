@@ -9,6 +9,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx drizzle/seed/index.ts",
+    "db:embed": "tsx drizzle/embed/index.ts",
     "db:verify-rls": "node drizzle/verify-rls.mjs",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint .",
@@ -19,6 +20,7 @@
     "format:check": "prettier . --check"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.2",

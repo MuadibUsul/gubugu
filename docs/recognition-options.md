@@ -1,57 +1,85 @@
-# 识别功能选型
+# 识别功能
 
-`server/recognition/service.ts` 当前调用 `buildMockRecognitionCandidates`，结果与图片内容无关。本文整理可用的免费开源方案，供决策使用。**尚未实施任何一项。**
+## 现状
 
-## 边界
+已实现基于 CLIP 图像向量的候选匹配，替换了原来与图片内容无关的 mock。
 
-`AGENTS.md` 第 8 节限定：只做候选匹配，不做自训练模型、不做标注流水线、不承诺精确自动识别。因此只考虑「用预训练模型抽向量 + 向量近邻检索」这一类方案，不考虑训练。
+符合 `AGENTS.md` 第 8 节的边界：只用预训练模型抽向量做候选匹配，不训练模型、不做标注流水线、不承诺精确识别。
 
-## 现有资产与障碍
+### 组成
 
-0004 迁移已经建好 `goods_image_embeddings` 表，字段设计（provider / model / model_version / dimensions / source_checksum / status / last_error）说明当初就是按「外部模型抽向量」来设计的，方向正确。
+| 模块                                | 职责                               |
+| ----------------------------------- | ---------------------------------- |
+| `server/recognition/embedding.ts`   | 加载 CLIP，把图片转成向量          |
+| `lib/vector-similarity.ts`          | 余弦相似度与排序（纯函数，有测试） |
+| `server/data/recognition-search.ts` | 读取图鉴向量并排序出候选           |
+| `drizzle/embed/index.ts`            | 离线批处理，给图鉴图片建索引       |
+| `server/recognition/service.ts`     | 串联上述部分，并在无索引时降级     |
 
-**但有一个必须先解决的问题：`embedding_payload` 是 `jsonb`。**
+模型为 `Xenova/clip-vit-base-patch32`，通过 `@huggingface/transformers` 在 Node 进程内以 ONNX 推理，无 Python、无外部服务、无 API 调用。
 
-jsonb 上建不了 ANN 索引（ivfflat / hnsw 都只支持 `vector` 类型）。维持 jsonb 就只能全表扫描 + 应用层算余弦相似度。
+### 实测数据
 
-两条路：
+在开发机上测得：
 
-- **SKU 量在数千以内**：保留 jsonb，在应用层暴力计算。512 维 × 数千行，单次查询几十毫秒量级，完全够用，且零额外依赖。
-- **要上规模**：加一个迁移，启用 `vector` 扩展，把列改成 `vector(512)` 并建 HNSW 索引。Supabase 免费档就支持 pgvector，不额外收费。
+- **模型冷加载约 142 秒**（含首次下载），之后由进程内单例复用
+- 单张图片抽向量 **60–90ms**
+- 输出 **512 维**，与 `goods_image_embeddings.dimensions` 一致
+- 同一张图经文件路径与 Blob 两条输入路径，向量余弦相似度为 `1.000000`
+- 两张不同样例图相似度约 `0.75`
 
-建议先走第一条，等 SKU 量真的起来再迁移。过早引入 pgvector 只是增加运维面。
+**这两个数字决定了架构。** 142 秒的冷加载意味着模型必须活在常驻进程里；60ms 的热态推理意味着请求路径上处理单张图完全够用。所以图鉴图片由离线任务预先建索引，请求时只对用户上传的那一张抽向量。
 
-## 方案 A：Transformers.js + CLIP（推荐）
+## 建立索引
 
-在 Node 里直接跑 CLIP，不需要 Python，不需要额外服务。
+```bash
+pnpm db:embed
+```
 
-- 包：`@huggingface/transformers`（v3，HF 官方维护）。旧的 `@xenova/transformers` v2 仍广泛使用但已是遗留版本。
-- 模型：`Xenova/clip-vit-base-patch32`（512 维），或 `Xenova/mobileclip_blt` —— 后者更小更快，更适合这个场景。
-- 机制：模型转成 ONNX，用 `CLIPVisionModelWithProjection` + `AutoProcessor` 抽图像向量。
-- 成本：全免费，模型权重本地加载，无 API 调用。
+- 幂等：已有 `ready` 且校验和未变的图片会跳过，重跑只处理新增或变更的图片
+- `pnpm db:embed --force` 强制重建全部
+- 失败的图片会写入 `status: 'failed'` 与 `last_error`，不会静默从检索中消失
+- 需要 `DATABASE_URL`；同源相对路径的图片会按 `NEXT_PUBLIC_APP_URL` 解析，因此本地跑之前应用要在运行
 
-**要注意的坑：**
+### 网络要求
 
-- 模型权重几十到上百 MB，冷启动慢。**不适合放在 Vercel 的 serverless function 里** —— 每次冷启动都要加载模型。需要常驻 Node 进程，或者把抽向量做成离线批处理（后台给库存图建索引），只有用户上传的那一张在请求路径上算。
-- 后者是更合理的架构：SKU 图库的向量离线建好写进 `goods_image_embeddings`，请求时只对用户拍的这一张抽向量再检索。这也正好对应表里 `status: pending/ready/failed` 的设计。
+首次运行需要访问 `huggingface.co` 下载模型权重。若环境通过代理出网，Node 的 fetch 默认不读代理环境变量，需要显式开启：
 
-## 方案 B：Supabase 官方 CLIP 示例
+```bash
+NODE_USE_ENV_PROXY=1 pnpm db:embed
+```
 
-Supabase 文档有现成的 Image Search with OpenAI CLIP 指南，用 `sentence-transformers` 的 `clip-ViT-B-32` 配 `vecs` 客户端。
+模型下载后会缓存在本地，后续运行不再需要网络。
 
-架构清晰、和现有 Supabase 栈契合，**但它是 Python 的**。采用就意味着要多维护一个 Python 服务，与 `AGENTS.md`「长期单人维护」的约束冲突。除非愿意接受这个成本，否则不建议。
+## 无索引时的行为
 
-## 方案 C：pgvector + 任意来源的向量
+图鉴还没建索引、或数据库不可达时，`recognizeGoodsImage` 会降级到占位候选，并且**明确标注**：
 
-pgvector 只负责存储和检索，不关心向量怎么来。免费档可用，HNSW 索引（`vector_cosine_ops`）适合本场景。
+- 警告文案说明结果与图片内容无关，并提示运行 `pnpm db:embed`
+- 界面上方的来源标签显示「占位结果 · 非真实识别」，而不是伪装成真实匹配
+- 响应里 `pipeline.provider` 为 `mock-placeholder`，`embeddingVersion` 为 `null`
 
-这不是独立方案，是方案 A 的存储层升级选项。
+真实匹配时来源标签为「图像特征匹配」，`embeddingVersion` 带上 provider 与模型名。
 
-## 建议路径
+## 部署注意
 
-1. 先用方案 A 抽向量，存进现有的 jsonb 列，应用层算余弦。
-2. 把 SKU 图库的向量做成离线批处理脚本（类似现有 `pnpm db:seed` 的形态），避免模型加载进请求路径。
-3. 只有用户上传的单张图在请求路径上抽向量。
-4. 等 SKU 规模真的需要了，再迁到 `vector(512)` + HNSW。
+**不要把识别放进 serverless function。** 142 秒的冷加载会在每次冷启动重复付出。需要常驻 Node 进程（容器、VPS，或平台上的长驻服务）。
 
-**在实施之前，界面上应当明确标注识别结果为实验功能。** 当前 UI 把 mock 结果当作真实候选呈现，这是会误导用户的。
+如果主站部署在 Vercel，可行的做法是把识别接口拆到独立的常驻服务上，主站只做转发。当前代码没有做这个拆分。
+
+## 未来：迁移到 pgvector
+
+`embedding_payload` 目前是 `jsonb`，jsonb 上建不了 ANN 索引，因此排序在应用层做，每次检索会加载全部 `ready` 向量。
+
+在当前图鉴规模下这是有意为之的取舍。当 SKU 数量增长到全量加载不可接受时，迁移路径是：
+
+1. 启用 `vector` 扩展
+2. 把 `embedding_payload` 改成 `vector(512)`
+3. 建 HNSW 索引（`vector_cosine_ops`）
+4. 把 `findRecognitionCandidates` 的排序改为数据库内 ORDER BY
+
+Supabase 免费档即支持 pgvector，不额外收费。
+
+## 已评估但未采用
+
+Supabase 官方的 Image Search with OpenAI CLIP 指南使用 `sentence-transformers` 与 `vecs`，架构清晰且贴合 Supabase 栈，但**是 Python 的**。采用意味着多维护一个服务，与 `AGENTS.md` 中「长期单人维护」的约束冲突。

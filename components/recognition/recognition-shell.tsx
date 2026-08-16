@@ -47,6 +47,18 @@ const pipelineSteps = [
   },
 ] as const;
 
+// Placeholder results must not be presented as real matches. The warning text
+// says so too, but the header label is what a user reads first.
+function getProviderLabel(response: RecognitionSuccessResponse | null) {
+  if (!response) {
+    return '等待识别';
+  }
+
+  return response.pipeline.provider === 'embedding-search'
+    ? '图像特征匹配'
+    : '占位结果 · 非真实识别';
+}
+
 function clampFrameSize(sourceWidth: number, sourceHeight: number) {
   const targetRatio = 4 / 5;
   const sourceRatio = sourceWidth / sourceHeight;
@@ -776,7 +788,7 @@ export function RecognitionShell() {
           errorMessage={errorMessage}
           onConfirmCandidate={handleConfirmCandidate}
           onRetake={handleRetake}
-          providerLabel={recognitionResponse ? '候选识别' : '等待识别'}
+          providerLabel={getProviderLabel(recognitionResponse)}
           resultState={resultState}
           warnings={recognitionResponse?.warnings ?? []}
         />
