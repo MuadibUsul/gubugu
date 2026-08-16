@@ -2,16 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
-import { CharacterCompletionPanel } from '@/components/character/character-completion-panel';
-import { CharacterFilters } from '@/components/character/character-filters';
-import { CharacterGoodsWall } from '@/components/character/character-goods-wall';
-import { CharacterHero } from '@/components/character/character-hero';
-import {
-  buildCharacterEncyclopediaHref,
-  type CharacterPageControls,
-} from '@/components/character/character-query';
-import { PageViewSwitch } from '@/components/layout/page-view-switch';
-import { SearchPanelState } from '@/components/search/search-panel-state';
+import { CharacterSheet } from '@/components/character/character-sheet';
+import { CharacterSheetFilters } from '@/components/character/character-sheet-filters';
+import { CharacterSheetHeader } from '@/components/character/character-sheet-header';
+import type { CharacterPageControls } from '@/components/character/character-query';
 import {
   defaultDemoViewerKey,
   demoViewers,
@@ -170,87 +164,23 @@ export default async function CharacterPage({
   });
 
   return (
-    <main className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--accent)_16%,transparent),transparent_56%)]" />
-      <div className="pointer-events-none absolute top-[-6rem] right-[-12rem] size-[28rem] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_14%,transparent),transparent_68%)]" />
-      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--accent)_48%,white),transparent)] md:inset-x-10 xl:inset-x-16" />
+    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
+      <CharacterSheetHeader data={data} viewerLabel={activeViewer.label} />
 
-      <div className="mx-auto flex min-h-screen w-full max-w-[94rem] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
-        <CharacterHero
-          controls={controls}
-          data={data}
-          viewerLabel={activeViewer.label}
-        />
+      <section className="spread py-14">
+        <div>
+          <p className="lbl">一覧</p>
+          <div className="rail-jp">図鑑</div>
+        </div>
 
-        <PageViewSwitch
-          items={[
-            {
-              active: controls.view === 'goods',
-              badge: `${filteredGoods.length}`,
-              description: '保留筛选和商品墙，适合快速扫货与点亮。',
-              href: buildCharacterEncyclopediaHref({
-                ...controls,
-                view: 'goods',
-              }),
-              label: '商品视图',
-            },
-            {
-              active: controls.view === 'progress',
-              badge: `${data.completion.character.progressPercentage}%`,
-              description: '只看完成度和系列进度，不再和商品墙一起纵向堆叠。',
-              href: buildCharacterEncyclopediaHref({
-                ...controls,
-                view: 'progress',
-              }),
-              label: '进度视图',
-            },
-          ]}
-        />
-
-        {controls.view === 'goods' ? (
-          <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-            <CharacterFilters
-              controls={controls}
-              data={data}
-              viewerOptions={
-                authUser
-                  ? []
-                  : (
-                      Object.entries(demoViewers) as Array<
-                        [DemoViewerKey, (typeof demoViewers)[DemoViewerKey]]
-                      >
-                    ).map(([key, item]) => ({
-                      key,
-                      label: item.label,
-                    }))
-              }
-            />
-
-            <div>
-              {filteredGoods.length > 0 ? (
-                <CharacterGoodsWall controls={controls} items={filteredGoods} />
-              ) : (
-                <SearchPanelState
-                  actionHref={buildCharacterEncyclopediaHref({
-                    ...controls,
-                    goodsType: undefined,
-                    seriesSlug: undefined,
-                    tagSlugs: [],
-                    ownedOnly: false,
-                  })}
-                  actionLabel="清空角色筛选"
-                  description="当前筛选条件下没有匹配商品，可以放宽标签、系列或已拥有条件。"
-                  eyebrow="没有匹配商品"
-                  title="当前角色筛选下没有结果"
-                  tone="warning"
-                />
-              )}
-            </div>
-          </section>
-        ) : (
-          <CharacterCompletionPanel data={data} />
-        )}
-      </div>
+        <div className="min-w-0">
+          <CharacterSheetFilters controls={controls} data={data} />
+          <CharacterSheet
+            items={filteredGoods}
+            totalCount={data.goods.length}
+          />
+        </div>
+      </section>
     </main>
   );
 }

@@ -1,20 +1,16 @@
-import Link from 'next/link';
-
-import { SiteShell } from '@/components/layout/site-shell';
-import { Button } from '@/components/ui/button';
+import { PageNotice } from '@/components/layout/page-notice';
 
 export default function NotFound() {
   return (
-    <SiteShell
-      eyebrow="页面不存在"
-      title="这个页面还没有被收录。"
-      description="当前路由不存在。你可以返回首页，从已经初始化好的站点入口继续浏览。"
-    >
-      <div className="border-border/70 bg-card/80 rounded-[var(--radius)] border p-8">
-        <Button asChild>
-          <Link href="/">返回首页</Link>
-        </Button>
-      </div>
-    </SiteShell>
+    <PageNotice
+      actions={[
+        { href: '/', label: '回到图鉴首页' },
+        { href: '/search', label: '搜索条目' },
+      ]}
+      description="这个地址下没有内容。可以从首页的目次翻起，或者直接搜。"
+      eyebrow="未找到"
+      railLabel="該当なし"
+      title="这一页不存在"
+    />
   );
 }

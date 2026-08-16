@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { SiteShell } from '@/components/layout/site-shell';
+import { PageNotice } from '@/components/layout/page-notice';
 
 export default function Error({
   error,
@@ -17,19 +16,19 @@ export default function Error({
   }, [error]);
 
   return (
-    <SiteShell
-      eyebrow="发生异常"
-      title="当前页面遇到了未预期错误。"
-      description="站点骨架已经就绪，但这个路由渲染失败了。可以先重试一次，再继续排查更深层的问题。"
+    <PageNotice
+      description="页面渲染时出错了。可以重试一次，如果还是不行，稍后再来。"
+      eyebrow="页面出错"
+      railLabel="エラー"
+      title="这一页没能加载出来"
     >
-      <div className="border-destructive/30 bg-card/85 max-w-2xl rounded-[var(--radius)] border p-8">
-        <p className="text-muted-foreground text-sm leading-6">
-          {error.message || '未知应用错误。'}
-        </p>
-        <div className="mt-6">
-          <Button onClick={reset}>重试渲染</Button>
-        </div>
-      </div>
-    </SiteShell>
+      <button
+        className="mt-6 rounded-[var(--radius)] bg-[var(--shu)] px-5 py-2.5 text-[14px] font-medium text-[var(--shu-ink)]"
+        onClick={reset}
+        type="button"
+      >
+        重试
+      </button>
+    </PageNotice>
   );
 }
