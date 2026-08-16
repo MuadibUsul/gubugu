@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { UserAchievementLedger } from '@/components/user/user-achievement-ledger';
 import { UserCollectionShowcase } from '@/components/user/user-collection-showcase';
 import { UserExchangeListings } from '@/components/user/user-exchange-listings';
 import { UserGoodsShelf } from '@/components/user/user-goods-shelf';
@@ -10,6 +11,7 @@ import {
 } from '@/components/user/user-profile-hero';
 import { UserProgressOverview } from '@/components/user/user-progress-overview';
 import { requireAuthUser } from '@/server/auth/session';
+import { listAchievementLedger } from '@/server/data/achievements';
 import { getUserProfilePageData } from '@/server/data';
 
 export const metadata: Metadata = {
@@ -39,16 +41,13 @@ export default async function MyCollectionPage() {
     userId: user.id,
     viewerMode: 'self',
   });
+  const ledger = await listAchievementLedger(user.id);
   const exchangeEntryGoods =
     data.goods.exchange.length > 0 ? data.goods.exchange : data.goods.owned;
 
   return (
-    <main className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--accent)_16%,transparent),transparent_56%)]" />
-      <div className="pointer-events-none absolute top-[-6rem] right-[-12rem] size-[28rem] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_14%,transparent),transparent_68%)]" />
-      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--accent)_48%,white),transparent)] md:inset-x-10 xl:inset-x-16" />
-
-      <div className="mx-auto flex min-h-screen w-full max-w-[94rem] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
+    <main>
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10 px-5 py-12 md:px-10 md:py-16">
         <UserProfileHero data={data} profile={profile} />
         <UserCollectionShowcase data={data} />
         <UserProgressOverview data={data} />
@@ -82,6 +81,10 @@ export default async function MyCollectionPage() {
           items={data.exchangeListings}
         />
         <UserPhotoArchive items={data.recentPhotoEntries} />
+        <UserAchievementLedger
+          entries={ledger}
+          ownedTotal={data.goods.owned.length}
+        />
       </div>
     </main>
   );

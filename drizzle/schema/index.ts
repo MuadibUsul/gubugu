@@ -85,6 +85,18 @@ export const profileVisibilityEnum = pgEnum('profile_visibility', [
   'private',
 ]);
 
+/**
+ * 収蔵記録的判定种类。
+ * `owned_count` 是全局累计，没有作用域；其余三种针对某个具体的角色 / 系列 /
+ * 作品，因此解锁记录需要 scope_id 指明是哪一个。
+ */
+export const achievementKindEnum = pgEnum('achievement_kind', [
+  'owned_count',
+  'character_complete',
+  'series_complete',
+  'ip_complete',
+]);
+
 export const ips = pgTable(
   'ips',
   {
@@ -787,6 +799,87 @@ export const exchangeListingsRelations = relations(
     }),
   }),
 );
+
+/**
+ * 収蔵記録的定义。内容由 seed 维护，不经用户输入。
+ */
+export const achievements = pgTable(
+  'achievements',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    code: varchar('code', { length: 64 }).notNull(),
+    name: varchar('name', { length: 120 }).notNull(),
+    description: varchar('description', { length: 255 }).notNull(),
+    kind: achievementKindEnum('kind').notNull(),
+    /** 仅 `owned_count` 使用：累计到多少件时达成。 */
+    threshold: integer('threshold'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex('achievements_code_unique').on(table.code),
+    index('achievements_kind_idx').on(table.kind),
+    // owned_count 必须有阈值，其余种类不该有 —— 让数据库挡住定义错误的记录。
+    check(
+      'achievements_threshold_matches_kind_check',
+      sql`(kind = 'owned_count' and threshold is not null and threshold > 0)
+          or (kind <> 'owned_count' and threshold is null)`,
+    ),
+  ],
+);
+
+/**
+ * 用户的解锁记录。达成即写入，不再变更。
+ */
+export const userAchievements = pgTable(
+  'user_achievements',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').notNull(),
+    achievementId: uuid('achievement_id')
+      .notNull()
+      .references(() => achievements.id, {
+        onDelete: 'cascade',
+        onUpdate: 'cascade',
+      }),
+    /** 角色 / 系列 / 作品的 id；`owned_count` 类记录为 null。 */
+    scopeId: uuid('scope_id'),
+    achievedAt: timestamp('achieved_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    // Postgres 里 NULL 彼此不相等，所以单个 unique(user, achievement, scope)
+    // 挡不住 scope_id 为 NULL 的重复行。NULLS NOT DISTINCT 要 PG15，这里用
+    // 两个部分索引，PG12 起都成立。
+    uniqueIndex('user_achievements_global_unique')
+      .on(table.userId, table.achievementId)
+      .where(sql`scope_id is null`),
+    uniqueIndex('user_achievements_scoped_unique')
+      .on(table.userId, table.achievementId, table.scopeId)
+      .where(sql`scope_id is not null`),
+    index('user_achievements_user_id_idx').on(table.userId),
+    index('user_achievements_achieved_at_idx').on(table.achievedAt),
+  ],
+);
+
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  unlocks: many(userAchievements),
+}));
+
+export const userAchievementsRelations = relations(
+  userAchievements,
+  ({ one }) => ({
+    achievement: one(achievements, {
+      fields: [userAchievements.achievementId],
+      references: [achievements.id],
+    }),
+  }),
+);
+
+export type Achievement = typeof achievements.$inferSelect;
+export type UserAchievement = typeof userAchievements.$inferSelect;
 
 export type Ip = typeof ips.$inferSelect;
 export type Character = typeof characters.$inferSelect;

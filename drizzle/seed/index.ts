@@ -17,6 +17,7 @@ import {
   profiles,
   ratings,
   series,
+  achievements,
   tags,
   userGoods,
 } from '../schema';
@@ -52,6 +53,7 @@ import {
   expandedTagSeed,
   expandedUserGoodsSeed,
 } from './expanded-data';
+import { achievementSeed } from './achievements';
 import { syncLocalSampleImages } from './local-sample-images';
 import { profileSeed } from './profiles';
 
@@ -405,6 +407,25 @@ async function seed() {
             reviewNote: row.reviewNote ?? null,
             reviewedBy: row.reviewedBy ?? null,
             reviewedAt: row.reviewedAt ?? null,
+            updatedAt: now,
+          },
+        });
+    }
+
+    // 収蔵記録的定义是产品内容，不是演示数据 —— 生产库也需要它们，所以按
+    // code 幂等 upsert，不带演示前缀。
+    for (const row of achievementSeed) {
+      await tx
+        .insert(achievements)
+        .values({ ...row, createdAt: now, updatedAt: now })
+        .onConflictDoUpdate({
+          target: achievements.code,
+          set: {
+            name: row.name,
+            description: row.description,
+            kind: row.kind,
+            threshold: row.threshold,
+            sortOrder: row.sortOrder,
             updatedAt: now,
           },
         });

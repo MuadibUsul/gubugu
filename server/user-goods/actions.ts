@@ -10,6 +10,10 @@ import {
   type UserGoodsStatus,
 } from '@/lib/user-goods-status';
 import {
+  recordAchievementsForGoods,
+  type RecordedUnlock,
+} from '@/server/data/achievements';
+import {
   getUserGoodsStateFlags,
   toggleUserGoodsStatus,
 } from '@/server/data/user-goods';
@@ -32,6 +36,8 @@ export type ToggleUserGoodsStatusActionState = {
   status: 'idle' | 'success' | 'error';
   message?: string;
   activeStatuses: UserGoodsStatus[];
+  /** 本次操作新达成的収蔵記録，用于展示纸条。 */
+  unlocked?: RecordedUnlock[];
 };
 
 export async function toggleUserGoodsStatusAction(
@@ -60,6 +66,23 @@ export async function toggleUserGoodsStatusAction(
     status,
   });
   const flags = getUserGoodsStateFlags(snapshot);
+  const nowOwned = flags.activeStatuses.includes('owned');
+
+  // 只在刚变成「已拥有」时判定；移除状态不该撤销已经记下的収蔵記録，那是
+  // 一条历史记录，不是当前状态的镜像。
+  let unlocked: RecordedUnlock[] = [];
+
+  if (nowOwned) {
+    try {
+      unlocked = await recordAchievementsForGoods({
+        userId: user.id,
+        goodsId,
+      });
+    } catch (error) {
+      // 収蔵記録判定失败不该让收藏动作失败 —— 标记拥有比记录重要。
+      console.error('[achievements] 判定失败', error);
+    }
+  }
 
   revalidatePath(nextPath);
   revalidatePath('/me/collection');
@@ -70,5 +93,6 @@ export async function toggleUserGoodsStatusAction(
       ? `已加入“${userGoodsStatusMeta[status].label}”状态。`
       : `已从“${userGoodsStatusMeta[status].label}”状态中移除。`,
     activeStatuses: sortUserGoodsStatuses(flags.activeStatuses),
+    unlocked,
   };
 }
