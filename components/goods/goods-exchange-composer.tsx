@@ -28,7 +28,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+      className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
       disabled={pending}
       type="submit"
     >
@@ -64,10 +64,10 @@ export function GoodsExchangeComposer({
 
   if (!isAuthenticated) {
     return (
-      <div className="border-border/70 bg-background/76 rounded-[1.75rem] border p-5">
+      <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border p-5">
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+            <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
               交换
             </p>
             <h3 className="font-heading text-foreground text-3xl leading-none">
@@ -89,18 +89,18 @@ export function GoodsExchangeComposer({
 
   if (wantedGoodsOptions.length === 0) {
     return (
-      <div className="border-border/70 bg-background/76 rounded-[1.75rem] border border-dashed p-5">
+      <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border border-dashed p-5">
         <p className="text-muted-foreground text-sm">暂无可选目标 SKU。</p>
       </div>
     );
   }
 
   return (
-    <div className="border-border/70 bg-background/76 rounded-[1.75rem] border p-5">
+    <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border p-5">
       <div className="space-y-5">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+            <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
               交换
             </p>
             <span className="border-border/70 bg-card/80 text-muted-foreground rounded-full border px-3 py-1 text-xs">
@@ -113,22 +113,22 @@ export function GoodsExchangeComposer({
         </div>
 
         {hasPendingSubmission ? (
-          <div className="border-border/70 bg-accent/12 text-foreground rounded-[1.3rem] border px-4 py-4 text-sm">
+          <div className="border-border/70 bg-accent/12 text-foreground rounded-[var(--radius)] border px-4 py-4 text-sm">
             你有一条交换意向正在审核中。
           </div>
         ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="border-border/70 bg-card/74 rounded-[1.45rem] border px-4 py-4">
-            <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
+          <div className="border-border/70 bg-card/74 rounded-[var(--radius)] border px-4 py-4">
+            <p className="text-muted-foreground text-[0.66rem] uppercase">
               我有
             </p>
             <p className="text-foreground mt-2 text-sm font-semibold">
               {goodsName}
             </p>
           </div>
-          <div className="border-border/70 bg-card/74 rounded-[1.45rem] border px-4 py-4">
-            <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
+          <div className="border-border/70 bg-card/74 rounded-[var(--radius)] border px-4 py-4">
+            <p className="text-muted-foreground text-[0.66rem] uppercase">
               想换
             </p>
             <p className="text-foreground mt-2 text-sm font-semibold">
@@ -143,13 +143,13 @@ export function GoodsExchangeComposer({
 
           <div className="space-y-3">
             <label
-              className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
+              className="text-muted-foreground block text-[0.68rem] font-semibold uppercase"
               htmlFor="exchange-wanted-goods"
             >
               目标 SKU
             </label>
             <select
-              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 w-full rounded-[1.35rem] border px-4 py-3 text-sm outline-none focus-visible:ring-2"
+              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 w-full rounded-[var(--radius)] border px-4 py-3 text-sm outline-none focus-visible:ring-2"
               id="exchange-wanted-goods"
               name="wantedGoodsId"
               onChange={(event) => setSelectedWantedGoodsId(event.target.value)}
@@ -166,13 +166,13 @@ export function GoodsExchangeComposer({
 
           <div className="space-y-3">
             <label
-              className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
+              className="text-muted-foreground block text-[0.68rem] font-semibold uppercase"
               htmlFor="exchange-note"
             >
               说明
             </label>
             <textarea
-              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-28 w-full rounded-[1.35rem] border px-4 py-4 text-sm leading-7 outline-none focus-visible:ring-2"
+              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-28 w-full rounded-[var(--radius)] border px-4 py-4 text-sm leading-7 outline-none focus-visible:ring-2"
               id="exchange-note"
               maxLength={600}
               name="note"
@@ -184,13 +184,13 @@ export function GoodsExchangeComposer({
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-3">
               <label
-                className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
+                className="text-muted-foreground block text-[0.68rem] font-semibold uppercase"
                 htmlFor="exchange-condition-note"
               >
                 品相
               </label>
               <textarea
-                className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-24 w-full rounded-[1.35rem] border px-4 py-4 text-sm leading-7 outline-none focus-visible:ring-2"
+                className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-24 w-full rounded-[var(--radius)] border px-4 py-4 text-sm leading-7 outline-none focus-visible:ring-2"
                 id="exchange-condition-note"
                 maxLength={280}
                 name="conditionNote"
@@ -200,13 +200,13 @@ export function GoodsExchangeComposer({
 
             <div className="space-y-3">
               <label
-                className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
+                className="text-muted-foreground block text-[0.68rem] font-semibold uppercase"
                 htmlFor="exchange-location-hint"
               >
                 地区
               </label>
               <input
-                className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 w-full rounded-[1.35rem] border px-4 py-3 text-sm outline-none focus-visible:ring-2"
+                className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 w-full rounded-[var(--radius)] border px-4 py-3 text-sm outline-none focus-visible:ring-2"
                 id="exchange-location-hint"
                 maxLength={128}
                 name="locationHint"
@@ -218,7 +218,7 @@ export function GoodsExchangeComposer({
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
             <fieldset className="space-y-3">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                 交换方式
               </p>
               <div className="grid gap-2 sm:grid-cols-3">
@@ -236,7 +236,7 @@ export function GoodsExchangeComposer({
                       type="radio"
                       value={method}
                     />
-                    <span className="border-border/70 bg-card/76 text-muted-foreground peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground flex min-h-24 flex-col rounded-[1.25rem] border px-4 py-4 text-left transition">
+                    <span className="border-border/70 bg-card/76 text-muted-foreground peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground flex min-h-24 flex-col rounded-[var(--radius)] border px-4 py-4 text-left transition">
                       <span className="text-sm font-semibold">
                         {exchangeFulfillmentMethodMeta[method].label}
                       </span>
@@ -250,11 +250,11 @@ export function GoodsExchangeComposer({
             </fieldset>
 
             <fieldset className="space-y-3">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                 选项
               </p>
               <div className="grid gap-3">
-                <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[1.25rem] border px-4 py-4">
+                <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[var(--radius)] border px-4 py-4">
                   <input
                     className="border-border mt-1 size-4 rounded"
                     name="allowMulti"
@@ -267,7 +267,7 @@ export function GoodsExchangeComposer({
                     </p>
                   </div>
                 </label>
-                <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[1.25rem] border px-4 py-4">
+                <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[var(--radius)] border px-4 py-4">
                   <input
                     className="border-border mt-1 size-4 rounded"
                     name="allowCash"
@@ -285,7 +285,7 @@ export function GoodsExchangeComposer({
           </div>
 
           {state.status === 'error' && state.message ? (
-            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7">
+            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
               {state.message}
             </div>
           ) : null}

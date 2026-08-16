@@ -103,7 +103,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--accent)_20%,transparent),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_94%,transparent)_0%,color-mix(in_oklab,var(--surface-soft)_88%,var(--background))_100%)]" />
           <div className="relative grid gap-6">
             <div className="space-y-4">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                 Search
               </p>
               <h1 className="font-heading text-foreground max-w-5xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5.15rem]">
@@ -122,7 +122,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 type="search"
               />
               <Button
-                className="h-15 rounded-[1.35rem] px-7 text-base"
+                className="h-15 rounded-[var(--radius)] px-7 text-base"
                 size="lg"
                 type="submit"
               >

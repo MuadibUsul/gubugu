@@ -48,14 +48,14 @@ export function RecognitionCandidateCard({
     <article
       className={
         compact
-          ? 'panel-float rounded-[1.5rem] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-4'
+          ? 'panel-float rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-4'
           : isConfirmed
-            ? 'panel-float rounded-[1.8rem] border border-[color:color-mix(in_oklab,var(--accent)_54%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,transparent),color-mix(in_oklab,var(--surface-strong)_88%,var(--background)))] p-5 shadow-[0_30px_74px_-44px_color-mix(in_oklab,var(--accent)_42%,transparent)]'
-            : 'panel-float rounded-[1.8rem] border border-[color:color-mix(in_oklab,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-5'
+            ? 'panel-float rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_54%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,transparent),color-mix(in_oklab,var(--surface-strong)_88%,var(--background)))] p-5'
+            : 'panel-float rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_84%,var(--background)))] p-5'
       }
     >
       <div className="flex gap-4">
-        <div className="hud-card relative h-28 w-24 shrink-0 overflow-hidden rounded-[1.25rem]">
+        <div className="hud-card relative h-28 w-24 shrink-0 overflow-hidden rounded-[var(--radius)]">
           {candidate.goods.primaryImageUrl ? (
             <Image
               alt={candidate.goods.name}
@@ -75,7 +75,7 @@ export function RecognitionCandidateCard({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 space-y-2">
               <div className="flex flex-wrap gap-2">
-                <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase">
+                <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold uppercase">
                   Top {candidate.rank}
                 </span>
                 <span className="hud-chip text-muted-foreground px-3 py-1 text-xs">
@@ -105,7 +105,7 @@ export function RecognitionCandidateCard({
               <p className="font-heading text-foreground text-4xl leading-none">
                 {confidence}
               </p>
-              <p className="text-muted-foreground mt-1 text-xs tracking-[0.18em] uppercase">
+              <p className="text-muted-foreground mt-1 text-xs uppercase">
                 {confidenceLabel}
               </p>
             </div>
@@ -132,7 +132,7 @@ export function RecognitionCandidateCard({
           {!compact ? (
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <div className="hud-card px-4 py-3">
-                <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                <p className="text-muted-foreground text-[0.66rem] uppercase">
                   匹配依据
                 </p>
                 <p className="text-foreground mt-2 text-sm leading-6">

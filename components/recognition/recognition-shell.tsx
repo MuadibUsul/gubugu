@@ -510,7 +510,7 @@ export function RecognitionShell() {
         <div className="relative space-y-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-2">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 拍摄阶段
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
@@ -519,10 +519,10 @@ export function RecognitionShell() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.2em] uppercase">
+              <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                 {captureModeLabel}
               </span>
-              <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.2em] uppercase">
+              <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                 {resultState === 'ready'
                   ? '结果已就绪'
                   : resultState === 'processing'
@@ -536,8 +536,8 @@ export function RecognitionShell() {
 
           <div className="grid gap-5 lg:grid-cols-[minmax(0,0.96fr)_minmax(280px,0.84fr)]">
             <div className="space-y-4">
-              <div className="border-border/70 bg-background/78 relative overflow-hidden rounded-[2rem] border p-3 shadow-[0_30px_90px_-48px_color-mix(in_oklab,var(--shadow-tint)_45%,transparent)]">
-                <div className="recognition-grid border-border/60 relative aspect-[4/5] overflow-hidden rounded-[1.6rem] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_90%,white),color-mix(in_oklab,var(--card)_86%,var(--background)))]">
+              <div className="border-border/70 bg-background/78 relative overflow-hidden rounded-[var(--radius)] border p-3">
+                <div className="recognition-grid border-border/60 relative aspect-[4/5] overflow-hidden rounded-[var(--radius)] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_90%,white),color-mix(in_oklab,var(--card)_86%,var(--background)))]">
                   {previewUrl ? (
                     <Image
                       alt="识别预览图"
@@ -557,7 +557,7 @@ export function RecognitionShell() {
                     />
                   ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
-                      <div className="border-border/70 bg-card/78 flex size-20 items-center justify-center rounded-full border text-2xl shadow-[0_18px_44px_-28px_color-mix(in_oklab,var(--accent)_30%,transparent)]">
+                      <div className="border-border/70 bg-card/78 flex size-20 items-center justify-center rounded-full border text-2xl">
                         ◎
                       </div>
                       <div className="space-y-2">
@@ -572,28 +572,28 @@ export function RecognitionShell() {
                   )}
 
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_32%,color-mix(in_oklab,var(--background)_52%,transparent)_100%)]" />
-                  <div className="pointer-events-none absolute inset-[11%] rounded-[1.8rem] border border-[color:color-mix(in_oklab,var(--accent)_70%,white)] shadow-[0_0_0_1px_color-mix(in_oklab,white_18%,transparent),0_0_64px_-26px_color-mix(in_oklab,var(--accent)_42%,transparent)]">
+                  <div className="pointer-events-none absolute inset-[11%] rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_70%,white)]">
                     <div className="absolute -top-px -left-px h-12 w-12 rounded-tl-[1.8rem] border-t-2 border-l-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
                     <div className="absolute -top-px -right-px h-12 w-12 rounded-tr-[1.8rem] border-t-2 border-r-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
                     <div className="absolute -bottom-px -left-px h-12 w-12 rounded-bl-[1.8rem] border-b-2 border-l-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
                     <div className="absolute -right-px -bottom-px h-12 w-12 rounded-br-[1.8rem] border-r-2 border-b-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
                     {cameraState === 'live' && countdown === null ? (
-                      <div className="recognition-scan-line absolute inset-x-5 top-5 bottom-5 overflow-hidden rounded-[1.4rem]" />
+                      <div className="recognition-scan-line absolute inset-x-5 top-5 bottom-5 overflow-hidden rounded-[var(--radius)]" />
                     ) : null}
                   </div>
 
                   <div className="pointer-events-none absolute top-4 left-4">
-                    <span className="border-border/70 bg-background/74 text-foreground inline-flex rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase backdrop-blur">
+                    <span className="border-border/70 bg-background/74 text-foreground inline-flex rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase">
                       取景框
                     </span>
                   </div>
 
                   <div className="pointer-events-none absolute right-4 bottom-4 left-4 flex items-center justify-between gap-4">
-                    <span className="border-border/70 bg-background/74 text-muted-foreground inline-flex rounded-full border px-3 py-1 text-xs backdrop-blur">
+                    <span className="border-border/70 bg-background/74 text-muted-foreground inline-flex rounded-full border px-3 py-1 text-xs">
                       尽量居中。
                     </span>
                     {countdown !== null ? (
-                      <span className="border-border/70 bg-background/74 text-foreground inline-flex min-w-16 items-center justify-center rounded-full border px-4 py-1 text-sm font-semibold backdrop-blur">
+                      <span className="border-border/70 bg-background/74 text-foreground inline-flex min-w-16 items-center justify-center rounded-full border px-4 py-1 text-sm font-semibold">
                         {countdown}
                       </span>
                     ) : null}
@@ -604,16 +604,16 @@ export function RecognitionShell() {
               <canvas className="hidden" ref={canvasRef} />
 
               <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                <div className="border-border/70 bg-card/72 rounded-[1.6rem] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
+                <div className="border-border/70 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+                  <p className="text-muted-foreground text-[0.66rem] uppercase">
                     当前状态
                   </p>
                   <p className="text-foreground mt-2 text-sm leading-7">
                     {statusCopy}
                   </p>
                 </div>
-                <div className="border-border/70 bg-card/72 rounded-[1.6rem] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.66rem] tracking-[0.24em] uppercase">
+                <div className="border-border/70 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+                  <p className="text-muted-foreground text-[0.66rem] uppercase">
                     预览时间
                   </p>
                   <p className="text-foreground mt-2 text-sm leading-7">
@@ -630,8 +630,8 @@ export function RecognitionShell() {
             </div>
 
             <aside className="space-y-4">
-              <div className="border-border/70 bg-background/76 rounded-[1.8rem] border p-5">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+              <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border p-5">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   输入控制
                 </p>
                 <div className="mt-4 flex flex-col gap-3">
@@ -692,8 +692,8 @@ export function RecognitionShell() {
                 </div>
               </div>
 
-              <div className="border-border/70 bg-background/76 rounded-[1.8rem] border p-5">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+              <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border p-5">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   预览
                 </p>
                 <div className="mt-4 grid gap-3">
@@ -715,8 +715,8 @@ export function RecognitionShell() {
                 </div>
               </div>
 
-              <div className="border-border/70 bg-background/76 rounded-[1.8rem] border border-dashed p-5">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+              <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border border-dashed p-5">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   上传入口
                 </p>
                 <p className="text-muted-foreground mt-3 text-sm">
@@ -733,7 +733,7 @@ export function RecognitionShell() {
           <div className="space-y-4">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="space-y-2">
-                <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+                <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                   进度
                 </p>
                 <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -757,8 +757,8 @@ export function RecognitionShell() {
                   <div
                     className={
                       isActive
-                        ? 'rounded-[1.35rem] border border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_10%,white)] px-4 py-4'
-                        : 'border-border/70 bg-background/78 rounded-[1.35rem] border px-4 py-4'
+                        ? 'rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_10%,white)] px-4 py-4'
+                        : 'border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4'
                     }
                     key={step.key}
                   >

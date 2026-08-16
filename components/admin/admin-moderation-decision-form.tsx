@@ -67,13 +67,13 @@ export function AdminModerationDecisionForm({
 
       <div className="space-y-2">
         <label
-          className="text-muted-foreground block text-[0.66rem] font-semibold tracking-[0.22em] uppercase"
+          className="text-muted-foreground block text-[0.66rem] font-semibold uppercase"
           htmlFor={`${subjectType}-${subjectId}-review-note`}
         >
           审核备注
         </label>
         <textarea
-          className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-[92px] w-full rounded-[1rem] border px-4 py-3 text-sm leading-6 transition outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-[92px] w-full rounded-[var(--radius)] border px-4 py-3 text-sm leading-6 transition outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
           defaultValue={reviewNote ?? ''}
           disabled={disabled}
           id={`${subjectType}-${subjectId}-review-note`}
@@ -83,7 +83,7 @@ export function AdminModerationDecisionForm({
       </div>
 
       {state.status === 'error' && state.message ? (
-        <div className="border-destructive/30 bg-destructive/8 text-foreground rounded-[1rem] border px-3 py-2 text-sm leading-6">
+        <div className="border-destructive/30 bg-destructive/8 text-foreground rounded-[var(--radius)] border px-3 py-2 text-sm leading-6">
           {state.message}
         </div>
       ) : null}

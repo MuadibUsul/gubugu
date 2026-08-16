@@ -19,7 +19,7 @@ export default function Error({
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--accent)_16%,transparent),transparent_44%)]" />
         <div className="relative space-y-6">
           <div className="space-y-4">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               用户页路由错误
             </p>
             <h1 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
@@ -36,7 +36,7 @@ export default function Error({
 
           <div>
             <button
-              className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition"
               onClick={reset}
               type="button"
             >

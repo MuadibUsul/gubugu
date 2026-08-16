@@ -56,7 +56,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
             <div className="relative space-y-6">
               <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   账户入口
                 </p>
                 <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
@@ -77,7 +77,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <aside className="collection-panel p-6 sm:p-8">
             <div className="space-y-6">
               <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   登录
                 </p>
                 <h2 className="font-heading text-foreground text-4xl leading-none">

@@ -21,16 +21,16 @@ export default function RecognitionPage() {
 
           <div className="relative space-y-4">
             <div className="flex flex-wrap gap-2">
-              <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm tracking-[0.22em] uppercase">
+              <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm uppercase">
                 相机入口
               </span>
-              <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm tracking-[0.22em] uppercase">
+              <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm uppercase">
                 候选匹配
               </span>
             </div>
 
             <div className="space-y-4">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                 识别
               </p>
               <h1 className="font-heading text-foreground max-w-5xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5.2rem]">

@@ -46,12 +46,12 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
       <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)]">
         <div className="space-y-7">
           <div className="space-y-4">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.38em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               Collection
             </p>
 
             <div className="flex flex-wrap items-start gap-5">
-              <div className="border-border/70 from-accent/16 to-background/84 flex size-24 shrink-0 items-center justify-center rounded-[1.8rem] border bg-gradient-to-br text-2xl font-semibold shadow-[0_22px_48px_-28px_color-mix(in_oklab,var(--accent)_36%,transparent)] sm:size-28 sm:text-3xl">
+              <div className="border-border/70 from-accent/16 to-background/84 flex size-24 shrink-0 items-center justify-center rounded-[var(--radius)] border bg-gradient-to-br text-2xl font-semibold sm:size-28 sm:text-3xl">
                 {initials}
               </div>
 
@@ -79,32 +79,32 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 已拥有
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
                 {data.summary.ownedCount}
               </p>
             </div>
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 想要
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
                 {data.summary.wantedCount}
               </p>
             </div>
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 可交换
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
                 {data.summary.exchangeCount}
               </p>
             </div>
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 点亮率
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
@@ -135,13 +135,13 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
           </div>
         </div>
 
-        <aside className="border-border/70 shadow-soft relative overflow-hidden rounded-[2rem] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_76%,white)_0%,color-mix(in_oklab,var(--background)_90%,var(--card))_100%)] p-5">
+        <aside className="border-border/70 relative overflow-hidden rounded-[var(--radius)] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_76%,white)_0%,color-mix(in_oklab,var(--background)_90%,var(--card))_100%)] p-5">
           <div className="pointer-events-none absolute top-8 -right-14 size-40 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--accent)_20%,transparent),transparent_70%)]" />
           <div className="pointer-events-none absolute bottom-6 -left-12 size-36 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_72%)]" />
 
           <div className="relative flex h-full flex-col gap-5">
             <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.34em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                 Visibility
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -150,24 +150,24 @@ export function UserProfileHero({ profile, data }: UserProfileHeroProps) {
             </div>
 
             <div className="grid gap-3">
-              <div className="border-border/65 bg-background/76 rounded-[1.4rem] border px-4 py-3">
-                <p className="text-muted-foreground text-[0.66rem] tracking-[0.26em] uppercase">
+              <div className="border-border/65 bg-background/76 rounded-[var(--radius)] border px-4 py-3">
+                <p className="text-muted-foreground text-[0.66rem] uppercase">
                   收藏者
                 </p>
                 <p className="text-foreground mt-2 text-sm font-semibold">
                   {profile.city ?? '当前登录账户'}
                 </p>
               </div>
-              <div className="border-border/65 bg-background/76 rounded-[1.4rem] border px-4 py-3">
-                <p className="text-muted-foreground text-[0.66rem] tracking-[0.26em] uppercase">
+              <div className="border-border/65 bg-background/76 rounded-[var(--radius)] border px-4 py-3">
+                <p className="text-muted-foreground text-[0.66rem] uppercase">
                   可见性
                 </p>
                 <p className="text-foreground mt-2 text-sm font-semibold">
                   {getPrivacyModeLabel(data.privacy.currentMode)}
                 </p>
               </div>
-              <div className="border-border/65 bg-card/72 rounded-[1.4rem] border border-dashed px-4 py-3">
-                <p className="text-muted-foreground text-[0.66rem] tracking-[0.26em] uppercase">
+              <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border border-dashed px-4 py-3">
+                <p className="text-muted-foreground text-[0.66rem] uppercase">
                   其他模式
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">

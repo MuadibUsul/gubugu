@@ -30,7 +30,7 @@ export function AdminReviewPanel({
     <section className="collection-panel p-5 sm:p-6">
       <div className="space-y-5">
         <div className="space-y-2">
-          <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+          <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
             {eyebrow}
           </p>
           <h2 className="font-heading text-foreground text-3xl leading-none">
@@ -44,10 +44,10 @@ export function AdminReviewPanel({
         <div className="grid gap-3 sm:grid-cols-2">
           {metrics.map((metric) => (
             <div
-              className="border-border/70 bg-background/78 rounded-[1.25rem] border px-4 py-4"
+              className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4"
               key={`${eyebrow}-${metric.label}`}
             >
-              <p className="text-muted-foreground text-[0.65rem] tracking-[0.22em] uppercase">
+              <p className="text-muted-foreground text-[0.65rem] uppercase">
                 {metric.label}
               </p>
               <p className="text-foreground mt-2 text-2xl font-semibold">
@@ -57,10 +57,8 @@ export function AdminReviewPanel({
           ))}
         </div>
 
-        <div className="border-border/70 bg-card/74 rounded-[1.3rem] border px-4 py-4">
-          <p className="text-muted-foreground text-[0.65rem] tracking-[0.22em] uppercase">
-            说明
-          </p>
+        <div className="border-border/70 bg-card/74 rounded-[var(--radius)] border px-4 py-4">
+          <p className="text-muted-foreground text-[0.65rem] uppercase">说明</p>
           <p className="mt-2 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))]">
             {note}
           </p>
@@ -69,7 +67,7 @@ export function AdminReviewPanel({
         {hasItems ? (
           <div className="space-y-3">{children}</div>
         ) : (
-          <div className="border-border/70 bg-background/74 rounded-[1.45rem] border border-dashed px-4 py-5 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_70%,var(--background))]">
+          <div className="border-border/70 bg-background/74 rounded-[var(--radius)] border border-dashed px-4 py-5 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_70%,var(--background))]">
             {emptyLabel}
           </div>
         )}

@@ -51,7 +51,7 @@ export function LoginForm({ nextPath, authMode, routeError }: LoginFormProps) {
     return (
       <div className="space-y-5">
         {message ? (
-          <div className="border-destructive/28 bg-destructive/7 text-muted-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7">
+          <div className="border-destructive/28 bg-destructive/7 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
             {message}
           </div>
         ) : null}
@@ -70,13 +70,13 @@ export function LoginForm({ nextPath, authMode, routeError }: LoginFormProps) {
                       {option.handle}
                     </p>
                   </div>
-                  <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase">
+                  <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold uppercase">
                     {option.roleLabel}
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+                  <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                     {option.title}
                   </p>
                   <p className="text-muted-foreground text-sm leading-7">
@@ -107,7 +107,7 @@ export function LoginForm({ nextPath, authMode, routeError }: LoginFormProps) {
 
       <div className="space-y-3">
         <label
-          className="text-muted-foreground block text-[0.72rem] font-semibold tracking-[0.3em] uppercase"
+          className="text-muted-foreground block text-[0.72rem] font-semibold uppercase"
           htmlFor="login-email"
         >
           邮箱
@@ -124,7 +124,7 @@ export function LoginForm({ nextPath, authMode, routeError }: LoginFormProps) {
 
       <div className="space-y-3">
         <label
-          className="text-muted-foreground block text-[0.72rem] font-semibold tracking-[0.3em] uppercase"
+          className="text-muted-foreground block text-[0.72rem] font-semibold uppercase"
           htmlFor="login-password"
         >
           密码
@@ -140,7 +140,7 @@ export function LoginForm({ nextPath, authMode, routeError }: LoginFormProps) {
       </div>
 
       {message ? (
-        <div className="border-destructive/28 bg-destructive/7 text-muted-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7">
+        <div className="border-destructive/28 bg-destructive/7 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
           {message}
         </div>
       ) : null}

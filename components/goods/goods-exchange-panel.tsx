@@ -33,7 +33,7 @@ export function GoodsExchangePanel({
       <div className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               交换
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -60,14 +60,14 @@ export function GoodsExchangePanel({
             <div className="grid gap-3">
               {exchange.listings.map((listing) => (
                 <article
-                  className="border-border/70 bg-background/78 overflow-hidden rounded-[1.55rem] border"
+                  className="border-border/70 bg-background/78 overflow-hidden rounded-[var(--radius)] border"
                   key={listing.id}
                 >
                   <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                     <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase ${exchangeListingStatusMeta[listing.status].toneClassName}`}
+                          className={`rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase ${exchangeListingStatusMeta[listing.status].toneClassName}`}
                         >
                           {exchangeListingStatusMeta[listing.status].label}
                         </span>
@@ -85,10 +85,10 @@ export function GoodsExchangePanel({
                         </p>
                         {listing.wantedGoods ? (
                           <Link
-                            className="group border-border/70 bg-card/72 block rounded-[1.35rem] border p-4 transition hover:-translate-y-0.5"
+                            className="group border-border/70 bg-card/72 block rounded-[var(--radius)] border p-4 transition"
                             href={`/goods/${listing.wantedGoods.slug}`}
                           >
-                            <p className="text-muted-foreground text-[0.68rem] tracking-[0.22em] uppercase">
+                            <p className="text-muted-foreground text-[0.68rem] uppercase">
                               {listing.wantedGoods.skuCode}
                             </p>
                             <p className="text-foreground mt-2 text-sm font-semibold">
@@ -99,7 +99,7 @@ export function GoodsExchangePanel({
                             </p>
                           </Link>
                         ) : (
-                          <div className="border-border/70 bg-card/72 text-muted-foreground rounded-[1.35rem] border border-dashed px-4 py-4 text-sm">
+                          <div className="border-border/70 bg-card/72 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-4 text-sm">
                             目标 SKU 暂未关联
                           </div>
                         )}
@@ -137,8 +137,8 @@ export function GoodsExchangePanel({
                       </div>
 
                       {listing.conditionNote ? (
-                        <div className="border-border/70 bg-card/72 rounded-[1.2rem] border px-4 py-4">
-                          <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                        <div className="border-border/70 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+                          <p className="text-muted-foreground text-[0.66rem] uppercase">
                             品相
                           </p>
                           <p className="text-foreground mt-2 text-sm leading-7">
@@ -152,7 +152,7 @@ export function GoodsExchangePanel({
               ))}
             </div>
           ) : (
-            <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.55rem] border border-dashed px-4 py-4 text-sm">
+            <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-4 text-sm">
               暂无交换意向
             </div>
           )}

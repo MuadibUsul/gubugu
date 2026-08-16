@@ -19,7 +19,7 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
           // Falls back to the SKU name when the record has no alt text, so the
           // image is never announced as unlabelled.
           alt={primaryImage?.altText ?? goods.name}
-          className="border-border/70 aspect-[4/5] rounded-[1.8rem] border"
+          className="border-border/70 aspect-[4/5] rounded-[var(--radius)] border"
           imageUrl={primaryImage?.imageUrl ?? null}
           // The largest element above the fold on a SKU page, and the LCP
           // candidate — it must not be lazy loaded.
@@ -28,8 +28,8 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
         >
           {!primaryImage ? (
             <div className="goods-card__art-content flex h-full items-end p-5">
-              <div className="border-border/70 bg-background/80 max-w-xs rounded-[1.4rem] border border-dashed px-4 py-3 backdrop-blur">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+              <div className="border-border/70 bg-background/80 max-w-xs rounded-[var(--radius)] border border-dashed px-4 py-3">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   图片待补充
                 </p>
                 <p className="text-muted-foreground mt-2 text-sm leading-7">
@@ -50,7 +50,7 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
             >
               <GoodsCardArt
                 alt={image.altText ?? goods.name}
-                className="border-border/70 aspect-[1/1] rounded-[1.35rem] border"
+                className="border-border/70 aspect-[1/1] rounded-[var(--radius)] border"
                 imageUrl={image.imageUrl}
                 sizes="(max-width: 639px) 100vw, 15vw"
               />

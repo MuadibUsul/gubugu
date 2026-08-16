@@ -38,7 +38,7 @@ export function CharacterCompletionPanel({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(300px,0.88fr)]">
         <div className="space-y-5">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               补全进度
             </p>
             <div>
@@ -52,8 +52,8 @@ export function CharacterCompletionPanel({
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <div className="border-border/65 bg-card/74 rounded-[1.8rem] border p-5">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/74 rounded-[var(--radius)] border p-5">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                 角色进度
               </p>
               <div className="mt-4 flex items-end gap-3">
@@ -70,9 +70,9 @@ export function CharacterCompletionPanel({
               </p>
             </div>
 
-            <div className="border-border/65 bg-background/74 rounded-[1.8rem] border p-5">
+            <div className="border-border/65 bg-background/74 rounded-[var(--radius)] border p-5">
               <div className="flex items-center justify-between gap-4">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   点亮进度条
                 </p>
                 <span className="text-muted-foreground text-sm">
@@ -83,16 +83,16 @@ export function CharacterCompletionPanel({
                 <ProgressBar value={character.progressPercentage} />
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="border-border/60 bg-card/74 rounded-[1.3rem] border px-4 py-3">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                <div className="border-border/60 bg-card/74 rounded-[var(--radius)] border px-4 py-3">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     已点亮商品
                   </p>
                   <p className="font-heading text-foreground mt-2 text-3xl leading-none">
                     {character.ownedGoods}
                   </p>
                 </div>
-                <div className="border-border/60 bg-card/74 rounded-[1.3rem] border px-4 py-3">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                <div className="border-border/60 bg-card/74 rounded-[var(--radius)] border px-4 py-3">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     系列
                   </p>
                   <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -100,8 +100,8 @@ export function CharacterCompletionPanel({
                     {character.totalSeriesCount}
                   </p>
                 </div>
-                <div className="border-border/60 bg-card/74 rounded-[1.3rem] border px-4 py-3">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                <div className="border-border/60 bg-card/74 rounded-[var(--radius)] border px-4 py-3">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     剩余
                   </p>
                   <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -115,12 +115,12 @@ export function CharacterCompletionPanel({
           <div className="grid gap-3">
             {series.map((item) => (
               <div
-                className="border-border/65 bg-card/72 rounded-[1.5rem] border p-4"
+                className="border-border/65 bg-card/72 rounded-[var(--radius)] border p-4"
                 key={item.id}
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-muted-foreground text-[0.66rem] font-semibold tracking-[0.28em] uppercase">
+                    <p className="text-muted-foreground text-[0.66rem] font-semibold uppercase">
                       系列完成度
                     </p>
                     <h3 className="text-foreground mt-2 text-lg font-semibold">
@@ -140,8 +140,8 @@ export function CharacterCompletionPanel({
         </div>
 
         <aside className="space-y-4">
-          <div className="border-border/65 bg-card/74 rounded-[1.8rem] border p-5">
-            <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+          <div className="border-border/65 bg-card/74 rounded-[var(--radius)] border p-5">
+            <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
               系列维度
             </p>
             <h3 className="font-heading text-foreground mt-4 text-3xl leading-none">
@@ -152,8 +152,8 @@ export function CharacterCompletionPanel({
             </p>
           </div>
 
-          <div className="border-border/65 bg-background/74 rounded-[1.8rem] border border-dashed p-5">
-            <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+          <div className="border-border/65 bg-background/74 rounded-[var(--radius)] border border-dashed p-5">
+            <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
               作品视角
             </p>
             <h3 className="font-heading text-foreground mt-4 text-3xl leading-none">
@@ -162,7 +162,7 @@ export function CharacterCompletionPanel({
             <p className="text-muted-foreground mt-3 text-sm leading-7">
               这里同步展示当前角色所属作品的图鉴范围，方便继续沿着作品与系列两个方向浏览。
             </p>
-            <div className="border-border/60 bg-card/70 text-muted-foreground mt-4 rounded-[1.35rem] border px-4 py-3 text-sm">
+            <div className="border-border/60 bg-card/70 text-muted-foreground mt-4 rounded-[var(--radius)] border px-4 py-3 text-sm">
               图鉴状态: {getPublicationStatusLabel(ip.status)} / 所属作品:{' '}
               {data.ip.name}
             </div>

@@ -154,10 +154,10 @@ export default async function GoodsDetailPage({
 
       <div className="mx-auto flex min-h-screen w-full max-w-[96rem] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
         {isRecognitionHandoff ? (
-          <section className="rounded-[1.8rem] border border-[color:color-mix(in_oklab,var(--accent)_48%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,white),color-mix(in_oklab,var(--background)_94%,var(--card)))] px-5 py-5">
+          <section className="rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_48%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_10%,white),color-mix(in_oklab,var(--background)_94%,var(--card)))] px-5 py-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-2">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   Recognition
                 </p>
                 <h2 className="text-foreground text-lg font-semibold">
@@ -191,13 +191,13 @@ export default async function GoodsDetailPage({
                 >
                   {goods.series.name}
                 </Link>
-                <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm tracking-[0.18em] uppercase">
+                <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm uppercase">
                   SKU {goods.skuCode}
                 </span>
               </div>
 
               <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   Goods
                 </p>
                 <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5.1rem]">
@@ -211,8 +211,8 @@ export default async function GoodsDetailPage({
               </div>
             </div>
 
-            <aside className="rounded-[1.7rem] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[color:color-mix(in_oklab,var(--background)_76%,var(--card))] px-5 py-5">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+            <aside className="rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[color:color-mix(in_oklab,var(--background)_76%,var(--card))] px-5 py-5">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 快速概览
               </p>
               <div className="mt-4 flex flex-wrap gap-2">

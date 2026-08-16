@@ -36,19 +36,19 @@ function CharacterGoodsCard({
         <div className="goods-card__art-content flex h-full flex-col justify-between p-5">
           <div className="flex items-start justify-between gap-4">
             <span
-              className={`hud-chip px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase ${
+              className={`hud-chip px-3 py-1 text-[0.68rem] font-semibold uppercase ${
                 item.isOwned ? 'hud-chip--lit' : 'text-muted-foreground'
               }`}
             >
               {item.isOwned ? '已点亮' : '未点亮'}
             </span>
-            <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
+            <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold uppercase">
               {formatGoodsTypeLabel(item.goodsType)}
             </span>
           </div>
 
-          <div className="hud-card max-w-[17rem] px-4 py-3 backdrop-blur">
-            <p className="text-muted-foreground text-[0.66rem] font-semibold tracking-[0.28em] uppercase">
+          <div className="hud-card max-w-[17rem] px-4 py-3">
+            <p className="text-muted-foreground text-[0.66rem] font-semibold uppercase">
               {item.skuCode}
             </p>
             <p className="text-foreground mt-2 text-sm">{item.series.name}</p>
@@ -76,7 +76,7 @@ function CharacterGoodsCard({
         <div className="flex flex-wrap gap-2">
           {item.tags.map((tag) => (
             <Link
-              className="border-border/65 bg-card/72 text-foreground/84 rounded-full border px-3 py-1 text-xs transition hover:-translate-y-0.5"
+              className="border-border/65 bg-card/72 text-foreground/84 rounded-full border px-3 py-1 text-xs transition"
               href={buildCharacterEncyclopediaHref({
                 ...controls,
                 tagSlugs: [tag.slug],
@@ -144,7 +144,7 @@ export function CharacterGoodsWall({
       <div className="collection-panel p-6 sm:p-7">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               商品墙
             </p>
             <div>

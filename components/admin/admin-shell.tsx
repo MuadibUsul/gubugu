@@ -71,13 +71,13 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_320px]">
             <div className="space-y-5">
               <div className="flex flex-wrap gap-2">
-                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.22em] uppercase">
+                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                   内容中台
                 </span>
-                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.22em] uppercase">
+                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                   管理总览
                 </span>
-                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.22em] uppercase">
+                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                   {getAdminRoleLabel(viewer.adminRole)}
                 </span>
                 <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs">
@@ -86,7 +86,7 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
               </div>
 
               <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   内容管理中心
                 </p>
                 <h1 className="font-heading text-foreground max-w-5xl text-5xl leading-[0.94] text-balance sm:text-6xl">
@@ -99,8 +99,8 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
             </div>
 
             <aside className="space-y-3">
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   模块地图
                 </p>
                 <div className="mt-4 grid gap-2 text-sm">
@@ -149,8 +149,8 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
                 </div>
               </div>
 
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   当前状态
                 </p>
                 <p className="text-foreground mt-3 text-sm leading-7">
@@ -186,7 +186,7 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
           <aside className="collection-panel p-5 sm:p-6">
             <div className="space-y-5">
               <div className="space-y-2">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.32em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   维护范围
                 </p>
                 <h2 className="font-heading text-foreground text-3xl leading-none">
@@ -198,32 +198,32 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
               </div>
 
               <div className="grid gap-3">
-                <div className="border-border/70 bg-background/78 rounded-[1.4rem] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.65rem] tracking-[0.22em] uppercase">
+                <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+                  <p className="text-muted-foreground text-[0.65rem] uppercase">
                     商品操作
                   </p>
                   <p className="text-foreground mt-2 text-sm leading-7">
                     维护 SKU 名称、标签、状态与图片资源。
                   </p>
                 </div>
-                <div className="border-border/70 bg-background/78 rounded-[1.4rem] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.65rem] tracking-[0.22em] uppercase">
+                <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+                  <p className="text-muted-foreground text-[0.65rem] uppercase">
                     图鉴操作
                   </p>
                   <p className="text-foreground mt-2 text-sm leading-7">
                     维护作品、角色和系列之间的图鉴关系。
                   </p>
                 </div>
-                <div className="border-border/70 bg-background/78 rounded-[1.4rem] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.65rem] tracking-[0.22em] uppercase">
+                <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+                  <p className="text-muted-foreground text-[0.65rem] uppercase">
                     审核
                   </p>
                   <p className="text-foreground mt-2 text-sm leading-7">
                     审核评论、图片、交换意向与图鉴提案。
                   </p>
                 </div>
-                <div className="border-border/70 bg-background/78 rounded-[1.4rem] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.65rem] tracking-[0.22em] uppercase">
+                <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+                  <p className="text-muted-foreground text-[0.65rem] uppercase">
                     权限模型
                   </p>
                   <p className="text-foreground mt-2 text-sm leading-7">
@@ -272,7 +272,7 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
             >
               {data.userSubmissions.items.map((item) => (
                 <article
-                  className="border-border/70 bg-background/78 rounded-[1.4rem] border px-4 py-4"
+                  className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4"
                   key={item.id}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -323,7 +323,7 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
             >
               {data.commentModeration.items.map((item) => (
                 <article
-                  className="border-border/70 bg-background/78 rounded-[1.4rem] border px-4 py-4"
+                  className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4"
                   key={item.id}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -373,7 +373,7 @@ export function AdminShell({ data, viewer }: AdminShellProps) {
             >
               {data.exchangeModeration.items.map((item) => (
                 <article
-                  className="border-border/70 bg-background/78 rounded-[1.4rem] border px-4 py-4"
+                  className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4"
                   key={item.id}
                 >
                   <div className="flex items-start justify-between gap-3">

@@ -5,16 +5,16 @@ function HeroLoadingCard() {
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="bg-muted h-3 w-40 animate-pulse rounded-full" />
-            <div className="bg-muted/80 h-16 w-full max-w-4xl animate-pulse rounded-[1.5rem]" />
-            <div className="bg-muted/65 h-16 w-full max-w-3xl animate-pulse rounded-[1.5rem]" />
+            <div className="bg-muted/80 h-16 w-full max-w-4xl animate-pulse rounded-[var(--radius)]" />
+            <div className="bg-muted/65 h-16 w-full max-w-3xl animate-pulse rounded-[var(--radius)]" />
             <div className="bg-muted/55 h-5 w-full max-w-2xl animate-pulse rounded-full" />
           </div>
 
-          <div className="border-border/70 bg-background/72 rounded-[1.9rem] border p-3">
+          <div className="border-border/70 bg-background/72 rounded-[var(--radius)] border p-3">
             <div className="bg-muted mb-3 h-3 w-60 animate-pulse rounded-full" />
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="bg-muted/80 h-15 animate-pulse rounded-[1.4rem]" />
-              <div className="bg-muted/70 h-15 w-full animate-pulse rounded-[1.4rem] lg:w-36" />
+              <div className="bg-muted/80 h-15 animate-pulse rounded-[var(--radius)]" />
+              <div className="bg-muted/70 h-15 w-full animate-pulse rounded-[var(--radius)] lg:w-36" />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -29,14 +29,14 @@ function HeroLoadingCard() {
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
-                className="border-border/60 bg-card/70 h-36 animate-pulse rounded-[1.5rem] border"
+                className="border-border/60 bg-card/70 h-36 animate-pulse rounded-[var(--radius)] border"
                 key={index}
               />
             ))}
           </div>
         </div>
 
-        <div className="border-border/70 bg-card/80 h-[28rem] animate-pulse rounded-[2rem] border" />
+        <div className="border-border/70 bg-card/80 h-[28rem] animate-pulse rounded-[var(--radius)] border" />
       </div>
     </section>
   );
@@ -59,7 +59,7 @@ export default function Loading() {
             <div className="mt-6 grid gap-4 xl:grid-cols-2">
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
-                  className="border-border/70 bg-card/70 h-[18rem] animate-pulse rounded-[1.8rem] border"
+                  className="border-border/70 bg-card/70 h-[18rem] animate-pulse rounded-[var(--radius)] border"
                   key={index}
                 />
               ))}
@@ -69,14 +69,14 @@ export default function Loading() {
           <div className="collection-panel p-6 sm:p-8">
             <div className="space-y-4">
               <div className="bg-muted h-3 w-36 animate-pulse rounded-full" />
-              <div className="bg-muted/80 h-12 w-56 animate-pulse rounded-[1rem]" />
-              <div className="bg-muted/70 h-12 w-48 animate-pulse rounded-[1rem]" />
+              <div className="bg-muted/80 h-12 w-56 animate-pulse rounded-[var(--radius)]" />
+              <div className="bg-muted/70 h-12 w-48 animate-pulse rounded-[var(--radius)]" />
               <div className="bg-muted/55 h-5 w-full animate-pulse rounded-full" />
             </div>
             <div className="mt-8 grid gap-3">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
-                  className="border-border/70 bg-card/70 h-16 animate-pulse rounded-[1.4rem] border"
+                  className="border-border/70 bg-card/70 h-16 animate-pulse rounded-[var(--radius)] border"
                   key={index}
                 />
               ))}

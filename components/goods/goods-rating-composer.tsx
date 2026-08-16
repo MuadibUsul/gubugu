@@ -29,7 +29,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+      className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
       disabled={pending}
       type="submit"
     >
@@ -71,7 +71,7 @@ export function GoodsRatingComposer({
       <div className="collection-panel p-5 sm:p-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               评分
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -99,7 +99,7 @@ export function GoodsRatingComposer({
       <div className="space-y-5">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               评分
             </p>
             <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-xs">
@@ -116,24 +116,24 @@ export function GoodsRatingComposer({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="border-border/70 bg-background/78 rounded-[1.45rem] border px-4 py-4">
-            <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+          <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+            <p className="text-muted-foreground text-[0.68rem] uppercase">
               预览总分
             </p>
             <p className="font-heading text-foreground mt-2 text-5xl leading-none">
               {previewScore}
             </p>
           </div>
-          <div className="border-border/70 bg-background/78 rounded-[1.45rem] border px-4 py-4">
-            <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+          <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+            <p className="text-muted-foreground text-[0.68rem] uppercase">
               值得买吗
             </p>
             <p className="font-heading text-foreground mt-2 text-5xl leading-none">
               {draft.worthBuying ? '是' : '否'}
             </p>
           </div>
-          <div className="border-border/70 bg-background/78 rounded-[1.45rem] border px-4 py-4">
-            <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+          <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+            <p className="text-muted-foreground text-[0.68rem] uppercase">
               总评
             </p>
             <p className="font-heading text-foreground mt-2 text-5xl leading-none">
@@ -149,7 +149,7 @@ export function GoodsRatingComposer({
           <div className="space-y-4">
             {goodsRatingDimensionMeta.map((dimension) => (
               <fieldset
-                className="border-border/70 bg-background/74 rounded-[1.45rem] border px-4 py-4"
+                className="border-border/70 bg-background/74 rounded-[var(--radius)] border px-4 py-4"
                 key={dimension.key}
               >
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -199,7 +199,7 @@ export function GoodsRatingComposer({
           </div>
 
           <fieldset className="space-y-3">
-            <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+            <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
               总评价标签
             </p>
             <div className="flex flex-wrap gap-2">
@@ -235,7 +235,7 @@ export function GoodsRatingComposer({
             </div>
           </fieldset>
 
-          <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[1.4rem] border px-4 py-4">
+          <label className="border-border/70 bg-background/74 flex items-start gap-3 rounded-[var(--radius)] border px-4 py-4">
             <input
               checked={draft.worthBuying}
               className="border-border mt-1 size-4 rounded"
@@ -260,7 +260,7 @@ export function GoodsRatingComposer({
           </label>
 
           {state.status === 'error' && state.message ? (
-            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7">
+            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
               {state.message}
             </div>
           ) : null}

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 
-import { AuthStatusDock } from '@/components/auth/auth-status-dock';
 import { SiteNavigation } from '@/components/layout/site-navigation';
 import { siteConfig } from '@/lib/config/site';
 
@@ -30,15 +29,8 @@ export default function RootLayout({
   return (
     <html className="scroll-smooth" lang="zh-CN">
       <body className="bg-background text-foreground min-h-screen font-sans antialiased">
-        <div aria-hidden className="site-atmosphere">
-          <div className="site-orb site-orb--primary" />
-          <div className="site-orb site-orb--accent" />
-          <div className="site-orb site-orb--veil" />
-          <div className="site-frame" />
-        </div>
-        <AuthStatusDock />
         <SiteNavigation />
-        <div className="relative z-10">{children}</div>
+        {children}
       </body>
     </html>
   );

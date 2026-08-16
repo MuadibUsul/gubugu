@@ -12,7 +12,7 @@ const browseLinks = [
 
 export function HomeHero() {
   return (
-    <section className="relative overflow-hidden rounded-[2.8rem] px-1">
+    <section className="relative overflow-hidden rounded-[var(--radius)] px-1">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--surface-line)_86%,transparent),transparent)]" />
       <div className="pointer-events-none absolute top-10 left-[8%] h-56 w-56 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--accent)_20%,transparent),transparent_70%)] blur-[110px]" />
       <div className="pointer-events-none absolute right-[8%] bottom-8 h-64 w-64 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_72%)] blur-[130px]" />
@@ -21,7 +21,7 @@ export function HomeHero() {
         <div className="collection-panel px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
           <div className="space-y-6">
             <div className="space-y-4">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.38em] uppercase">
+              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                 Search First
               </p>
               <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.92] sm:text-[4.5rem] xl:text-[5.2rem]">
@@ -50,7 +50,7 @@ export function HomeHero() {
         <aside className="grid gap-4">
           <article className="collection-panel flex flex-col justify-between px-6 py-7">
             <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.32em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                 Secondary
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -66,7 +66,7 @@ export function HomeHero() {
 
           <article className="collection-panel px-6 py-6">
             <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.32em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                 Explore
               </p>
               <Button asChild className="w-full" variant="ghost">

@@ -1,17 +1,24 @@
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
+import { SiteNavLinks } from '@/components/layout/site-nav-links';
 import { getAdminRoleForUser } from '@/lib/admin-access';
+import { signOutAction } from '@/server/auth/actions';
 import { getAuthUser } from '@/server/auth/session';
 
+/**
+ * One sticky bar. This used to be two stacked floating panels — an account dock
+ * over a pill-shaped nav — which cost 80px of every page before any content and
+ * was a large part of why the site read as cluttered.
+ */
 const primaryLinks = [
-  { href: '/', label: '首页' },
-  { href: '/search', label: '搜索图鉴' },
-  { href: '/recognition', label: '拍照识别' },
+  { href: '/', label: '图鉴' },
+  { href: '/search', label: '搜索' },
+  { href: '/recognition', label: '识别' },
+  { href: '/me/collection', label: '我的收藏' },
 ] as const;
 
 function getAdminEntryLabel(role: 'admin' | 'moderator') {
-  return role === 'admin' ? '后台管理' : '审核队列';
+  return role === 'admin' ? '后台' : '审核';
 }
 
 export async function SiteNavigation() {
@@ -19,58 +26,50 @@ export async function SiteNavigation() {
   const adminRole = user ? getAdminRoleForUser(user) : null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[4.9rem] z-40 flex justify-center px-4">
-      <nav
-        aria-label="Primary"
-        className="pointer-events-auto flex w-full max-w-[78rem] flex-wrap items-center justify-between gap-3 rounded-[1.6rem] border border-[color:color-mix(in_oklab,var(--border)_88%,white_10%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_92%,transparent),color-mix(in_oklab,var(--surface-soft)_94%,var(--background)))] px-4 py-3 shadow-[0_18px_44px_-28px_color-mix(in_oklab,var(--shadow-tint)_36%,transparent)] backdrop-blur-md"
-      >
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          {primaryLinks.map((link) => (
-            <Button
-              asChild
-              className="rounded-full"
-              key={link.href}
-              size="sm"
-              variant="ghost"
-            >
-              <Link href={link.href}>{link.label}</Link>
-            </Button>
-          ))}
+    <nav
+      aria-label="Primary"
+      className="border-border bg-card sticky top-0 z-30 border-b"
+    >
+      <div className="mx-auto flex h-[62px] max-w-[1180px] items-center gap-7 px-5 md:px-10">
+        <Link className="font-heading mr-auto text-xl font-semibold" href="/">
+          谷布谷<span className="text-[17px] text-[var(--shu)]">図鑑</span>
+        </Link>
+
+        <div className="hidden items-center gap-7 md:flex">
+          <SiteNavLinks links={primaryLinks} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {user ? (
-            <Button
-              asChild
-              className="rounded-full"
-              size="sm"
-              variant="secondary"
-            >
-              <Link href="/me/collection">我的收藏</Link>
-            </Button>
-          ) : (
-            <Button
-              asChild
-              className="rounded-full"
-              size="sm"
-              variant="secondary"
-            >
-              <Link href="/login?next=%2Fme%2Fcollection">登录后管理收藏</Link>
-            </Button>
-          )}
+        {adminRole ? (
+          <Link
+            className="text-muted-foreground hover:text-foreground hidden text-sm md:inline"
+            href="/admin"
+          >
+            {getAdminEntryLabel(adminRole)}
+          </Link>
+        ) : null}
 
-          {adminRole ? (
-            <Button
-              asChild
-              className="rounded-full"
-              size="sm"
-              variant="outline"
+        {user ? (
+          <form action={signOutAction}>
+            <button
+              className="border-input text-muted-foreground hover:text-foreground rounded-[var(--radius)] border px-3 py-1.5 text-[13px]"
+              type="submit"
             >
-              <Link href="/admin">{getAdminEntryLabel(adminRole)}</Link>
-            </Button>
-          ) : null}
-        </div>
-      </nav>
-    </div>
+              退出
+            </button>
+          </form>
+        ) : (
+          <Link
+            className="rounded-[var(--radius)] bg-[var(--shu)] px-4 py-1.5 text-[13px] font-medium text-[var(--shu-ink)] hover:text-[var(--shu-ink)]"
+            href="/login?next=%2Fme%2Fcollection"
+          >
+            登录
+          </Link>
+        )}
+      </div>
+
+      <div className="border-border mx-auto flex max-w-[1180px] items-center gap-6 overflow-x-auto border-t px-5 py-2 md:hidden">
+        <SiteNavLinks links={primaryLinks} />
+      </div>
+    </nav>
   );
 }

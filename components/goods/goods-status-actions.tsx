@@ -41,8 +41,8 @@ function StatusToggleButton({
       aria-pressed={active}
       className={
         active
-          ? 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[1.75rem] border border-[color:color-mix(in_oklab,var(--accent)_72%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_16%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] px-4 py-4 text-left shadow-[0_24px_54px_-34px_color-mix(in_oklab,var(--accent)_50%,transparent)] transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60'
-          : 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[1.75rem] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_88%,var(--background)))] px-4 py-4 text-left transition hover:-translate-y-0.5 hover:border-[color:color-mix(in_oklab,var(--accent)_48%,var(--border))] disabled:translate-y-0 disabled:opacity-60'
+          ? 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_72%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_16%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] px-4 py-4 text-left transition disabled:translate-y-0 disabled:opacity-60'
+          : 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_88%,var(--background)))] px-4 py-4 text-left transition hover:border-[color:color-mix(in_oklab,var(--accent)_48%,var(--border))] disabled:translate-y-0 disabled:opacity-60'
       }
       disabled={pending}
       name="status"
@@ -61,8 +61,8 @@ function StatusToggleButton({
         <span
           className={
             active
-              ? 'text-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border border-[color:color-mix(in_oklab,var(--accent)_74%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-center text-[0.68rem] font-semibold tracking-[0.22em] whitespace-nowrap uppercase'
-              : 'border-border/70 bg-card/76 text-muted-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border px-3 py-1 text-center text-[0.68rem] font-semibold tracking-[0.22em] whitespace-nowrap uppercase'
+              ? 'text-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border border-[color:color-mix(in_oklab,var(--accent)_74%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-center text-[0.68rem] font-semibold whitespace-nowrap uppercase'
+              : 'border-border/70 bg-card/76 text-muted-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border px-3 py-1 text-center text-[0.68rem] font-semibold whitespace-nowrap uppercase'
           }
         >
           {pending ? '保存中' : active ? '已选中' : '未选中'}
@@ -91,7 +91,7 @@ export function GoodsStatusActions({
       <section className="collection-panel p-5 sm:p-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               收藏状态
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -114,7 +114,7 @@ export function GoodsStatusActions({
       <div className="space-y-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               收藏状态
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -130,14 +130,14 @@ export function GoodsStatusActions({
           {state.activeStatuses.length > 0 ? (
             state.activeStatuses.map((status) => (
               <span
-                className="text-foreground rounded-full border border-[color:color-mix(in_oklab,var(--accent)_60%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase"
+                className="text-foreground rounded-full border border-[color:color-mix(in_oklab,var(--accent)_60%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-xs font-semibold uppercase"
                 key={status}
               >
                 {userGoodsStatusMeta[status].label}
               </span>
             ))
           ) : (
-            <span className="border-border/70 text-muted-foreground rounded-full border border-dashed px-3 py-1 text-xs tracking-[0.18em] uppercase">
+            <span className="border-border/70 text-muted-foreground rounded-full border border-dashed px-3 py-1 text-xs uppercase">
               尚未标记
             </span>
           )}
@@ -163,8 +163,8 @@ export function GoodsStatusActions({
             <p
               className={
                 state.status === 'error'
-                  ? 'border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7'
-                  : 'border-border/70 bg-background/78 text-muted-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7'
+                  ? 'border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7'
+                  : 'border-border/70 bg-background/78 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7'
               }
             >
               {state.message}

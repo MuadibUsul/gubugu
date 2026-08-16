@@ -30,7 +30,7 @@ export function CharacterFilters({
         <input name="view" type="hidden" value={controls.view} />
         <div className="space-y-5">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               筛选
             </p>
             <div>
@@ -47,13 +47,13 @@ export function CharacterFilters({
           {viewerOptions.length > 0 ? (
             <section className="space-y-3">
               <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
+                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
                 htmlFor="character-viewer"
               >
                 收藏视角
               </label>
               <select
-                className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[1rem] border px-4 outline-none focus-visible:ring-2"
+                className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[var(--radius)] border px-4 outline-none focus-visible:ring-2"
                 defaultValue={controls.viewer}
                 id="character-viewer"
                 name="viewer"
@@ -69,13 +69,13 @@ export function CharacterFilters({
 
           <section className="space-y-3">
             <label
-              className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
+              className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
               htmlFor="character-goods-type"
             >
               商品类型
             </label>
             <select
-              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[1rem] border px-4 outline-none focus-visible:ring-2"
+              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[var(--radius)] border px-4 outline-none focus-visible:ring-2"
               defaultValue={controls.goodsType ?? ''}
               id="character-goods-type"
               name="goodsType"
@@ -91,13 +91,13 @@ export function CharacterFilters({
 
           <section className="space-y-3">
             <label
-              className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
+              className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
               htmlFor="character-series"
             >
               系列
             </label>
             <select
-              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[1rem] border px-4 outline-none focus-visible:ring-2"
+              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[var(--radius)] border px-4 outline-none focus-visible:ring-2"
               defaultValue={controls.seriesSlug ?? ''}
               id="character-series"
               name="series"
@@ -113,7 +113,7 @@ export function CharacterFilters({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-4">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 标签
               </p>
               <span className="text-muted-foreground text-xs">可多选</span>
@@ -136,7 +136,7 @@ export function CharacterFilters({
                       type="checkbox"
                       value={tag.slug}
                     />
-                    <span className="border-border/70 bg-card/76 text-foreground/84 peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex rounded-full border px-3 py-1.5 text-sm transition hover:-translate-y-0.5">
+                    <span className="border-border/70 bg-card/76 text-foreground/84 peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex rounded-full border px-3 py-1.5 text-sm transition">
                       {tag.name}
                       <span className="text-muted-foreground ml-2 text-xs">
                         {tag.goodsCount}
@@ -149,7 +149,7 @@ export function CharacterFilters({
           </section>
 
           <section className="space-y-3">
-            <label className="border-border/65 bg-background/76 flex items-start gap-3 rounded-[1.3rem] border px-4 py-4">
+            <label className="border-border/65 bg-background/76 flex items-start gap-3 rounded-[var(--radius)] border px-4 py-4">
               <input
                 className="border-border mt-1 size-4 rounded"
                 defaultChecked={controls.ownedOnly}
@@ -170,7 +170,7 @@ export function CharacterFilters({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-4">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 扩展浏览
               </p>
               <span className="text-muted-foreground text-xs">更多维度</span>
@@ -183,7 +183,7 @@ export function CharacterFilters({
                 '地区与场贩条件筛选',
               ].map((item) => (
                 <div
-                  className="border-border/65 bg-background/72 text-muted-foreground rounded-[1.25rem] border border-dashed px-4 py-3 text-sm leading-6"
+                  className="border-border/65 bg-background/72 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-3 text-sm leading-6"
                   key={item}
                 >
                   {item}
@@ -194,7 +194,7 @@ export function CharacterFilters({
 
           <div className="flex flex-wrap gap-3 pt-2">
             <button
-              className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition"
               type="submit"
             >
               应用筛选

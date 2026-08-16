@@ -86,7 +86,7 @@ export function AdminGoodsTable({
         <div className="grid gap-3 lg:grid-cols-4">
           {summaryItems.map((item) => (
             <div
-              className="border-border/70 bg-background/78 rounded-[1.3rem] border px-4 py-4"
+              className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4"
               key={item.label}
             >
               <p className="text-muted-foreground meta-label">{item.label}</p>
@@ -97,7 +97,7 @@ export function AdminGoodsTable({
           ))}
         </div>
 
-        <div className="border-border/70 overflow-hidden rounded-[1.8rem] border">
+        <div className="border-border/70 overflow-hidden rounded-[var(--radius)] border">
           <div className="overflow-x-auto">
             <div className="min-w-[57rem]">
               <div className="grid grid-cols-[140px_minmax(260px,1.4fr)_minmax(220px,1fr)_120px_112px] gap-4 border-b border-[color:color-mix(in_oklab,var(--border)_82%,white)] bg-[color:color-mix(in_oklab,var(--card)_84%,white)] px-4 py-3 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))]">

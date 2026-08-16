@@ -11,7 +11,7 @@ export function UserPhotoArchive({ items }: UserPhotoArchiveProps) {
       <div className="collection-panel p-6 sm:p-7">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               图片
             </p>
             <div>
@@ -32,7 +32,7 @@ export function UserPhotoArchive({ items }: UserPhotoArchiveProps) {
             >
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+                  <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                     图片记录
                   </p>
                   <h3 className="font-heading text-foreground text-3xl leading-none">
@@ -47,7 +47,7 @@ export function UserPhotoArchive({ items }: UserPhotoArchiveProps) {
                   {item.images.length > 0 ? (
                     item.images.slice(0, 3).map((image) => (
                       <div
-                        className="border-border/70 from-accent/10 to-background/82 relative h-28 overflow-hidden rounded-[1.35rem] border bg-gradient-to-br"
+                        className="border-border/70 from-accent/10 to-background/82 relative h-28 overflow-hidden rounded-[var(--radius)] border bg-gradient-to-br"
                         key={image.id}
                       >
                         <RemoteImage
@@ -59,7 +59,7 @@ export function UserPhotoArchive({ items }: UserPhotoArchiveProps) {
                       </div>
                     ))
                   ) : (
-                    <div className="border-border/65 bg-background/72 text-muted-foreground col-span-full rounded-[1.35rem] border border-dashed px-4 py-6 text-sm">
+                    <div className="border-border/65 bg-background/72 text-muted-foreground col-span-full rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm">
                       暂无图片
                     </div>
                   )}
@@ -70,7 +70,7 @@ export function UserPhotoArchive({ items }: UserPhotoArchiveProps) {
         </div>
       ) : (
         <div className="collection-panel p-6 sm:p-7">
-          <div className="border-border/65 bg-background/72 rounded-[1.6rem] border border-dashed px-5 py-8">
+          <div className="border-border/65 bg-background/72 rounded-[var(--radius)] border border-dashed px-5 py-8">
             <p className="text-muted-foreground text-sm">暂无图片</p>
           </div>
         </div>

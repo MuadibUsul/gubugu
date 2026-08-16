@@ -38,7 +38,7 @@ export function SearchPanelState({
       <div className="relative flex h-full flex-col justify-between gap-8">
         <div className="space-y-4">
           {eyebrow ? (
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               {eyebrow}
             </p>
           ) : null}
@@ -54,7 +54,7 @@ export function SearchPanelState({
         <div className="grid gap-3 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <div
-              className="border-border/60 bg-background/76 rounded-[1.4rem] border px-4 py-3"
+              className="border-border/60 bg-background/76 rounded-[var(--radius)] border px-4 py-3"
               key={index}
             >
               <div className="bg-muted/80 h-2.5 w-24 rounded-full" />

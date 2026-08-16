@@ -24,7 +24,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
       <div className="collection-panel p-5 sm:p-6">
         <div className="space-y-5">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               过滤范围
             </p>
             <div>
@@ -36,9 +36,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
 
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-semibold tracking-[0.18em] uppercase">
-                图鉴范围
-              </h3>
+              <h3 className="text-sm font-semibold uppercase">图鉴范围</h3>
               <span className="text-muted-foreground text-xs">
                 IP / 角色 / 系列
               </span>
@@ -46,7 +44,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
 
             <div className="space-y-3">
               <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
+                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
                 htmlFor="search-sidebar-ip"
               >
                 IP
@@ -68,7 +66,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
 
             <div className="space-y-3">
               <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
+                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
                 htmlFor="search-sidebar-character"
               >
                 角色
@@ -90,7 +88,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
 
             <div className="space-y-3">
               <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
+                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
                 htmlFor="search-sidebar-series"
               >
                 系列
@@ -113,15 +111,13 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
 
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-semibold tracking-[0.18em] uppercase">
-                商品特征
-              </h3>
+              <h3 className="text-sm font-semibold uppercase">商品特征</h3>
               <span className="text-muted-foreground text-xs">类型 + 标签</span>
             </div>
 
             <div className="space-y-3">
               <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.28em] uppercase"
+                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
                 htmlFor="search-sidebar-goods-type"
               >
                 商品类型
@@ -143,7 +139,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
             </div>
 
             <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 标签
               </p>
               <div className="flex flex-wrap gap-2">
@@ -166,7 +162,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
                           type="checkbox"
                           value={tag.slug}
                         />
-                        <span className="hud-chip text-foreground/84 peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex px-3 py-1.5 text-sm transition hover:-translate-y-0.5">
+                        <span className="hud-chip text-foreground/84 peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex px-3 py-1.5 text-sm transition">
                           {tag.name}
                           <span className="text-muted-foreground ml-2 text-xs">
                             {tag.goodsCount}
@@ -187,9 +183,7 @@ export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
           {hasActiveFilters ? (
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-4">
-                <h3 className="text-sm font-semibold tracking-[0.18em] uppercase">
-                  当前过滤
-                </h3>
+                <h3 className="text-sm font-semibold uppercase">当前过滤</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 {controls.ipSlug ? (

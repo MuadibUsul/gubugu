@@ -9,7 +9,7 @@ export default function ForbiddenPage() {
         <section className="collection-panel w-full max-w-3xl px-6 py-7 sm:px-8 sm:py-9">
           <div className="space-y-5">
             <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                 无访问权限
               </p>
               <h1 className="font-heading text-foreground text-5xl leading-[0.94] sm:text-6xl">

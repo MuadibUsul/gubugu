@@ -33,7 +33,7 @@ function getStatDescription(stat: AdminStatisticCard) {
 export function AdminStatCard({ stat }: AdminStatCardProps) {
   return (
     <article className={`${toneClasses[stat.tone]} hud-card px-5 py-5`}>
-      <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+      <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
         {stat.label}
       </p>
       <p className="font-heading text-foreground mt-3 text-5xl leading-none">

@@ -48,7 +48,7 @@ export function GoodsCommunityPanel({
         <div className="collection-panel p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="space-y-2">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 评分概览
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -61,24 +61,24 @@ export function GoodsCommunityPanel({
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+            <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 总分
               </p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.averageScore?.toFixed(2) ?? 'N/A'}
               </p>
             </div>
-            <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+            <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 值得入手
               </p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
                 {community.ratingSummary.worthBuyingRate ?? 0}%
               </p>
             </div>
-            <div className="border-border/70 bg-background/78 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+            <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 我的评分
               </p>
               <p className="font-heading text-foreground mt-2 text-5xl leading-none">
@@ -99,7 +99,7 @@ export function GoodsCommunityPanel({
 
               return (
                 <div
-                  className="border-border/70 bg-background/74 rounded-[1.35rem] border px-4 py-4"
+                  className="border-border/70 bg-background/74 rounded-[var(--radius)] border px-4 py-4"
                   key={dimension.key}
                 >
                   <div className="flex items-center justify-between gap-4">
@@ -150,7 +150,7 @@ export function GoodsCommunityPanel({
         <div className="collection-panel p-5 sm:p-6">
           <div className="flex items-end justify-between gap-4">
             <div className="space-y-2">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 图片
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -166,7 +166,7 @@ export function GoodsCommunityPanel({
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {spotlightImages.slice(0, 6).map((image) => (
                 <div
-                  className="border-border/70 bg-background/80 overflow-hidden rounded-[1.4rem] border"
+                  className="border-border/70 bg-background/80 overflow-hidden rounded-[var(--radius)] border"
                   key={image.id}
                 >
                   <div className="relative aspect-[1/1]">
@@ -181,7 +181,7 @@ export function GoodsCommunityPanel({
               ))}
             </div>
           ) : (
-            <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[1.5rem] border border-dashed px-4 py-4 text-sm">
+            <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[var(--radius)] border border-dashed px-4 py-4 text-sm">
               暂无图片
             </div>
           )}
@@ -191,7 +191,7 @@ export function GoodsCommunityPanel({
       <div className="collection-panel p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               评论
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -207,12 +207,12 @@ export function GoodsCommunityPanel({
           <div className="mt-5 space-y-4">
             {community.posts.items.map((post) => (
               <article
-                className="border-border/70 bg-background/78 rounded-[1.6rem] border p-4"
+                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
                 key={post.id}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                    <p className="text-muted-foreground text-[0.68rem] uppercase">
                       收藏笔记
                     </p>
                     <p className="text-foreground mt-2 text-sm leading-7">
@@ -228,7 +228,7 @@ export function GoodsCommunityPanel({
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">
                     {post.images.map((image) => (
                       <div
-                        className="border-border/70 bg-card/72 overflow-hidden rounded-[1.2rem] border"
+                        className="border-border/70 bg-card/72 overflow-hidden rounded-[var(--radius)] border"
                         key={image.id}
                       >
                         <div className="relative aspect-[1/1]">
@@ -247,7 +247,7 @@ export function GoodsCommunityPanel({
             ))}
           </div>
         ) : (
-          <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[1.6rem] border border-dashed px-4 py-4 text-sm">
+          <div className="border-border/70 bg-background/74 text-muted-foreground mt-5 rounded-[var(--radius)] border border-dashed px-4 py-4 text-sm">
             暂无评论
           </div>
         )}

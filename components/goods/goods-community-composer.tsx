@@ -21,7 +21,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+      className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
       disabled={pending}
       type="submit"
     >
@@ -49,7 +49,7 @@ export function GoodsCommunityComposer({
       <div className="collection-panel p-5 sm:p-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               评论
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -74,7 +74,7 @@ export function GoodsCommunityComposer({
       <div className="space-y-5">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               评论
             </p>
             <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-xs">
@@ -87,7 +87,7 @@ export function GoodsCommunityComposer({
         </div>
 
         {hasPendingSubmission ? (
-          <div className="border-border/70 bg-accent/12 text-foreground rounded-[1.35rem] border px-4 py-4 text-sm">
+          <div className="border-border/70 bg-accent/12 text-foreground rounded-[var(--radius)] border px-4 py-4 text-sm">
             你有一条内容正在审核中。
           </div>
         ) : null}
@@ -98,13 +98,13 @@ export function GoodsCommunityComposer({
 
           <div className="space-y-3">
             <label
-              className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
+              className="text-muted-foreground block text-[0.68rem] font-semibold uppercase"
               htmlFor="goods-community-body"
             >
               内容
             </label>
             <textarea
-              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-32 w-full rounded-[1.4rem] border px-4 py-4 text-sm leading-7 transition outline-none focus-visible:ring-2"
+              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-32 w-full rounded-[var(--radius)] border px-4 py-4 text-sm leading-7 transition outline-none focus-visible:ring-2"
               id="goods-community-body"
               maxLength={1200}
               name="body"
@@ -115,14 +115,14 @@ export function GoodsCommunityComposer({
 
           <div className="space-y-3">
             <label
-              className="text-muted-foreground block text-[0.68rem] font-semibold tracking-[0.28em] uppercase"
+              className="text-muted-foreground block text-[0.68rem] font-semibold uppercase"
               htmlFor="goods-community-images"
             >
               图片
             </label>
             <input
               accept="image/*"
-              className="border-border/70 bg-background/82 file:bg-secondary file:text-secondary-foreground file:hover:bg-secondary/90 text-muted-foreground block w-full rounded-[1.4rem] border px-4 py-3 text-sm file:mr-4 file:rounded-full file:border-0 file:px-4 file:py-2 file:text-sm file:font-semibold"
+              className="border-border/70 bg-background/82 file:bg-secondary file:text-secondary-foreground file:hover:bg-secondary/90 text-muted-foreground block w-full rounded-[var(--radius)] border px-4 py-3 text-sm file:mr-4 file:rounded-full file:border-0 file:px-4 file:py-2 file:text-sm file:font-semibold"
               id="goods-community-images"
               multiple
               name="images"
@@ -153,7 +153,7 @@ export function GoodsCommunityComposer({
           </div>
 
           {state.status === 'error' && state.message ? (
-            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7">
+            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
               {state.message}
             </div>
           ) : null}

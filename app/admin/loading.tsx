@@ -1,7 +1,7 @@
 function LoadingBlock({ className }: { className: string }) {
   return (
     <div
-      className={`bg-muted/70 animate-pulse rounded-[1.4rem] ${className}`}
+      className={`bg-muted/70 animate-pulse rounded-[var(--radius)] ${className}`}
     />
   );
 }

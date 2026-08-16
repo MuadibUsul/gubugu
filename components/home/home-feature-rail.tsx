@@ -27,7 +27,7 @@ export function HomeFeatureRail() {
   return (
     <aside className="relative grid gap-4 xl:pt-[3.4rem]">
       <div className="space-y-4 px-1">
-        <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+        <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
           真实入口
         </p>
 
@@ -43,12 +43,12 @@ export function HomeFeatureRail() {
       <div className="grid gap-3">
         {entryPoints.map((item) => (
           <Link
-            className="panel-float rounded-[1.7rem] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_92%,transparent),color-mix(in_oklab,var(--surface-soft)_95%,var(--background)))] px-5 py-5"
+            className="panel-float rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_92%,transparent),color-mix(in_oklab,var(--surface-soft)_95%,var(--background)))] px-5 py-5"
             href={item.href}
             key={item.href}
           >
             <div className="space-y-3">
-              <p className="text-[0.66rem] font-semibold tracking-[0.26em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
+              <p className="text-[0.66rem] font-semibold text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
                 {item.eyebrow}
               </p>
               <h3 className="text-foreground text-xl leading-tight font-semibold">
@@ -62,8 +62,8 @@ export function HomeFeatureRail() {
         ))}
       </div>
 
-      <div className="rounded-[1.7rem] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-[color:color-mix(in_oklab,var(--card)_84%,var(--background))] p-4">
-        <p className="text-[0.68rem] font-semibold tracking-[0.3em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
+      <div className="rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-[color:color-mix(in_oklab,var(--card)_84%,var(--background))] p-4">
+        <p className="text-[0.68rem] font-semibold text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
           当前能力
         </p>
         <div className="mt-3 flex flex-wrap gap-2">

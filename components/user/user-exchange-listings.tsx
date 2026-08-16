@@ -27,7 +27,7 @@ export function UserExchangeListings({
       <div className="collection-panel p-6 sm:p-7">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               交换
             </p>
             <div>
@@ -68,7 +68,7 @@ export function UserExchangeListings({
               <div className="space-y-5">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase ${exchangeListingStatusMeta[item.status].toneClassName}`}
+                    className={`rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase ${exchangeListingStatusMeta[item.status].toneClassName}`}
                   >
                     {exchangeListingStatusMeta[item.status].label}
                   </span>
@@ -79,10 +79,10 @@ export function UserExchangeListings({
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Link
-                    className="border-border/70 bg-background/78 block rounded-[1.45rem] border p-4 transition hover:-translate-y-0.5"
+                    className="border-border/70 bg-background/78 block rounded-[var(--radius)] border p-4 transition"
                     href={`/goods/${item.offeredGoods.slug}`}
                   >
-                    <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                    <p className="text-muted-foreground text-[0.66rem] uppercase">
                       我有
                     </p>
                     <p className="text-foreground mt-2 text-sm font-semibold">
@@ -95,10 +95,10 @@ export function UserExchangeListings({
 
                   {item.wantedGoods ? (
                     <Link
-                      className="border-border/70 bg-card/76 block rounded-[1.45rem] border p-4 transition hover:-translate-y-0.5"
+                      className="border-border/70 bg-card/76 block rounded-[var(--radius)] border p-4 transition"
                       href={`/goods/${item.wantedGoods.slug}`}
                     >
-                      <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                      <p className="text-muted-foreground text-[0.66rem] uppercase">
                         想换
                       </p>
                       <p className="text-foreground mt-2 text-sm font-semibold">
@@ -109,7 +109,7 @@ export function UserExchangeListings({
                       </p>
                     </Link>
                   ) : (
-                    <div className="border-border/70 bg-card/76 text-muted-foreground rounded-[1.45rem] border border-dashed px-4 py-4 text-sm">
+                    <div className="border-border/70 bg-card/76 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-4 text-sm">
                       目标 SKU 暂未关联
                     </div>
                   )}
@@ -142,8 +142,8 @@ export function UserExchangeListings({
                 </div>
 
                 {item.conditionNote ? (
-                  <div className="border-border/70 bg-background/74 rounded-[1.25rem] border px-4 py-4">
-                    <p className="text-muted-foreground text-[0.66rem] tracking-[0.22em] uppercase">
+                  <div className="border-border/70 bg-background/74 rounded-[var(--radius)] border px-4 py-4">
+                    <p className="text-muted-foreground text-[0.66rem] uppercase">
                       品相
                     </p>
                     <p className="text-foreground mt-2 text-sm leading-7">
@@ -157,7 +157,7 @@ export function UserExchangeListings({
         </div>
       ) : (
         <div className="collection-panel p-6 sm:p-7">
-          <div className="border-border/65 bg-background/72 rounded-[1.6rem] border border-dashed px-5 py-8">
+          <div className="border-border/65 bg-background/72 rounded-[var(--radius)] border border-dashed px-5 py-8">
             <p className="text-muted-foreground text-sm">暂无交换意向</p>
           </div>
         </div>

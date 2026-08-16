@@ -21,7 +21,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
 
   return (
     <article
-      className={`panel-float group relative overflow-hidden rounded-[2rem] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-gradient-to-br ${getIpCardAccent(index)} p-6 shadow-[0_30px_78px_-42px_color-mix(in_oklab,var(--shadow-tint)_44%,transparent)]`}
+      className={`panel-float group relative overflow-hidden rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-gradient-to-br ${getIpCardAccent(index)} p-6`}
     >
       {/* Decorative backdrop at 18% opacity behind the card text, not content —
           it stays a background image, but the URL still has to be escaped or a
@@ -29,7 +29,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
       {coverUrl ? (
         <div
           aria-hidden="true"
-          className="absolute inset-y-0 right-0 w-[46%] bg-cover bg-center opacity-[0.18] transition duration-500 group-hover:scale-[1.02] group-hover:opacity-[0.24]"
+          className="absolute inset-y-0 right-0 w-[46%] bg-cover bg-center opacity-[0.14] transition duration-500 group-hover:opacity-[0.2]"
           style={{
             backgroundImage: `linear-gradient(270deg, transparent 0%, color-mix(in oklab, var(--background) 40%, transparent) 58%, color-mix(in oklab, var(--background) 96%, transparent) 100%), ${coverUrl}`,
           }}
@@ -40,7 +40,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
         <div className="max-w-[28rem] space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[0.68rem] font-semibold tracking-[0.34em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
+              <p className="text-[0.68rem] font-semibold text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
                 热门作品
               </p>
               <h3 className="font-heading text-foreground mt-3 text-4xl leading-none">
@@ -53,7 +53,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
               ) : null}
             </div>
 
-            <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+            <span className="hud-chip text-muted-foreground px-3 py-1 text-[0.68rem] font-semibold uppercase">
               作品入口
             </span>
           </div>
@@ -61,7 +61,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="hud-card px-4 py-3">
-            <p className="text-[0.68rem] tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
+            <p className="text-[0.68rem] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
               商品
             </p>
             <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -70,7 +70,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
           </div>
 
           <div className="hud-card px-4 py-3">
-            <p className="text-[0.68rem] tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
+            <p className="text-[0.68rem] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
               角色
             </p>
             <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -79,7 +79,7 @@ function HotIpCard({ ip, index }: { ip: HomeHotIp; index: number }) {
           </div>
 
           <div className="hud-card px-4 py-3">
-            <p className="text-[0.68rem] tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
+            <p className="text-[0.68rem] text-[color:color-mix(in_oklab,var(--foreground)_46%,var(--background))] uppercase">
               系列
             </p>
             <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -155,7 +155,7 @@ export async function HomeHotIpsSection() {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
-          <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+          <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
             世界观入口
           </p>
           <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">

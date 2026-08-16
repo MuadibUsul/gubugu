@@ -35,7 +35,7 @@ export function GoodsInfoPanels({ goods }: GoodsInfoPanelsProps) {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <span className="hud-chip text-muted-foreground px-3 py-1 text-xs tracking-[0.18em] uppercase">
+            <span className="hud-chip text-muted-foreground px-3 py-1 text-xs uppercase">
               {goods.goodsType}
             </span>
             <Link

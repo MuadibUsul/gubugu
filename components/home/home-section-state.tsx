@@ -30,7 +30,7 @@ export function HomeSectionState({
       <div className="relative flex h-full flex-col justify-between gap-6">
         <div className="space-y-3">
           {eyebrow ? (
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               {eyebrow}
             </p>
           ) : null}

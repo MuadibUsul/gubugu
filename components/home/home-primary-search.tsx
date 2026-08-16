@@ -71,7 +71,7 @@ export function HomePrimarySearch() {
           value={query}
         />
         <Button
-          className="h-16 rounded-[1.4rem] px-8 text-base"
+          className="h-16 rounded-[var(--radius)] px-8 text-base"
           onClick={() => submit(query)}
           size="lg"
           type="button"

@@ -58,7 +58,7 @@ export function UserCollectionShowcase({ data }: UserCollectionShowcaseProps) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <div className="space-y-5">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               Showcase
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
@@ -68,7 +68,7 @@ export function UserCollectionShowcase({ data }: UserCollectionShowcaseProps) {
 
           <div className="grid gap-3 md:grid-cols-3">
             <div className="hud-card px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 最近加入
               </p>
               <div className="mt-3 space-y-2">
@@ -76,7 +76,7 @@ export function UserCollectionShowcase({ data }: UserCollectionShowcaseProps) {
               </div>
             </div>
             <div className="hud-card px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 稀有条目
               </p>
               <div className="mt-3 space-y-2">
@@ -84,7 +84,7 @@ export function UserCollectionShowcase({ data }: UserCollectionShowcaseProps) {
               </div>
             </div>
             <div className="hud-card px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 偏爱收藏
               </p>
               <div className="mt-3 space-y-2">
@@ -95,7 +95,7 @@ export function UserCollectionShowcase({ data }: UserCollectionShowcaseProps) {
         </div>
 
         <div className="hud-card px-5 py-5">
-          <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+          <p className="text-muted-foreground text-[0.68rem] uppercase">
             收藏身份
           </p>
           <div className="mt-4 space-y-3">

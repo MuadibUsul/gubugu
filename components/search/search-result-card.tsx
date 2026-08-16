@@ -65,11 +65,11 @@ export function SearchResultCard({
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-wrap gap-2">
                 {isFeatured ? (
-                  <span className="hud-chip hud-chip--lit px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+                  <span className="hud-chip hud-chip--lit px-3 py-1 text-[0.68rem] font-semibold uppercase">
                     最佳匹配
                   </span>
                 ) : null}
-                <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+                <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold uppercase">
                   {item.skuCode}
                 </span>
               </div>
@@ -78,7 +78,7 @@ export function SearchResultCard({
               </span>
             </div>
 
-            <div className="hud-card max-w-[20rem] px-4 py-3 backdrop-blur">
+            <div className="hud-card max-w-[20rem] px-4 py-3">
               <p className="text-foreground text-sm font-semibold">
                 {item.series.name}
               </p>

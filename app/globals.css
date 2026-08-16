@@ -1,120 +1,130 @@
 @import 'tailwindcss';
 
+/* ============================================================================
+   金銀朱 — 漆器与和装书的配色。
+   两个强调色有明确分工，不是两种装饰：
+     朱 (--shu)  行为：主操作、当前项、入藏印（印泥本来就是朱）
+     金 (--kin)  拥有：已收录的格子、已拥有条目的装裱内衬、収蔵記録的达成印
+   「拥有」因此在视觉上本身就是贵重的，不靠额外装饰去暗示。
+   分隔靠细线与留白，不靠阴影、辉光或毛玻璃。
+   ========================================================================= */
+
 :root {
-  --background: oklch(0.17 0.018 8);
-  --foreground: oklch(0.93 0.018 56);
-  --card: oklch(0.25 0.02 12 / 82%);
-  --card-foreground: oklch(0.93 0.018 56);
-  --popover: oklch(0.22 0.018 10 / 94%);
-  --popover-foreground: oklch(0.93 0.018 56);
-  --primary: oklch(0.68 0.108 28);
-  --primary-foreground: oklch(0.97 0.01 70);
-  --secondary: oklch(0.42 0.034 22);
-  --secondary-foreground: oklch(0.93 0.018 56);
-  --muted: oklch(0.3 0.016 14);
-  --muted-foreground: oklch(0.76 0.02 40);
-  --accent: oklch(0.78 0.056 82);
-  --accent-foreground: oklch(0.18 0.014 14);
-  --destructive: oklch(0.64 0.18 24);
-  --border: oklch(0.38 0.018 16);
-  --input: oklch(0.28 0.018 12);
-  --ring: oklch(0.7 0.074 38);
-  --shadow-tint: oklch(0.11 0.02 12);
-  --surface-strong: oklch(0.22 0.018 12 / 94%);
-  --surface-soft: oklch(0.29 0.015 12 / 76%);
-  --surface-line: color-mix(in oklab, var(--accent) 20%, white 8%);
-  --surface-line-soft: color-mix(in oklab, var(--border) 90%, white 6%);
-  --panel-shadow: color-mix(in oklab, var(--shadow-tint) 74%, transparent);
-  --panel-glow: color-mix(in oklab, var(--primary) 10%, transparent);
-  --panel-glow-warm: color-mix(in oklab, var(--accent) 10%, transparent);
-  /* Every other surface token in this theme carries a warm tint — --muted is
-     oklch(0.3 0.016 14), a desaturated red rather than a grey. Dormant cards
-     need genuinely neutral surfaces (chroma 0) so an uncollected SKU reads as
-     grey next to the warm lit cards instead of merely darker. */
-  --dormant-surface: oklch(0.24 0 0);
-  --dormant-surface-soft: oklch(0.19 0 0);
-  --dormant-line: oklch(0.42 0 0);
-  --radius: 1.35rem;
-  --radius-card: clamp(1.5rem, 2.4vw, 1.9rem);
+  /* light-dark() 让每个 token 只声明一次，随 color-scheme 取值；
+     [data-theme] 只需翻转 color-scheme，不必重复整份调色板。 */
+  color-scheme: light dark;
+
+  /* 和紙 / 漆黒 */
+  --paper: light-dark(oklch(0.972 0.009 84), oklch(0.152 0.008 48));
+  --surface: light-dark(oklch(0.995 0.005 86), oklch(0.196 0.009 48));
+  --sunken: light-dark(oklch(0.945 0.01 84), oklch(0.128 0.007 48));
+
+  /* 墨 */
+  --ink: light-dark(oklch(0.19 0.012 55), oklch(0.955 0.006 80));
+  --ink-2: light-dark(oklch(0.44 0.012 55), oklch(0.715 0.008 70));
+  --ink-3: light-dark(oklch(0.615 0.01 60), oklch(0.545 0.008 65));
+
+  /* 线 */
+  --rule: light-dark(oklch(0.878 0.011 78), oklch(0.295 0.009 55));
+  --rule-2: light-dark(oklch(0.775 0.014 74), oklch(0.405 0.011 60));
+
+  /* 朱 */
+  --shu: light-dark(oklch(0.52 0.198 30), oklch(0.665 0.182 32));
+  --shu-ink: light-dark(oklch(1 0 0), oklch(0.145 0.02 30));
+  --shu-soft: light-dark(oklch(0.955 0.034 32), oklch(0.255 0.055 30));
+
+  /* 金 —— 古銅，不是亮黄 */
+  --kin: light-dark(oklch(0.66 0.096 82), oklch(0.775 0.105 84));
+  --kin-2: light-dark(oklch(0.78 0.07 84), oklch(0.66 0.085 82));
+  --kin-soft: light-dark(oklch(0.955 0.033 85), oklch(0.26 0.045 84));
+
+  --destructive: light-dark(oklch(0.52 0.2 25), oklch(0.68 0.17 25));
+
   --font-heading-family:
-    'Hiragino Mincho ProN', 'Yu Mincho', 'BIZ UDPMincho', 'Palatino Linotype',
-    Georgia, serif;
+    'Hiragino Mincho ProN', 'Yu Mincho', 'Songti SC', 'SimSun',
+    'Iowan Old Style', Georgia, serif;
   --font-body-family:
-    'Aptos', 'Segoe UI Variable Text', 'PingFang SC', 'Microsoft YaHei UI',
-    'Helvetica Neue', sans-serif;
-  --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
-  --duration-soft: 280ms;
+    'Inter', 'Segoe UI Variable Text', 'PingFang SC', 'Microsoft YaHei UI',
+    system-ui, sans-serif;
+  --font-mono-family:
+    ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+
+  /* 圆角克制到近乎直角，卡片读起来像印刷品而不是 UI 方块 */
+  --radius: 2px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --duration: 180ms;
 }
 
+/* 迁移别名。
+   组件里散落着对旧 token 的直接引用（--primary、--surface-strong…），
+   引用一个不存在的变量会让整条声明失效 —— 面板会变透明而不是报错，很难
+   发现。在组件逐个移植干净之前，这些别名把旧名映射到新体系上。
+   组件移植完成后应当整块删除。 */
+:root {
+  --primary: var(--shu);
+  --primary-foreground: var(--shu-ink);
+  --accent: var(--shu);
+  --accent-foreground: var(--shu-ink);
+  --secondary: var(--sunken);
+  --secondary-foreground: var(--ink);
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --muted: var(--sunken);
+  --muted-foreground: var(--ink-2);
+  --border: var(--rule);
+  --surface-strong: var(--surface);
+  --surface-soft: var(--sunken);
+  --surface-line: var(--rule);
+  --surface-line-soft: var(--rule);
+  --shadow-tint: transparent;
+  --panel-shadow: transparent;
+  --panel-glow: transparent;
+  --panel-glow-warm: transparent;
+  --ease-fluid: var(--ease);
+  --duration-soft: var(--duration);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* Tailwind 的语义色名保持不变，只是重新指向新调色板，既有工具类
+   （text-muted-foreground、border-border、bg-card…）无需改动即可换肤。 */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--shu);
+  --color-primary-foreground: var(--shu-ink);
+  --color-secondary: var(--sunken);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--sunken);
+  --color-muted-foreground: var(--ink-2);
+  --color-accent: var(--shu);
+  --color-accent-foreground: var(--shu-ink);
   --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 0.5rem);
-  --radius-md: calc(var(--radius) - 0.25rem);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 0.5rem);
+  --color-border: var(--rule);
+  --color-input: var(--rule-2);
+  --color-ring: var(--shu);
+  --color-kin: var(--kin);
+
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 3px;
+
   --font-sans: var(--font-body-family);
   --font-heading: var(--font-heading-family);
-  --shadow-soft: 0 28px 72px -36px
-    color-mix(in oklab, var(--panel-shadow) 78%, transparent);
-}
-
-@keyframes recognition-scan {
-  0% {
-    transform: translateY(-10%);
-    opacity: 0;
-  }
-
-  12% {
-    opacity: 1;
-  }
-
-  88% {
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(110%);
-    opacity: 0;
-  }
-}
-
-@keyframes ambient-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate3d(0, -2.5%, 0) scale(1.04);
-  }
-}
-
-@keyframes ambient-pulse {
-  0%,
-  100% {
-    opacity: 0.52;
-  }
-
-  50% {
-    opacity: 0.82;
-  }
+  --font-mono: var(--font-mono-family);
 }
 
 @layer base {
@@ -123,119 +133,84 @@
   }
 
   html {
-    color-scheme: dark;
-    background: var(--background);
+    background: var(--paper);
   }
 
   body {
     @apply bg-background text-foreground min-h-screen;
-    position: relative;
-    overflow-x: hidden;
-    background:
-      radial-gradient(
-        circle at 12% 12%,
-        color-mix(in oklab, var(--primary) 12%, transparent),
-        transparent 26%
-      ),
-      radial-gradient(
-        circle at 82% 10%,
-        color-mix(in oklab, var(--accent) 10%, transparent),
-        transparent 28%
-      ),
-      radial-gradient(
-        circle at 50% 100%,
-        color-mix(in oklab, var(--secondary) 16%, transparent),
-        transparent 32%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--background) 96%, black) 0%,
-        color-mix(in oklab, var(--background) 90%, black) 100%
-      );
-    background-attachment: fixed;
+    font-family: var(--font-body-family);
+    font-size: 15px;
+    line-height: 1.78;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  body::before,
-  body::after {
+  /* 和紙的纤维感。强度极低，只在大面积留白上隐约可辨；这是"有材质"与
+     "没有颜色"的区别，不是装饰图层。 */
+  body::before {
     content: '';
     position: fixed;
     inset: 0;
+    z-index: 0;
     pointer-events: none;
-  }
-
-  body::before {
-    z-index: 0;
-    opacity: 0.24;
+    opacity: 0.5;
     background-image:
-      radial-gradient(
-        circle at 18% 22%,
-        color-mix(in oklab, var(--accent) 34%, transparent) 0 1px,
-        transparent 1.6px
-      ),
-      radial-gradient(
-        circle at 36% 72%,
-        color-mix(in oklab, white 34%, transparent) 0 1px,
-        transparent 1.8px
-      ),
-      radial-gradient(
-        circle at 76% 28%,
-        color-mix(in oklab, var(--primary) 26%, transparent) 0 1.1px,
-        transparent 1.9px
-      );
-    animation: ambient-pulse 16s ease-in-out infinite;
-  }
-
-  body::after {
-    z-index: 0;
-    opacity: 0.18;
-    background-image:
-      linear-gradient(
+      repeating-linear-gradient(
         90deg,
-        color-mix(in oklab, var(--border) 30%, transparent) 1px,
-        transparent 1px
+        color-mix(in oklab, var(--ink) 2.5%, transparent) 0 1px,
+        transparent 1px 3px
       ),
-      linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--border) 22%, transparent) 1px,
-        transparent 1px
+      repeating-linear-gradient(
+        0deg,
+        color-mix(in oklab, var(--ink) 1.5%, transparent) 0 1px,
+        transparent 1px 4px
       );
-    background-size: 60px 60px;
-    mask-image: linear-gradient(
-      180deg,
-      transparent,
-      black 16%,
-      black 84%,
-      transparent
-    );
   }
 
   main,
   section,
   article,
   aside,
-  form {
+  form,
+  nav,
+  header,
+  footer {
     position: relative;
     z-index: 1;
   }
 
-  a,
-  button {
-    transition-property:
-      color, background-color, border-color, transform, box-shadow, opacity;
-    transition-duration: var(--duration-soft);
-    transition-timing-function: var(--ease-fluid);
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading-family);
+    font-weight: 600;
+    letter-spacing: -0.014em;
   }
 
   a {
     color: inherit;
+    text-decoration: none;
+    transition: color var(--duration) var(--ease);
   }
 
   a:hover {
-    color: color-mix(in oklab, var(--foreground) 92%, var(--accent));
+    color: var(--shu);
   }
 
-  :where(p, span, label).uppercase {
-    letter-spacing: 0.2em;
+  button {
+    transition:
+      border-color var(--duration) var(--ease),
+      color var(--duration) var(--ease),
+      background-color var(--duration) var(--ease);
+  }
+
+  /* 汉字不做 uppercase（对中文是空操作），也不拉字距 —— 旧设计对中文用了
+     0.2–0.34em 字距，那是字散架的直接原因。层级交给字号、字重与颜色。 */
+  :where(p, span, label, div, h1, h2, h3, h4, a, li).uppercase {
+    text-transform: none;
+    letter-spacing: normal;
   }
 
   :where(
@@ -245,28 +220,13 @@
     textarea,
     select
   ) {
-    border: 1px solid color-mix(in oklab, var(--border) 82%, white 8%);
-    border-radius: 1.15rem;
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--surface-strong) 82%, transparent) 0%,
-      color-mix(in oklab, var(--surface-soft) 86%, var(--background)) 100%
-    );
-    color: var(--foreground);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
-      0 18px 36px -32px color-mix(in oklab, var(--accent) 24%, transparent);
-    backdrop-filter: blur(18px);
-  }
-
-  :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not(
-        [type='file']
-      ),
-    textarea,
-    select
-  ):hover {
-    border-color: color-mix(in oklab, var(--accent) 36%, var(--border));
+    border: 1px solid var(--rule-2);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 10px 13px;
+    font: inherit;
+    font-size: 15px;
   }
 
   :where(
@@ -277,61 +237,42 @@
     select
   ):focus-visible {
     outline: none;
-    border-color: color-mix(in oklab, var(--accent) 52%, white 12%);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 20%, transparent),
-      0 0 0 1px color-mix(in oklab, var(--accent) 50%, transparent),
-      0 0 0 6px color-mix(in oklab, var(--accent) 18%, transparent),
-      0 24px 42px -28px color-mix(in oklab, var(--accent) 44%, transparent);
+    border-color: var(--shu);
+    box-shadow: 0 0 0 1px var(--shu);
   }
 
   :where(select) {
     appearance: none;
     background-image:
-      linear-gradient(
-        45deg,
-        transparent 50%,
-        color-mix(in oklab, var(--foreground) 72%, transparent) 50%
-      ),
-      linear-gradient(
-        135deg,
-        color-mix(in oklab, var(--foreground) 72%, transparent) 50%,
-        transparent 50%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--surface-strong) 82%, transparent) 0%,
-        color-mix(in oklab, var(--surface-soft) 86%, var(--background)) 100%
-      );
+      linear-gradient(45deg, transparent 50%, var(--ink-2) 50%),
+      linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
     background-position:
-      calc(100% - 1.15rem) calc(50% - 1px),
-      calc(100% - 0.85rem) calc(50% - 1px),
-      center;
+      calc(100% - 17px) calc(50% - 1px),
+      calc(100% - 12px) calc(50% - 1px);
     background-size:
-      0.4rem 0.4rem,
-      0.4rem 0.4rem,
-      auto;
+      5px 5px,
+      5px 5px;
     background-repeat: no-repeat;
-    padding-right: 2.8rem;
+    padding-right: 34px;
   }
 
   textarea {
-    min-height: 9rem;
+    min-height: 8rem;
     resize: vertical;
   }
 
   ::placeholder {
-    color: color-mix(in oklab, var(--muted-foreground) 82%, transparent);
+    color: var(--ink-3);
   }
 
   input[type='checkbox'],
   input[type='radio'] {
-    accent-color: color-mix(in oklab, var(--accent) 78%, var(--primary));
+    accent-color: var(--shu);
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--accent) 28%, transparent);
-    color: var(--foreground);
+    background: var(--shu);
+    color: var(--shu-ink);
   }
 }
 
@@ -340,281 +281,177 @@
     text-wrap: balance;
   }
 
-  .site-atmosphere {
-    pointer-events: none;
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-  }
-
-  .site-orb {
-    position: absolute;
-    border-radius: 999px;
-    filter: blur(36px);
-    opacity: 0.54;
-    animation: ambient-drift 24s ease-in-out infinite;
-  }
-
-  .site-orb--primary {
-    top: -10rem;
-    right: -8rem;
-    height: 28rem;
-    width: 28rem;
-    background: radial-gradient(
-      circle,
-      color-mix(in oklab, var(--primary) 26%, transparent),
-      transparent 68%
-    );
-  }
-
-  .site-orb--accent {
-    top: 22%;
-    left: -7rem;
-    height: 24rem;
-    width: 24rem;
-    animation-delay: -4s;
-    background: radial-gradient(
-      circle,
-      color-mix(in oklab, var(--accent) 18%, transparent),
-      transparent 70%
-    );
-  }
-
-  .site-orb--veil {
-    right: 16%;
-    bottom: -11rem;
-    height: 22rem;
-    width: 22rem;
-    animation-delay: -8s;
-    background: radial-gradient(
-      circle,
-      color-mix(in oklab, var(--secondary) 18%, transparent),
-      transparent 70%
-    );
-  }
-
+  /* 旧的环境层（光球、点阵、网格线、内框）已全部撤除。保留空规则是为了让仍
+     引用这些类名的标记不会残留尺寸或边框。 */
+  .site-atmosphere,
+  .site-orb,
   .site-frame {
-    position: absolute;
-    inset: 1.25rem;
-    border: 1px solid color-mix(in oklab, var(--border) 20%, transparent);
-    border-radius: 2.2rem;
-    opacity: 0.16;
-    mask-image: linear-gradient(
-      180deg,
-      transparent 0%,
-      black 14%,
-      black 84%,
-      transparent 100%
-    );
+    display: none !important;
   }
 
-  .collection-panel {
-    position: relative;
-    isolation: isolate;
-    border-radius: clamp(1.5rem, 3vw, 2rem);
-    border: 1px solid color-mix(in oklab, var(--border) 82%, white 8%);
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--surface-strong) 98%, transparent) 0%,
-      color-mix(in oklab, var(--surface-soft) 94%, var(--background)) 100%
-    );
-    box-shadow:
-      0 26px 64px -40px var(--panel-shadow),
-      0 0 0 1px color-mix(in oklab, white 3%, transparent) inset,
-      0 -24px 60px -72px var(--panel-glow) inset,
-      0 32px 86px -90px var(--panel-glow-warm) inset;
-    backdrop-filter: blur(20px) saturate(1.04);
+  /* ---------- 版式骨架 ---------- */
+
+  /* 画册的开页：左窄栏放标记，右主栏放内容 */
+  .spread {
+    display: grid;
+    grid-template-columns: 124px minmax(0, 1fr);
+    gap: 38px;
   }
 
-  .collection-panel > * {
-    position: relative;
-    z-index: 1;
+  @media (max-width: 900px) {
+    .spread {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
   }
 
-  .collection-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    border-radius: inherit;
-    background: linear-gradient(
-      135deg,
-      color-mix(in oklab, white 6%, transparent) 0%,
-      transparent 28%,
-      transparent 68%,
-      color-mix(in oklab, var(--primary) 8%, transparent) 100%
-    );
-    opacity: 0.5;
-    pointer-events: none;
+  .rail-jp {
+    writing-mode: vertical-rl;
+    font-family: var(--font-heading-family);
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 0.3em;
+    margin-top: 12px;
   }
 
-  .collection-panel::after {
-    content: '';
-    position: absolute;
-    top: 1rem;
-    left: 1.25rem;
-    right: 1.25rem;
-    z-index: 0;
+  @media (max-width: 900px) {
+    .rail-jp {
+      display: none;
+    }
+  }
+
+  /* 章节起首的一道金线 */
+  .rule-kin {
     height: 1px;
     background: linear-gradient(
       90deg,
-      transparent,
-      color-mix(in oklab, var(--surface-line) 82%, transparent),
+      var(--kin),
+      color-mix(in oklab, var(--kin) 22%, transparent) 62%,
       transparent
     );
-    pointer-events: none;
+  }
+
+  /* ---------- 排版 ---------- */
+
+  .eyebrow-label,
+  .meta-label,
+  .lbl {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--ink-3);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .num,
+  .sku-code {
+    font-family: var(--font-mono-family);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  /* 藏品编号：分母始终在场，提醒还有多少没收 */
+  .accession {
+    font-family: var(--font-mono-family);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+
+  .accession b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .accession i {
+    color: var(--ink-3);
+    font-style: normal;
+  }
+
+  /* ---------- 面板 ---------- */
+
+  .collection-panel,
+  .panel {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
   }
 
   .panel-float {
-    transition:
-      transform var(--duration-soft) var(--ease-fluid),
-      box-shadow var(--duration-soft) var(--ease-fluid),
-      border-color var(--duration-soft) var(--ease-fluid);
+    transition: border-color var(--duration) var(--ease);
   }
 
   .panel-float:hover {
-    transform: translateY(-4px);
-    border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
-    box-shadow:
-      0 30px 76px -44px var(--panel-shadow),
-      0 0 0 1px color-mix(in oklab, white 4%, transparent) inset,
-      0 -30px 76px -86px var(--panel-glow) inset,
-      0 38px 96px -98px var(--panel-glow-warm) inset;
+    border-color: var(--rule-2);
   }
 
-  /* Shared shell for every goods card (search results, character wall, user
-     shelf). These cards previously each hand-rolled the same arbitrary-value
-     Tailwind strings, so a visual change had to be repeated in four files. */
+  /* ---------- 芯片 ---------- */
+
+  .hud-chip,
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .hud-chip:hover,
+  .chip:hover {
+    border-color: var(--rule-2);
+    color: var(--ink);
+  }
+
+  .hud-chip--lit,
+  .chip--on {
+    background: var(--shu);
+    border-color: var(--shu);
+    color: var(--shu-ink);
+  }
+
+  .hud-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  /* ---------- 商品卡：装裱 ----------
+     外细线 + 内衬留白 + 图。已拥有的内衬转金 —— 同一个结构，材质不同。 */
+
   .goods-card {
     position: relative;
     isolation: isolate;
-    overflow: hidden;
-    border-radius: var(--radius-card);
-    border: 1px solid color-mix(in oklab, var(--border) 86%, white 6%);
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--surface-strong) 90%, transparent) 0%,
-      color-mix(in oklab, var(--surface-soft) 88%, var(--background)) 100%
-    );
-    box-shadow:
-      0 26px 72px -44px var(--panel-shadow),
-      inset 0 1px 0 color-mix(in oklab, white 7%, transparent);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 7px;
     transition:
-      transform var(--duration-soft) var(--ease-fluid),
-      box-shadow var(--duration-soft) var(--ease-fluid),
-      border-color var(--duration-soft) var(--ease-fluid);
-  }
-
-  /* The diagonal sheen that makes the card read as a physical object. */
-  .goods-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    border-radius: inherit;
-    background: linear-gradient(
-      135deg,
-      transparent 0%,
-      color-mix(in oklab, white 14%, transparent) 42%,
-      transparent 100%
-    );
-    opacity: 0.6;
-    transition: opacity var(--duration-soft) var(--ease-fluid);
+      border-color 200ms var(--ease),
+      background-color 520ms var(--ease);
   }
 
   .goods-card:hover {
-    transform: translateY(-4px);
-    box-shadow:
-      0 34px 86px -44px var(--panel-shadow),
-      inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
+    border-color: var(--rule-2);
   }
 
-  .goods-card:hover::before {
-    opacity: 0.85;
-  }
-
-  /* Owned / lit. A lit collectible emits light, so the card body stays dark and
-     gains an accent rim plus outer glow. Mixing the surface toward white (the
-     previous treatment) reads as faded rather than lit on a dark theme. */
-  .goods-card--lit {
-    border-color: color-mix(in oklab, var(--accent) 48%, var(--border));
-    box-shadow:
-      0 26px 72px -44px var(--panel-shadow),
-      0 0 0 1px color-mix(in oklab, var(--accent) 26%, transparent) inset,
-      inset 0 1px 0 color-mix(in oklab, var(--accent) 30%, white 40%),
-      0 22px 68px -40px color-mix(in oklab, var(--accent) 40%, transparent);
-  }
-
-  .goods-card--lit:hover {
-    border-color: color-mix(in oklab, var(--accent) 62%, var(--border));
-    box-shadow:
-      0 34px 86px -44px var(--panel-shadow),
-      0 0 0 1px color-mix(in oklab, var(--accent) 34%, transparent) inset,
-      inset 0 1px 0 color-mix(in oklab, var(--accent) 38%, white 46%),
-      0 30px 84px -38px color-mix(in oklab, var(--accent) 52%, transparent);
-  }
-
-  /* The emissive top edge — the actual "lit" tell, readable at grid scale. */
-  .goods-card--lit::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 12%;
-    right: 12%;
-    z-index: 3;
-    height: 1px;
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in oklab, var(--accent) 78%, white) 50%,
-      transparent
-    );
-    box-shadow: 0 0 18px -2px
-      color-mix(in oklab, var(--accent) 62%, transparent);
-  }
-
-  /* Not owned. Reads as an empty slot in the binder rather than a second
-     equally-bright card. */
-  .goods-card--dormant {
-    border-color: var(--dormant-line);
-    background: linear-gradient(
-      180deg,
-      var(--dormant-surface) 0%,
-      var(--dormant-surface-soft) 100%
-    );
-    box-shadow:
-      0 24px 66px -46px var(--panel-shadow),
-      inset 0 1px 0 color-mix(in oklab, white 4%, transparent);
-  }
-
-  /* Chips inside a dormant card inherit the warm hud-chip surface; flatten them
-     so the whole card reads as one dormant object rather than a grey card with
-     warm jewellery on it. */
-  .goods-card--dormant .hud-chip,
-  .goods-card--dormant .hud-card {
-    border-color: color-mix(in oklab, var(--dormant-line) 76%, transparent);
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--dormant-surface) 88%, white 6%) 0%,
-      var(--dormant-surface-soft) 100%
-    );
-    color: color-mix(in oklab, white 62%, var(--dormant-line));
-  }
-
-  .goods-card--dormant:hover {
-    border-color: color-mix(in oklab, var(--primary) 26%, var(--border));
-  }
-
-  /* Art plate. Holds a real <img>/next-image element rather than a CSS
-     background, so the art gets lazy loading, a srcset and an alt text. The
-     lighting treatment stays here so it is not rebuilt at each call site. */
   .goods-card__art {
     position: relative;
     overflow: hidden;
-    background-color: color-mix(in oklab, var(--background) 86%, var(--card));
+    background: var(--sunken);
+    outline: 1px solid var(--rule);
+    outline-offset: 0;
+    transition: outline-color 520ms var(--ease);
+  }
+
+  /* 已拥有：装裱内衬转金 */
+  .goods-card--lit .goods-card__art {
+    outline-color: color-mix(in oklab, var(--kin) 62%, var(--rule));
   }
 
   .goods-card__art-image {
@@ -626,207 +463,477 @@
     object-fit: cover;
     object-position: center;
     transition:
-      filter var(--duration-soft) var(--ease-fluid),
-      transform 620ms var(--ease-fluid);
+      transform 640ms var(--ease),
+      filter 720ms var(--ease);
   }
 
   .goods-card:hover .goods-card__art-image {
-    transform: scale(1.045);
+    transform: scale(1.035);
   }
 
-  /* Dormant art goes fully grey. Partial desaturation left the colour still
-     readable, so an uncollected SKU sat too close to a collected one at grid
-     scale; the wall has to be scannable at a glance. Hover brings the colour
-     part of the way back as a preview of the lit state. */
+  /* 未收录：图片退成背景，整卡沉进 sunken 底 —— 读起来是收藏册上的空格 */
+  .goods-card--dormant {
+    background: var(--sunken);
+  }
+
   .goods-card--dormant .goods-card__art-image {
-    filter: grayscale(1) brightness(0.58) contrast(0.92);
+    filter: grayscale(1) opacity(0.3);
   }
 
   .goods-card--dormant:hover .goods-card__art-image {
-    filter: grayscale(0.35) brightness(0.86) contrast(0.97);
+    filter: grayscale(0.2) opacity(0.78);
   }
 
-  /* Sits above the art so the gradient never washes out the overlaid chips. */
-  .goods-card__art::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--accent) 12%, transparent) 0%,
-      transparent 34%,
-      color-mix(in oklab, var(--background) 80%, var(--card)) 100%
-    );
-  }
-
-  .goods-card--lit .goods-card__art::after {
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--accent) 20%, transparent) 0%,
-      transparent 36%,
-      color-mix(in oklab, var(--background) 76%, var(--card)) 100%
-    );
-  }
-
-  /* The shared gradient carries an accent tint at the top. Left in place it
-     puts warm light back over art that was just made grey, which is what kept
-     the two states looking alike. Neutralise it for dormant cards. */
-  .goods-card--dormant .goods-card__art::after {
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--dormant-line) 22%, transparent) 0%,
-      transparent 34%,
-      var(--dormant-surface-soft) 100%
-    );
-  }
-
-  /* Applied to the content wrapper only. A `> *` rule here would also hit the
-     absolutely-positioned overlay link the search card lays over the art and
-     force it back to static flow, destroying the click target. */
   .goods-card__art-content {
     position: relative;
     z-index: 2;
   }
 
-  /* Detail-page gallery. The card gradient exists to keep overlaid chips
-     readable; there are none here, and darkening the lower third of a product
-     shot works against the one screen where the object itself is the subject.
-     Swap it for a display-case sheen. */
-  .goods-plate .goods-card__art::after {
-    background:
-      linear-gradient(
-        135deg,
-        transparent 0%,
-        color-mix(in oklab, white 12%, transparent) 44%,
-        transparent 100%
-      ),
-      radial-gradient(
-        ellipse at 50% 108%,
-        color-mix(in oklab, var(--accent) 16%, transparent),
-        transparent 62%
-      );
+  /* 画册式编号，压在图片左上角 */
+  .goods-card__no {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+    background: var(--surface);
+    color: var(--ink-3);
+    font-family: var(--font-mono-family);
+    font-size: 10.5px;
+    line-height: 1.4;
+    padding: 4px 8px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    transition: all 420ms var(--ease);
+  }
+
+  /* 未收录卡片上编号提到最显眼的位置 */
+  .goods-card--dormant .goods-card__no {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ink-2);
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+
+  /* ---------- 朱印 ---------- */
+
+  .seal {
+    position: absolute;
+    right: 9px;
+    top: 9px;
+    z-index: 3;
+    width: 29px;
+    height: 29px;
+    border-radius: 50%;
+    background: var(--shu);
+    color: var(--shu-ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading-family);
+    font-size: 13.5px;
+    line-height: 1;
+    /* 朱印落在金环里 */
+    box-shadow:
+      0 0 0 3px var(--surface),
+      0 0 0 4px color-mix(in oklab, var(--kin) 45%, transparent);
+    pointer-events: none;
+  }
+
+  @keyframes seal-stamp {
+    0% {
+      transform: scale(2) rotate(-12deg);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(0.92) rotate(2deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) rotate(0);
+      opacity: 1;
+    }
+  }
+
+  .seal--stamp {
+    animation: seal-stamp 420ms var(--ease);
+  }
+
+  /* 印泥扩散的一圈 */
+  .seal::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid var(--shu);
+    opacity: 0;
+  }
+
+  @keyframes ink-spread {
+    0% {
+      transform: scale(0.7);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(2.3);
+      opacity: 0;
+    }
+  }
+
+  .seal--stamp::after {
+    animation: ink-spread 580ms var(--ease) 100ms;
+  }
+
+  /* ---------- 収蔵日 ---------- */
+
+  .acquired {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--font-mono-family);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .acquired::before {
+    content: '収蔵';
+    font-family: var(--font-heading-family);
+    font-size: 11px;
+    color: var(--kin-2);
+  }
+
+  /* ---------- 收集条 ----------
+     一格一件，金＝已收录。整排扫一眼就知道差多少 —— 图鉴的驱动力来自
+     看得见的缺口，不是抽象的百分比。 */
+
+  .slot-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .slot {
+    width: 15px;
+    height: 19px;
+    border: 1px solid var(--rule-2);
+    border-radius: 1px;
+    background: transparent;
+    transition:
+      background-color 460ms var(--ease),
+      border-color 460ms var(--ease),
+      box-shadow 460ms var(--ease);
+  }
+
+  .slot--filled {
+    background: var(--kin);
+    border-color: color-mix(in oklab, var(--kin) 72%, var(--ink));
+    box-shadow: inset 0 1px 0 color-mix(in oklab, white 40%, transparent);
+  }
+
+  /* 新填的那格从下往上渗实，不弹跳 */
+  @keyframes slot-ink-fill {
+    0% {
+      clip-path: inset(100% 0 0 0);
+    }
+    100% {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  .slot--just {
+    animation: slot-ink-fill 460ms var(--ease);
+  }
+
+  .slot--current {
+    outline: 1px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  /* ---------- 状态与进度 ---------- */
+
+  .state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  .state--lit {
+    color: var(--shu);
+  }
+
+  .state--off {
+    color: var(--ink-3);
+  }
+
+  .meter-value {
+    font-family: var(--font-heading-family);
+    font-size: 52px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    display: block;
+    color: var(--ink);
+  }
+
+  .meter-value em {
+    font-style: normal;
+    color: var(--kin);
+  }
+
+  /* 差额提示：把"还差几件"做成一句有分量的话，而不是一个小数字 */
+  .gap-callout {
+    font-family: var(--font-heading-family);
+    font-size: 19px;
+    color: var(--ink);
+  }
+
+  .gap-callout b {
+    color: var(--shu);
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .bar {
+    height: 2px;
+    background: var(--rule);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bar > span {
+    display: block;
+    height: 100%;
+    background: var(--kin);
+  }
+
+  /* 系列进度行 */
+  .series-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .series-row:last-child {
+    border-bottom: 0;
+  }
+
+  .series-row__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+  }
+
+  .series-row__count {
+    font-family: var(--font-mono-family);
+    font-size: 12.5px;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  /* ---------- 収蔵記録 ----------
+     登录簿，不是奖章。用和规格表相同的细线、和藏品编号相同的等宽数字。 */
+
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .ledger th {
+    text-align: left;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--ink-3);
+    padding: 0 0 9px;
+    border-bottom: 1px solid var(--rule-2);
+  }
+
+  .ledger td {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+
+  .ledger__no {
+    font-family: var(--font-mono-family);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    width: 52px;
+  }
+
+  .ledger__name {
+    font-family: var(--font-heading-family);
+    font-size: 15.5px;
+    font-weight: 600;
+  }
+
+  .ledger__cond {
+    color: var(--ink-3);
+    font-size: 12.5px;
+  }
+
+  .ledger__date {
+    font-family: var(--font-mono-family);
+    font-size: 12px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .ledger tr.is-pending .ledger__name {
+    color: var(--ink-3);
+    font-weight: 400;
+  }
+
+  .ledger tr.is-pending .ledger__date {
+    color: var(--ink-3);
+  }
+
+  /* 达成 —— 行首一枚金印 */
+  .ledger tr.is-done .ledger__no::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: var(--kin);
+    border: 1px solid color-mix(in oklab, var(--kin) 70%, var(--ink));
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+
+  .ledger tr.is-done .ledger__date {
+    color: var(--ink);
+  }
+
+  @keyframes row-gild {
+    0% {
+      background: var(--kin-soft);
+    }
+    100% {
+      background: transparent;
+    }
+  }
+
+  .ledger tr.is-just {
+    animation: row-gild 1800ms var(--ease);
+  }
+
+  /* 記録纸条 */
+  .slip {
+    background: var(--surface);
+    border: 1px solid var(--rule-2);
+    border-left: 2px solid var(--kin);
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 13px;
+    min-width: 280px;
+  }
+
+  @keyframes slip-in {
+    0% {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .slip {
+    animation: slip-in 300ms var(--ease);
+  }
+
+  /* ---------- 详情页图版 ---------- */
+
+  .goods-plate {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 11px;
   }
 
   .goods-plate .goods-card__art {
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 12%, transparent),
-      inset 0 0 42px -18px color-mix(in oklab, var(--accent) 40%, transparent);
+    background: var(--sunken);
   }
 
-  .hud-chip {
-    border: 1px solid color-mix(in oklab, var(--border) 90%, white 6%);
-    border-radius: 999px;
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--surface-strong) 72%, transparent) 0%,
-      color-mix(in oklab, var(--surface-soft) 88%, var(--background)) 100%
-    );
-    box-shadow: inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
-    backdrop-filter: blur(10px);
-  }
+  /* ---------- 规格表 ---------- */
 
-  /* Accent chip for lit / owned state. Tints toward the accent instead of
-     toward white, so it stays legible against the dark card. */
-  .hud-chip--lit {
-    border-color: color-mix(in oklab, var(--accent) 56%, var(--border));
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--accent) 26%, var(--surface-strong)) 0%,
-      color-mix(in oklab, var(--accent) 14%, var(--surface-soft)) 100%
-    );
-    color: color-mix(in oklab, var(--foreground) 88%, var(--accent));
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 16%, transparent),
-      0 0 18px -6px color-mix(in oklab, var(--accent) 54%, transparent);
-  }
-
-  .hud-card {
-    border: 1px solid color-mix(in oklab, var(--border) 88%, white 6%);
-    border-radius: 1.45rem;
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--surface-strong) 80%, transparent) 0%,
-      color-mix(in oklab, var(--surface-soft) 82%, var(--background)) 100%
-    );
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 9%, transparent),
-      0 18px 40px -38px color-mix(in oklab, var(--primary) 14%, transparent);
-  }
-
-  .ui-field {
+  .spec-table {
     width: 100%;
-    border-radius: 1.15rem;
+    border-collapse: collapse;
+    font-size: 14px;
   }
 
-  .ui-field-lg {
-    width: 100%;
-    border-radius: 1.35rem;
+  .spec-table th,
+  .spec-table td {
+    text-align: left;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
   }
 
-  .eyebrow-label {
-    font-size: 0.78rem;
+  .spec-table th {
+    color: var(--ink-3);
+    font-weight: 400;
+    width: 88px;
+    white-space: nowrap;
+  }
+
+  /* ---------- 空状态 ---------- */
+
+  .empty-state {
+    border: 1px dashed var(--rule-2);
+    background: var(--sunken);
+    padding: 28px;
+    text-align: center;
+    color: var(--ink-2);
+    font-size: 14px;
+    border-radius: var(--radius);
+  }
+
+  .empty-state strong {
+    display: block;
+    font-family: var(--font-heading-family);
+    font-size: 17px;
     font-weight: 600;
-    letter-spacing: 0.24em;
-    line-height: 1.5;
-    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 6px;
   }
 
-  .meta-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    line-height: 1.45;
-    text-transform: uppercase;
+  /* ---------- 提示 ---------- */
+
+  .callout {
+    background: var(--shu-soft);
+    border-left: 2px solid var(--shu);
+    padding: 14px 18px;
+    font-size: 13.5px;
+    color: var(--ink);
   }
+
+  .callout--kin {
+    background: var(--kin-soft);
+    border-left-color: var(--kin);
+  }
+
+  /* ---------- 识别 ---------- */
 
   .recognition-grid {
     background-image:
-      linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--accent) 8%, transparent),
-        transparent 32%
-      ),
-      linear-gradient(
-        0deg,
-        color-mix(in oklab, var(--primary) 8%, transparent),
-        transparent 32%
-      ),
-      linear-gradient(
-        90deg,
-        color-mix(in oklab, var(--border) 20%, transparent) 1px,
-        transparent 1px
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--border) 18%, transparent) 1px,
-        transparent 1px
-      );
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px),
+      linear-gradient(180deg, var(--rule) 1px, transparent 1px);
     background-position: center;
     background-size:
-      auto,
-      auto,
-      28px 28px,
-      28px 28px;
+      32px 32px,
+      32px 32px;
   }
 
   .recognition-scan-line::after {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    top: 0;
-    height: 22%;
-    border-radius: 999px;
-    background: linear-gradient(
-      180deg,
-      transparent 0%,
-      color-mix(in oklab, var(--accent) 60%, white) 48%,
-      transparent 100%
-    );
-    box-shadow:
-      0 0 0 1px color-mix(in oklab, white 16%, transparent),
-      0 0 56px -18px color-mix(in oklab, var(--accent) 50%, transparent);
-    animation: recognition-scan 3.4s ease-in-out infinite;
+    content: none;
   }
 }
 

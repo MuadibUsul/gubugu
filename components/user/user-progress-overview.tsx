@@ -21,7 +21,7 @@ export function UserProgressOverview({ data }: UserProgressOverviewProps) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)]">
         <div className="space-y-5">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               Progress
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
@@ -30,8 +30,8 @@ export function UserProgressOverview({ data }: UserProgressOverviewProps) {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
-            <div className="border-border/65 bg-card/74 rounded-[1.8rem] border p-5">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/74 rounded-[var(--radius)] border p-5">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                 完成度
               </p>
               <div className="mt-4 flex items-end gap-3">
@@ -47,9 +47,9 @@ export function UserProgressOverview({ data }: UserProgressOverviewProps) {
               </p>
             </div>
 
-            <div className="border-border/65 bg-background/74 rounded-[1.8rem] border p-5">
+            <div className="border-border/65 bg-background/74 rounded-[var(--radius)] border p-5">
               <div className="flex items-center justify-between gap-4">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   收藏进度
                 </p>
                 <span className="text-muted-foreground text-sm">
@@ -60,24 +60,24 @@ export function UserProgressOverview({ data }: UserProgressOverviewProps) {
                 <ProgressBar value={data.summary.litProgressPercentage} />
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="border-border/60 bg-card/74 rounded-[1.3rem] border px-4 py-3">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                <div className="border-border/60 bg-card/74 rounded-[var(--radius)] border px-4 py-3">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     已追踪
                   </p>
                   <p className="font-heading text-foreground mt-2 text-3xl leading-none">
                     {data.summary.trackedGoodsCount}
                   </p>
                 </div>
-                <div className="border-border/60 bg-card/74 rounded-[1.3rem] border px-4 py-3">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                <div className="border-border/60 bg-card/74 rounded-[var(--radius)] border px-4 py-3">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     图片
                   </p>
                   <p className="font-heading text-foreground mt-2 text-3xl leading-none">
                     {data.summary.visiblePhotoCount}
                   </p>
                 </div>
-                <div className="border-border/60 bg-card/74 rounded-[1.3rem] border px-4 py-3">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                <div className="border-border/60 bg-card/74 rounded-[var(--radius)] border px-4 py-3">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     评分
                   </p>
                   <p className="font-heading text-foreground mt-2 text-3xl leading-none">
@@ -90,12 +90,12 @@ export function UserProgressOverview({ data }: UserProgressOverviewProps) {
         </div>
 
         <aside className="space-y-4">
-          <div className="border-border/65 bg-card/74 rounded-[1.8rem] border p-5">
-            <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.28em] uppercase">
+          <div className="border-border/65 bg-card/74 rounded-[var(--radius)] border p-5">
+            <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
               当前结构
             </p>
             <div className="mt-4 grid gap-3">
-              <div className="border-border/60 bg-background/76 rounded-[1.35rem] border px-4 py-3">
+              <div className="border-border/60 bg-background/76 rounded-[var(--radius)] border px-4 py-3">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-muted-foreground text-sm">已拥有</span>
                   <span className="text-foreground text-sm font-semibold">
@@ -103,7 +103,7 @@ export function UserProgressOverview({ data }: UserProgressOverviewProps) {
                   </span>
                 </div>
               </div>
-              <div className="border-border/60 bg-background/76 rounded-[1.35rem] border px-4 py-3">
+              <div className="border-border/60 bg-background/76 rounded-[var(--radius)] border px-4 py-3">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-muted-foreground text-sm">想要</span>
                   <span className="text-foreground text-sm font-semibold">
@@ -111,7 +111,7 @@ export function UserProgressOverview({ data }: UserProgressOverviewProps) {
                   </span>
                 </div>
               </div>
-              <div className="border-border/60 bg-background/76 rounded-[1.35rem] border px-4 py-3">
+              <div className="border-border/60 bg-background/76 rounded-[var(--radius)] border px-4 py-3">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-muted-foreground text-sm">可交换</span>
                   <span className="text-foreground text-sm font-semibold">

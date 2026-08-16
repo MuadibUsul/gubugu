@@ -27,9 +27,9 @@ export function PageViewSwitch({ items, className }: PageViewSwitchProps) {
       {items.map((item) => (
         <Link
           className={cn(
-            'group min-w-0 basis-full rounded-[1.4rem] border px-4 py-3 transition duration-300 sm:basis-[calc(50%-0.375rem)] lg:flex-1',
+            'group min-w-0 basis-full rounded-[var(--radius)] border px-4 py-3 transition duration-300 sm:basis-[calc(50%-0.375rem)] lg:flex-1',
             item.active
-              ? 'border-[color:color-mix(in_oklab,var(--accent)_52%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,white),color-mix(in_oklab,var(--background)_88%,var(--card)))] shadow-[0_18px_40px_-28px_color-mix(in_oklab,var(--accent)_30%,transparent)]'
+              ? 'border-[color:color-mix(in_oklab,var(--accent)_52%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,white),color-mix(in_oklab,var(--background)_88%,var(--card)))]'
               : 'border-border/70 bg-background/72 hover:bg-card/82 hover:border-[color:color-mix(in_oklab,var(--primary)_28%,var(--border))]',
           )}
           href={item.href}

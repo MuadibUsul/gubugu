@@ -23,11 +23,11 @@ type AdminCatalogEditorFormProps = {
 };
 
 const inputClassName =
-  'border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[1rem] border px-4 text-sm outline-none focus-visible:ring-2';
+  'border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 w-full rounded-[var(--radius)] border px-4 text-sm outline-none focus-visible:ring-2';
 const textareaClassName =
-  'border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-32 w-full rounded-[1rem] border px-4 py-3 text-sm outline-none focus-visible:ring-2';
+  'border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-32 w-full rounded-[var(--radius)] border px-4 py-3 text-sm outline-none focus-visible:ring-2';
 const labelClassName =
-  'text-muted-foreground block text-[0.7rem] font-semibold tracking-[0.24em] uppercase';
+  'text-muted-foreground block text-[0.7rem] font-semibold uppercase';
 
 function formatDateInputValue(value: Date | null) {
   if (!value) {
@@ -73,7 +73,7 @@ export function AdminCatalogEditorForm({
     <section className="collection-panel p-5 sm:p-6">
       <div className="space-y-5">
         <div className="space-y-2">
-          <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+          <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
             编辑器
           </p>
           <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -270,14 +270,14 @@ export function AdminCatalogEditorForm({
           </section>
 
           {state.message ? (
-            <div className="border-destructive/30 bg-destructive/8 rounded-[1.2rem] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
+            <div className="border-destructive/30 bg-destructive/8 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
               {state.message}
             </div>
           ) : null}
 
           <div className="flex flex-wrap gap-3">
             <button
-              className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition"
               type="submit"
             >
               {editorMode === 'create' ? '创建记录' : '保存修改'}

@@ -21,7 +21,7 @@ function StatusPill({
   return (
     <span
       className={cn(
-        'rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase',
+        'rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase',
         moderationStatusMeta[status].toneClassName,
         className,
       )}
@@ -65,7 +65,7 @@ function QueueSection({
     <article className="collection-panel p-5 sm:p-6">
       <div className="space-y-5">
         <div className="space-y-2">
-          <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+          <p className="text-muted-foreground text-[0.68rem] uppercase">
             {eyebrow}
           </p>
           <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -79,7 +79,7 @@ function QueueSection({
         {children.length > 0 ? (
           <div className="space-y-3">{children}</div>
         ) : (
-          <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.45rem] border border-dashed px-4 py-4 text-sm leading-7">
+          <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-4 text-sm leading-7">
             {emptyLabel}
           </div>
         )}
@@ -106,7 +106,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
           <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
             <div className="space-y-5">
               <div className="flex flex-wrap gap-2">
-                <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm tracking-[0.18em] uppercase">
+                <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm uppercase">
                   审核中心
                 </span>
                 <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm">
@@ -115,7 +115,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
               </div>
 
               <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   审核流程
                 </p>
                 <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
@@ -126,7 +126,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 </p>
               </div>
 
-              <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.6rem] border px-5 py-4 text-sm leading-7">
+              <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border px-5 py-4 text-sm leading-7">
                 {data.mode === 'live'
                   ? '审核结果会同步影响公开页面中的评论、图片、交换意向和图鉴提案展示。'
                   : '当前审核数据暂时不可用，页面已切换为简版队列概览。'}
@@ -136,7 +136,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
             <aside className="grid gap-3">
               {moderationStatusValues.map((status) => (
                 <div
-                  className="border-border/70 bg-background/78 rounded-[1.55rem] border px-5 py-5"
+                  className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5"
                   key={status}
                 >
                   <StatusPill status={status} />
@@ -154,7 +154,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
             <article className="collection-panel p-5 sm:p-6" key={module.key}>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     队列模块
                   </p>
                   <h2 className="font-heading text-foreground text-3xl leading-none">
@@ -168,7 +168,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 <div className="grid gap-2">
                   {moderationStatusValues.map((status) => (
                     <div
-                      className="border-border/70 bg-background/76 flex items-center justify-between rounded-[1.15rem] border px-4 py-3"
+                      className="border-border/70 bg-background/76 flex items-center justify-between rounded-[var(--radius)] border px-4 py-3"
                       key={status}
                     >
                       <StatusPill className="text-[0.6rem]" status={status} />
@@ -197,7 +197,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
           >
             {data.catalogSubmissions.items.map((item) => (
               <article
-                className="border-border/70 bg-background/78 rounded-[1.45rem] border p-4"
+                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
                 key={item.id}
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -227,7 +227,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 </p>
 
                 {item.reviewNote ? (
-                  <div className="border-border/70 bg-card/74 mt-4 rounded-[1.1rem] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
+                  <div className="border-border/70 bg-card/74 mt-4 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
                     {item.reviewNote}
                   </div>
                 ) : null}
@@ -254,12 +254,12 @@ export function ModerationShell({ data }: ModerationShellProps) {
           >
             {data.photoUploads.items.map((item) => (
               <article
-                className="border-border/70 bg-background/78 overflow-hidden rounded-[1.45rem] border"
+                className="border-border/70 bg-background/78 overflow-hidden rounded-[var(--radius)] border"
                 key={item.id}
               >
                 <div className="grid gap-4 p-4 md:grid-cols-[120px_minmax(0,1fr)]">
                   <div
-                    className="border-border/70 rounded-[1.1rem] border bg-cover bg-center"
+                    className="border-border/70 rounded-[var(--radius)] border bg-cover bg-center"
                     style={{
                       backgroundImage: `url(${item.imageUrl})`,
                       minHeight: '120px',
@@ -291,7 +291,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                     </p>
 
                     {item.reviewNote ? (
-                      <div className="border-border/70 bg-card/74 rounded-[1.1rem] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
+                      <div className="border-border/70 bg-card/74 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
                         {item.reviewNote}
                       </div>
                     ) : null}
@@ -320,7 +320,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
           >
             {data.comments.items.map((item) => (
               <article
-                className="border-border/70 bg-background/78 rounded-[1.45rem] border p-4"
+                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
                 key={item.id}
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -347,7 +347,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 </p>
 
                 {item.reviewNote ? (
-                  <div className="border-border/70 bg-card/74 mt-4 rounded-[1.1rem] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
+                  <div className="border-border/70 bg-card/74 mt-4 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
                     {item.reviewNote}
                   </div>
                 ) : null}
@@ -374,7 +374,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
           >
             {data.exchangeIntents.items.map((item) => (
               <article
-                className="border-border/70 bg-background/78 rounded-[1.45rem] border p-4"
+                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
                 key={item.id}
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -404,7 +404,7 @@ export function ModerationShell({ data }: ModerationShellProps) {
                 </p>
 
                 {item.reviewNote ? (
-                  <div className="border-border/70 bg-card/74 mt-4 rounded-[1.1rem] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
+                  <div className="border-border/70 bg-card/74 mt-4 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
                     {item.reviewNote}
                   </div>
                 ) : null}

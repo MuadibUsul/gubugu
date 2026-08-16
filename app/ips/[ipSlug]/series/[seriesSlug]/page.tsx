@@ -66,7 +66,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
               </div>
 
               <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   系列图鉴
                 </p>
                 <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
@@ -80,32 +80,32 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
             </div>
 
             <aside className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   系列类型
                 </p>
                 <p className="text-foreground mt-3 text-lg font-semibold">
                   {data.series.seriesType}
                 </p>
               </div>
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   发售日期
                 </p>
                 <p className="text-foreground mt-3 text-lg font-semibold">
                   {formatCatalogDate(data.series.releaseDate)}
                 </p>
               </div>
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   商品
                 </p>
                 <p className="font-heading text-foreground mt-3 text-5xl leading-none">
                   {data.summary.goodsCount}
                 </p>
               </div>
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   角色
                 </p>
                 <p className="font-heading text-foreground mt-3 text-5xl leading-none">
@@ -119,7 +119,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
         <section className="collection-panel p-6 sm:p-7">
           <div className="space-y-5">
             <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                 关联角色
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
@@ -131,7 +131,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
               {data.characters.length > 0 ? (
                 data.characters.map((character) => (
                   <Link
-                    className="border-border/70 bg-background/78 hover:border-accent/50 rounded-full border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
+                    className="border-border/70 bg-background/78 hover:border-accent/50 rounded-full border px-4 py-2 text-sm font-semibold transition"
                     href={`/ips/${data.ip.slug}/characters/${character.slug}`}
                     key={character.id}
                   >
@@ -139,7 +139,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                   </Link>
                 ))
               ) : (
-                <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.4rem] border border-dashed px-4 py-6 text-sm leading-7">
+                <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm leading-7">
                   当前这个系列还没有关联已发布角色。
                 </div>
               )}
@@ -150,7 +150,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
         <section className="space-y-5">
           <div className="collection-panel p-6 sm:p-7">
             <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                 商品
               </p>
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
@@ -171,7 +171,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
             </div>
           ) : (
             <div className="collection-panel p-6 sm:p-7">
-              <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.4rem] border border-dashed px-4 py-6 text-sm leading-7">
+              <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm leading-7">
                 当前这个系列还没有关联已发布商品。
               </div>
             </div>

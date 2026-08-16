@@ -105,7 +105,7 @@ export function SearchResults({
       <div className="collection-panel p-6 sm:p-7">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               Results
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
@@ -131,7 +131,7 @@ export function SearchResults({
 
       {bestMatch ? (
         <div className="space-y-3">
-          <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+          <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
             最佳匹配
           </p>
           <SearchResultCard
@@ -144,7 +144,7 @@ export function SearchResults({
 
       {otherItems.length > 0 ? (
         <div className="space-y-3">
-          <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+          <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
             其他结果
           </p>
           <div className="grid gap-4 2xl:grid-cols-2">

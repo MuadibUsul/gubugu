@@ -27,9 +27,9 @@ function formatTimestamp(value: Date) {
 const statusBadgeClassName =
   'inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize';
 const filterControlClassName =
-  'border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 rounded-[1rem] border px-4 text-sm transition outline-none focus-visible:ring-2';
+  'border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 h-11 rounded-[var(--radius)] border px-4 text-sm transition outline-none focus-visible:ring-2';
 const selectedListCardClassName =
-  'rounded-[1.5rem] border border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_16%,var(--surface-strong)),color-mix(in_oklab,var(--background)_92%,var(--card)))] px-4 py-4 shadow-[0_24px_54px_-36px_color-mix(in_oklab,var(--accent)_42%,transparent),inset_0_1px_0_color-mix(in_oklab,white_8%,transparent)]';
+  'rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_16%,var(--surface-strong)),color-mix(in_oklab,var(--background)_92%,var(--card)))] px-4 py-4';
 
 export function AdminGoodsManagementShell({
   data,
@@ -75,19 +75,19 @@ export function AdminGoodsManagementShell({
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.24fr)_320px]">
             <div className="space-y-5">
               <div className="flex flex-wrap gap-2">
-                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.22em] uppercase">
+                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                   SKU
                 </span>
-                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.22em] uppercase">
+                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                   商品管理
                 </span>
-                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs tracking-[0.22em] uppercase">
+                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
                   内容维护
                 </span>
               </div>
 
               <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.34em] uppercase">
+                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
                   商品库
                 </p>
                 <h1 className="font-heading text-foreground text-5xl leading-[0.94] text-balance sm:text-6xl">
@@ -100,8 +100,8 @@ export function AdminGoodsManagementShell({
             </div>
 
             <aside className="space-y-3">
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   常用入口
                 </p>
                 <div className="mt-4 grid gap-2 text-sm">
@@ -126,8 +126,8 @@ export function AdminGoodsManagementShell({
                 </div>
               </div>
 
-              <div className="border-border/70 bg-background/78 rounded-[1.7rem] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
+                <p className="text-muted-foreground text-[0.68rem] uppercase">
                   当前状态
                 </p>
                 <p className="text-foreground mt-3 text-sm leading-7">
@@ -143,10 +143,10 @@ export function AdminGoodsManagementShell({
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           {statItems.map((item) => (
             <article
-              className="border-border/70 bg-background/78 rounded-[1.4rem] border px-5 py-4"
+              className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-4"
               key={item.label}
             >
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.24em] uppercase">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 {item.label}
               </p>
               <p className="text-foreground mt-2 text-3xl font-semibold">
@@ -161,7 +161,7 @@ export function AdminGoodsManagementShell({
             <div className="space-y-5">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="space-y-2">
-                  <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+                  <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                     条目列表
                   </p>
                   <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -181,7 +181,7 @@ export function AdminGoodsManagementShell({
 
               <form
                 action="/admin/goods"
-                className="border-border/70 bg-background/76 grid gap-3 rounded-[1.35rem] border px-4 py-4 xl:grid-cols-[minmax(0,1fr)_160px_1fr_auto]"
+                className="border-border/70 bg-background/76 grid gap-3 rounded-[var(--radius)] border px-4 py-4 xl:grid-cols-[minmax(0,1fr)_160px_1fr_auto]"
               >
                 <input
                   className={filterControlClassName}
@@ -223,7 +223,7 @@ export function AdminGoodsManagementShell({
               </form>
 
               {data.goodsList.length === 0 ? (
-                <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.4rem] border border-dashed px-4 py-8 text-sm leading-7">
+                <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-8 text-sm leading-7">
                   当前筛选条件下没有匹配的商品记录。你可以直接在这个页面里新建商品条目。
                 </div>
               ) : (
@@ -243,13 +243,13 @@ export function AdminGoodsManagementShell({
                         className={
                           isSelected
                             ? selectedListCardClassName
-                            : 'border-border/70 bg-background/76 rounded-[1.5rem] border px-4 py-4'
+                            : 'border-border/70 bg-background/76 rounded-[var(--radius)] border px-4 py-4'
                         }
                         key={item.id}
                       >
                         <div className="grid gap-4 2xl:grid-cols-[108px_minmax(0,1fr)_auto]">
                           <div
-                            className="border-border/70 bg-card/78 h-28 rounded-[1.15rem] border bg-cover bg-center"
+                            className="border-border/70 bg-card/78 h-28 rounded-[var(--radius)] border bg-cover bg-center"
                             style={
                               item.primaryImageUrl
                                 ? {
@@ -259,7 +259,7 @@ export function AdminGoodsManagementShell({
                             }
                           >
                             {!item.primaryImageUrl ? (
-                              <div className="text-muted-foreground flex h-full items-center justify-center text-xs tracking-[0.18em] uppercase">
+                              <div className="text-muted-foreground flex h-full items-center justify-center text-xs uppercase">
                                 暂无图片
                               </div>
                             ) : null}
@@ -338,10 +338,10 @@ export function AdminGoodsManagementShell({
 
           <div className="space-y-4">
             {data.selectedGoods ? (
-              <section className="border-border/70 bg-background/78 rounded-[1.4rem] border px-5 py-5">
+              <section className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-2">
-                    <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.24em] uppercase">
+                    <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                       当前选中项
                     </p>
                     <p className="text-foreground text-lg leading-7 font-semibold">

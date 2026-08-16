@@ -15,12 +15,12 @@ function ShelfHighlightCard({ item }: { item: HomeShelfItem }) {
   const primaryCharacter = item.characters[0];
 
   return (
-    <article className="panel-float group relative overflow-hidden rounded-[2rem] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_94%,transparent),color-mix(in_oklab,var(--surface-soft)_95%,var(--background)))] shadow-[0_28px_72px_-42px_color-mix(in_oklab,var(--shadow-tint)_40%,transparent)]">
+    <article className="panel-float group relative overflow-hidden rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_86%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_94%,transparent),color-mix(in_oklab,var(--surface-soft)_95%,var(--background)))]">
       <div className="relative h-72 overflow-hidden border-b border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)]">
         {item.primaryImageUrl ? (
           <Image
             alt={item.name}
-            className="object-cover transition duration-500 group-hover:scale-[1.02]"
+            className="object-cover transition duration-500 group-hover:scale-[1.035]"
             fill
             sizes="(max-width: 1024px) 100vw, 30rem"
             src={item.primaryImageUrl}
@@ -30,10 +30,10 @@ function ShelfHighlightCard({ item }: { item: HomeShelfItem }) {
         )}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,transparent_36%,color-mix(in_oklab,var(--background)_76%,var(--card))_100%)]" />
         <div className="absolute right-5 bottom-5 left-5">
-          <div className="rounded-[1.4rem] bg-[color:color-mix(in_oklab,var(--background)_42%,transparent)] px-4 py-4 backdrop-blur-md">
+          <div className="rounded-[var(--radius)] bg-[color:color-mix(in_oklab,var(--background)_42%,transparent)] px-4 py-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[0.66rem] font-semibold tracking-[0.28em] text-[color:color-mix(in_oklab,var(--foreground)_50%,var(--background))] uppercase">
+                <p className="text-[0.66rem] font-semibold text-[color:color-mix(in_oklab,var(--foreground)_50%,var(--background))] uppercase">
                   {item.skuCode}
                 </p>
                 <p className="text-foreground mt-2 text-base font-semibold">
@@ -163,7 +163,7 @@ export async function HomeShelfHighlightsSection() {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
-          <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.36em] uppercase">
+          <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
             藏品聚焦
           </p>
           <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">

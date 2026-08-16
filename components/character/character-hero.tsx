@@ -27,7 +27,7 @@ export function CharacterHero({
       <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
         <div className="space-y-7">
           <div className="space-y-4">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold tracking-[0.38em] uppercase">
+            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
               角色图鉴
             </p>
             <div className="space-y-4">
@@ -50,32 +50,32 @@ export function CharacterHero({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 商品
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
                 {data.summary.goodsCount}
               </p>
             </div>
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 已点亮
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
                 {data.completion.character.ownedGoods}
               </p>
             </div>
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 系列
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
                 {data.summary.seriesCount}
               </p>
             </div>
-            <div className="border-border/65 bg-card/72 rounded-[1.5rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+            <div className="border-border/65 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.68rem] uppercase">
                 进度
               </p>
               <p className="font-heading text-foreground mt-3 text-4xl leading-none">
@@ -100,29 +100,29 @@ export function CharacterHero({
           </div>
         </div>
 
-        <aside className="border-border/70 shadow-soft relative overflow-hidden rounded-[2rem] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_74%,white)_0%,color-mix(in_oklab,var(--background)_90%,var(--card))_100%)] p-5">
+        <aside className="border-border/70 relative overflow-hidden rounded-[var(--radius)] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_74%,white)_0%,color-mix(in_oklab,var(--background)_90%,var(--card))_100%)] p-5">
           <div className="pointer-events-none absolute top-8 -right-14 size-40 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--accent)_20%,transparent),transparent_70%)]" />
           <div className="pointer-events-none absolute bottom-6 -left-12 size-36 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_72%)]" />
 
           <div className="relative flex h-full flex-col gap-6">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.34em] uppercase">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   沉浸式档案
                 </p>
                 <h2 className="font-heading text-foreground text-4xl leading-none">
                   游戏角色图鉴式入口
                 </h2>
               </div>
-              <div className="border-border/70 bg-background/76 text-muted-foreground rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.24em] uppercase">
+              <div className="border-border/70 bg-background/76 text-muted-foreground rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase">
                 精选
               </div>
             </div>
 
-            <div className="border-border/70 relative overflow-hidden rounded-[1.8rem] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,white),color-mix(in_oklab,var(--background)_94%,var(--card)))] p-5">
+            <div className="border-border/70 relative overflow-hidden rounded-[var(--radius)] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_14%,white),color-mix(in_oklab,var(--background)_94%,var(--card)))] p-5">
               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,color-mix(in_oklab,white_24%,transparent)_42%,transparent_100%)]" />
               <div className="relative flex items-center gap-4">
-                <div className="border-border/70 relative size-28 shrink-0 overflow-hidden rounded-[1.6rem] border bg-[color:color-mix(in_oklab,var(--background)_72%,transparent)] shadow-[0_20px_40px_-26px_color-mix(in_oklab,var(--foreground)_30%,transparent)]">
+                <div className="border-border/70 relative size-28 shrink-0 overflow-hidden rounded-[var(--radius)] border bg-[color:color-mix(in_oklab,var(--background)_72%,transparent)]">
                   {data.character.avatarImageUrl ? (
                     <RemoteImage
                       alt={data.character.name}
@@ -133,7 +133,7 @@ export function CharacterHero({
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <p className="text-muted-foreground text-[0.68rem] tracking-[0.28em] uppercase">
+                  <p className="text-muted-foreground text-[0.68rem] uppercase">
                     角色立绘区
                   </p>
                   <h3 className="font-heading text-foreground text-3xl leading-none">
@@ -149,12 +149,12 @@ export function CharacterHero({
             <div className="grid gap-3">
               {featuredGoods.map((item) => (
                 <div
-                  className="border-border/65 bg-background/76 rounded-[1.35rem] border px-4 py-3"
+                  className="border-border/65 bg-background/76 rounded-[var(--radius)] border px-4 py-3"
                   key={item.id}
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-muted-foreground text-[0.66rem] tracking-[0.26em] uppercase">
+                      <p className="text-muted-foreground text-[0.66rem] uppercase">
                         精选商品
                       </p>
                       <p className="text-foreground mt-2 text-sm font-semibold">
@@ -164,8 +164,8 @@ export function CharacterHero({
                     <span
                       className={
                         item.isOwned
-                          ? 'text-foreground rounded-full border border-[color:color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_18%,white)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase'
-                          : 'border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-[0.68rem] font-semibold tracking-[0.2em] uppercase'
+                          ? 'text-foreground rounded-full border border-[color:color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_18%,white)] px-3 py-1 text-[0.68rem] font-semibold uppercase'
+                          : 'border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase'
                       }
                     >
                       {item.isOwned ? '已点亮' : '未点亮'}

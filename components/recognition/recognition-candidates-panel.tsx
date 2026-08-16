@@ -25,7 +25,7 @@ function getResultTone(candidates: RecognitionCandidate[]) {
       title: '这次没能锁定目标',
       description: '换一张更清晰的图再试。',
       toneClass:
-        'border-border/70 bg-background/74 text-muted-foreground rounded-[1.6rem] border border-dashed px-4 py-5',
+        'border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-5',
       isWeak: false,
     };
   }
@@ -38,7 +38,7 @@ function getResultTone(candidates: RecognitionCandidate[]) {
       title: '先看最接近的一件',
       description: '如果不对，直接重拍。',
       toneClass:
-        'border-[color:color-mix(in_oklab,var(--accent)_30%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_8%,white)] text-[color:color-mix(in_oklab,var(--foreground)_82%,var(--background))] rounded-[1.6rem] border px-4 py-5',
+        'border-[color:color-mix(in_oklab,var(--accent)_30%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_8%,white)] text-[color:color-mix(in_oklab,var(--foreground)_82%,var(--background))] rounded-[var(--radius)] border px-4 py-5',
       isWeak: true,
     };
   }
@@ -48,7 +48,7 @@ function getResultTone(candidates: RecognitionCandidate[]) {
     title: '先确认这一件',
     description: '其他候选放在下面。',
     toneClass:
-      'border-[color:color-mix(in_oklab,var(--accent)_42%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_10%,white)] text-[color:color-mix(in_oklab,var(--foreground)_84%,var(--background))] rounded-[1.6rem] border px-4 py-5',
+      'border-[color:color-mix(in_oklab,var(--accent)_42%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_10%,white)] text-[color:color-mix(in_oklab,var(--foreground)_84%,var(--background))] rounded-[var(--radius)] border px-4 py-5',
     isWeak: false,
   };
 }
@@ -79,7 +79,7 @@ export function RecognitionCandidatesPanel({
       <div className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               Candidates
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -92,7 +92,7 @@ export function RecognitionCandidatesPanel({
         </div>
 
         {resultState === 'idle' ? (
-          <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[1.6rem] border border-dashed px-4 py-5 text-sm">
+          <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-5 text-sm">
             先拍照或上传图片。
           </div>
         ) : null}
@@ -101,11 +101,11 @@ export function RecognitionCandidatesPanel({
           <div className="space-y-3">
             {[0, 1, 2].map((item) => (
               <div
-                className="border-border/70 bg-background/78 rounded-[1.5rem] border p-4"
+                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
                 key={item}
               >
                 <div className="flex gap-4">
-                  <div className="h-28 w-24 animate-pulse rounded-[1.2rem] bg-[color:color-mix(in_oklab,var(--border)_54%,white)]" />
+                  <div className="h-28 w-24 animate-pulse rounded-[var(--radius)] bg-[color:color-mix(in_oklab,var(--border)_54%,white)]" />
                   <div className="flex-1 space-y-3">
                     <div className="h-4 w-44 animate-pulse rounded-full bg-[color:color-mix(in_oklab,var(--accent)_16%,white)]" />
                     <div className="h-3 w-56 animate-pulse rounded-full bg-[color:color-mix(in_oklab,var(--border)_56%,white)]" />
@@ -118,7 +118,7 @@ export function RecognitionCandidatesPanel({
         ) : null}
 
         {resultState === 'error' ? (
-          <div className="border-destructive/30 bg-destructive/8 rounded-[1.6rem] border px-4 py-5">
+          <div className="border-destructive/30 bg-destructive/8 rounded-[var(--radius)] border px-4 py-5">
             <p className="text-destructive text-sm font-semibold">识别失败</p>
             <p className="mt-2 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_74%,var(--background))]">
               {errorMessage ?? '识别服务没有返回可用结果。'}
@@ -134,7 +134,7 @@ export function RecognitionCandidatesPanel({
         {resultState === 'ready' ? (
           <div className="space-y-4">
             <div className={resultTone.toneClass}>
-              <p className="text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
+              <p className="text-[0.68rem] font-semibold uppercase">
                 {resultTone.eyebrow}
               </p>
               <h3 className="text-foreground mt-2 text-2xl leading-tight font-semibold">
@@ -145,7 +145,7 @@ export function RecognitionCandidatesPanel({
 
             {topCandidate ? (
               <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.26em] uppercase">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   首选
                 </p>
                 <RecognitionCandidateCard
@@ -155,14 +155,14 @@ export function RecognitionCandidatesPanel({
                 />
               </div>
             ) : (
-              <div className="border-border/70 bg-background/74 rounded-[1.6rem] border border-dashed px-4 py-5 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))]">
+              <div className="border-border/70 bg-background/74 rounded-[var(--radius)] border border-dashed px-4 py-5 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))]">
                 当前画面没有达到可用匹配。
               </div>
             )}
 
             {otherCandidates.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.26em] uppercase">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   其他候选
                 </p>
                 <div className="space-y-3">
@@ -180,8 +180,8 @@ export function RecognitionCandidatesPanel({
             ) : null}
 
             {confirmedCandidate ? (
-              <div className="rounded-[1.6rem] border border-[color:color-mix(in_oklab,var(--accent)_46%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,white),color-mix(in_oklab,var(--background)_95%,var(--card)))] px-4 py-5">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
+              <div className="rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_46%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_12%,white),color-mix(in_oklab,var(--background)_95%,var(--card)))] px-4 py-5">
+                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   已确认
                 </p>
                 <h3 className="text-foreground mt-2 text-xl leading-tight font-semibold">
@@ -196,7 +196,7 @@ export function RecognitionCandidatesPanel({
         ) : null}
 
         {warnings.length > 0 && resultState === 'ready' ? (
-          <div className="border-border/70 bg-card/72 rounded-[1.45rem] border px-4 py-4">
+          <div className="border-border/70 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
             <div className="flex flex-wrap gap-2">
               {warnings.map((warning) => (
                 <span

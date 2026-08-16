@@ -39,11 +39,11 @@ type ImageDraft = {
 };
 
 const inputClassName =
-  'h-11 w-full rounded-[1rem] border border-border/70 bg-background/82 px-4 text-sm text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:opacity-60';
+  'h-11 w-full rounded-[var(--radius)] border border-border/70 bg-background/82 px-4 text-sm text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:opacity-60';
 const textareaClassName =
-  'min-h-[120px] w-full rounded-[1rem] border border-border/70 bg-background/82 px-4 py-3 text-sm text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:opacity-60';
+  'min-h-[120px] w-full rounded-[var(--radius)] border border-border/70 bg-background/82 px-4 py-3 text-sm text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:opacity-60';
 const labelClassName =
-  'block text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground';
+  'block text-[0.7rem] font-semibold uppercase text-muted-foreground';
 
 function createEmptyTagRow(): TagDraft {
   return {
@@ -242,9 +242,9 @@ export function AdminGoodsEditorForm({
         value={filters.seriesId ?? ''}
       />
 
-      <div className="border-border/70 bg-background/78 flex flex-wrap items-start justify-between gap-4 rounded-[1.5rem] border px-5 py-5">
+      <div className="border-border/70 bg-background/78 flex flex-wrap items-start justify-between gap-4 rounded-[var(--radius)] border px-5 py-5">
         <div className="space-y-2">
-          <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+          <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
             {editorMode === 'create' ? '新建商品条目' : '编辑商品条目'}
           </p>
           <h2 className="font-heading text-foreground text-4xl leading-none">
@@ -268,13 +268,13 @@ export function AdminGoodsEditorForm({
       </div>
 
       {state.status === 'error' && state.message ? (
-        <div className="border-destructive/30 bg-destructive/8 text-foreground rounded-[1.25rem] border px-4 py-3 text-sm leading-7">
+        <div className="border-destructive/30 bg-destructive/8 text-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
           {state.message}
         </div>
       ) : null}
 
       {isLocked ? (
-        <div className="border-border/70 bg-background/78 text-muted-foreground rounded-[1.25rem] border px-4 py-4 text-sm leading-7">
+        <div className="border-border/70 bg-background/78 text-muted-foreground rounded-[var(--radius)] border px-4 py-4 text-sm leading-7">
           当前还没有可用系列记录。由于现有数据结构要求每个商品都必须归属一个系列，
           因此暂时无法创建商品。
         </div>
@@ -538,7 +538,7 @@ export function AdminGoodsEditorForm({
           <div className="space-y-5">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="space-y-2">
-                <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+                <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                   标签管理
                 </p>
                 <h3 className="font-heading text-foreground text-3xl leading-none">
@@ -577,7 +577,7 @@ export function AdminGoodsEditorForm({
             <div className="space-y-3">
               {tagRows.map((row, index) => (
                 <div
-                  className="border-border/70 bg-background/76 grid gap-3 rounded-[1.25rem] border px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                  className="border-border/70 bg-background/76 grid gap-3 rounded-[var(--radius)] border px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
                   key={`${editorMode}-tag-${index}`}
                 >
                   <div className="space-y-2">
@@ -635,8 +635,8 @@ export function AdminGoodsEditorForm({
               ))}
             </div>
 
-            <div className="border-border/70 bg-background/76 rounded-[1.25rem] border px-4 py-4">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.24em] uppercase">
+            <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border px-4 py-4">
+              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 高频复用标签
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -663,7 +663,7 @@ export function AdminGoodsEditorForm({
           <div className="space-y-5">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="space-y-2">
-                <p className="text-muted-foreground text-[0.7rem] font-semibold tracking-[0.28em] uppercase">
+                <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                   图片管理
                 </p>
                 <h3 className="font-heading text-foreground text-3xl leading-none">
@@ -683,7 +683,7 @@ export function AdminGoodsEditorForm({
             <div className="space-y-4">
               {imageRows.map((row, index) => (
                 <div
-                  className="border-border/70 bg-background/76 grid gap-4 rounded-[1.4rem] border px-4 py-4 2xl:grid-cols-[112px_minmax(0,1.2fr)_160px_minmax(0,0.8fr)_auto]"
+                  className="border-border/70 bg-background/76 grid gap-4 rounded-[var(--radius)] border px-4 py-4 2xl:grid-cols-[112px_minmax(0,1.2fr)_160px_minmax(0,0.8fr)_auto]"
                   key={`${editorMode}-image-${row.id || index}`}
                 >
                   <input name="imageId" type="hidden" value={row.id} />
@@ -695,7 +695,7 @@ export function AdminGoodsEditorForm({
                     >
                       主图
                     </label>
-                    <label className="border-border/70 bg-card/78 text-muted-foreground flex h-24 flex-col items-center justify-center rounded-[1rem] border text-center text-xs">
+                    <label className="border-border/70 bg-card/78 text-muted-foreground flex h-24 flex-col items-center justify-center rounded-[var(--radius)] border text-center text-xs">
                       <input
                         checked={primaryImageIndex === index}
                         className="mb-2"
@@ -775,7 +775,7 @@ export function AdminGoodsEditorForm({
                     <div className="space-y-2">
                       <p className={labelClassName}>预览</p>
                       <div
-                        className="border-border/70 bg-card/78 h-24 rounded-[1rem] border bg-cover bg-center"
+                        className="border-border/70 bg-card/78 h-24 rounded-[var(--radius)] border bg-cover bg-center"
                         style={
                           row.imageUrl
                             ? {
@@ -808,7 +808,7 @@ export function AdminGoodsEditorForm({
           </div>
         </section>
 
-        <div className="border-border/70 bg-background/78 flex flex-wrap items-center justify-between gap-3 rounded-[1.4rem] border px-5 py-4">
+        <div className="border-border/70 bg-background/78 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius)] border px-5 py-4">
           <p className="text-muted-foreground text-sm leading-7">
             空的标签行或图片行会被自动忽略。如果没有显式指定主图，
             第一张有效图片会自动成为主图。

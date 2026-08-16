@@ -3,7 +3,7 @@ function UserSectionSkeleton({ tall = false }: { tall?: boolean }) {
     <section className="collection-panel p-6 sm:p-7">
       <div className="space-y-4">
         <div className="bg-muted h-3 w-32 animate-pulse rounded-full" />
-        <div className="bg-muted/85 h-12 w-52 animate-pulse rounded-[1rem]" />
+        <div className="bg-muted/85 h-12 w-52 animate-pulse rounded-[var(--radius)]" />
         <div className="bg-muted/60 h-5 w-full max-w-2xl animate-pulse rounded-full" />
       </div>
       <div
@@ -11,7 +11,7 @@ function UserSectionSkeleton({ tall = false }: { tall?: boolean }) {
       >
         {Array.from({ length: tall ? 4 : 2 }).map((_, index) => (
           <div
-            className={`border-border/70 bg-card/72 animate-pulse rounded-[1.6rem] border ${
+            className={`border-border/70 bg-card/72 animate-pulse rounded-[var(--radius)] border ${
               tall ? 'h-[28rem]' : 'h-36'
             }`}
             key={index}
@@ -31,18 +31,18 @@ export default function Loading() {
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)]">
             <div className="space-y-6">
               <div className="bg-muted h-3 w-40 animate-pulse rounded-full" />
-              <div className="bg-muted/85 h-16 w-full max-w-4xl animate-pulse rounded-[1.5rem]" />
+              <div className="bg-muted/85 h-16 w-full max-w-4xl animate-pulse rounded-[var(--radius)]" />
               <div className="bg-muted/60 h-5 w-full max-w-2xl animate-pulse rounded-full" />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <div
-                    className="border-border/70 bg-card/72 h-28 animate-pulse rounded-[1.4rem] border"
+                    className="border-border/70 bg-card/72 h-28 animate-pulse rounded-[var(--radius)] border"
                     key={index}
                   />
                 ))}
               </div>
             </div>
-            <div className="border-border/70 bg-card/72 h-[28rem] animate-pulse rounded-[2rem] border" />
+            <div className="border-border/70 bg-card/72 h-[28rem] animate-pulse rounded-[var(--radius)] border" />
           </div>
         </section>
         <UserSectionSkeleton />
