@@ -1,17 +1,28 @@
-export default function Loading() {
+function Line({ className }: { className: string }) {
+  return <div className={`bg-muted animate-pulse ${className}`} />;
+}
+
+export default function GoodsLoading() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[94rem] items-center px-5 py-8 md:px-8 xl:px-10">
-      <div className="collection-panel w-full overflow-hidden p-6 sm:p-8">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
-          <div className="border-border/70 bg-background/78 aspect-[4/5] animate-pulse rounded-[var(--radius)] border" />
-          <div className="space-y-4">
-            <div className="bg-background/78 h-5 w-28 animate-pulse rounded-full" />
-            <div className="bg-background/78 h-16 w-full animate-pulse rounded-[var(--radius)]" />
-            <div className="bg-background/78 h-28 animate-pulse rounded-[var(--radius)]" />
-            <div className="bg-background/78 h-48 animate-pulse rounded-[var(--radius)]" />
+    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
+      <section className="spread border-border border-b pb-14">
+        <div>
+          <Line className="h-3 w-10" />
+        </div>
+        <div className="min-w-0 space-y-4">
+          <Line className="h-4 w-56" />
+          <Line className="h-11 w-full max-w-[30rem]" />
+          <Line className="h-px w-full max-w-[20rem]" />
+          <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+            <Line className="aspect-[4/3] w-full" />
+            <div className="space-y-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Line className="h-5 w-full" key={index} />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

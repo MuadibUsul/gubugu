@@ -33,8 +33,6 @@ export function SearchPanelState({
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--accent)_16%,transparent),transparent_44%)]" />
-
       <div className="relative flex h-full flex-col justify-between gap-8">
         <div className="space-y-4">
           {eyebrow ? (

@@ -505,8 +505,6 @@ export function RecognitionShell() {
   return (
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)]">
       <div className="collection-panel relative overflow-hidden p-5 sm:p-6 lg:p-7">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--accent)_18%,transparent),transparent_32%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_88%,white)_0%,color-mix(in_oklab,var(--background)_94%,var(--card))_100%)]" />
-
         <div className="relative space-y-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-2">
@@ -570,8 +568,6 @@ export function RecognitionShell() {
                       </div>
                     </div>
                   )}
-
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_32%,color-mix(in_oklab,var(--background)_52%,transparent)_100%)]" />
                   <div className="pointer-events-none absolute inset-[11%] rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_70%,white)]">
                     <div className="absolute -top-px -left-px h-12 w-12 rounded-tl-[1.8rem] border-t-2 border-l-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
                     <div className="absolute -top-px -right-px h-12 w-12 rounded-tr-[1.8rem] border-t-2 border-r-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />

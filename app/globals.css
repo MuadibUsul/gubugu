@@ -56,11 +56,12 @@
   --duration: 180ms;
 }
 
-/* 迁移别名。
-   组件里散落着对旧 token 的直接引用（--primary、--surface-strong…），
-   引用一个不存在的变量会让整条声明失效 —— 面板会变透明而不是报错，很难
-   发现。在组件逐个移植干净之前，这些别名把旧名映射到新体系上。
-   组件移植完成后应当整块删除。 */
+/* 语义别名。
+   组件在 Tailwind 任意值里直接写 var(--accent)、var(--background) 这类名字，
+   而 @theme 生成的是 --color-* 前缀，两者不通。引用一个不存在的自定义属性
+   不会报错，只会让整条声明失效 —— 面板会静默变透明，很难发现。
+   这些别名把语义名接到新体系上；辉光与阴影相关的旧 token 已随组件移植一起
+   移除，不再保留。 */
 :root {
   --primary: var(--shu);
   --primary-foreground: var(--shu-ink);
@@ -76,14 +77,7 @@
   --border: var(--rule);
   --surface-strong: var(--surface);
   --surface-soft: var(--sunken);
-  --surface-line: var(--rule);
-  --surface-line-soft: var(--rule);
-  --shadow-tint: transparent;
-  --panel-shadow: transparent;
-  --panel-glow: transparent;
-  --panel-glow-warm: transparent;
   --ease-fluid: var(--ease);
-  --duration-soft: var(--duration);
 }
 
 :root[data-theme='light'] {

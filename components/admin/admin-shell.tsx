@@ -63,10 +63,7 @@ function getListStatusLabel(value: string) {
 export function AdminShell({ data, viewer }: AdminShellProps) {
   return (
     <main className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[24rem] bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--accent)_11%,transparent),transparent_64%)]" />
-      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--border)_72%,white),transparent)] md:inset-x-10 xl:inset-x-16" />
-
-      <div className="mx-auto flex min-h-screen w-full max-w-[96rem] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1180px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
         <section className="collection-panel overflow-hidden px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-9">
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_320px]">
             <div className="space-y-5">

@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: buildRemoteImagePatterns(),
   },
+  experimental: {
+    // server/auth/admin.ts 用 forbidden() 拦截权限不足的访问，app/forbidden.tsx
+    // 是它的渲染目标。这个开关不打开时 forbidden() 直接抛错，后台页面会变成
+    // 500 而不是 403 —— 拦截仍然生效，但呈现给用户的是崩溃。
+    authInterrupts: true,
+  },
 };
 
 export default nextConfig;

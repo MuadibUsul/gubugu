@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { SearchFilters } from '@/components/search/search-filters';
 import { SearchResults } from '@/components/search/search-results';
-import { Button } from '@/components/ui/button';
 import type { SearchPageControls } from '@/components/search/search-query';
 import {
   getSingleSearchParamValue,
@@ -90,60 +89,62 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   return (
-    <main className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--accent)_18%,transparent),transparent_58%)]" />
-      <div className="pointer-events-none absolute top-[-4rem] right-[-10rem] size-[24rem] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_14%,transparent),transparent_66%)] blur-xl" />
-      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--surface-line)_84%,transparent),transparent)] md:inset-x-10 xl:inset-x-16" />
+    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
+      <form action="/search">
+        <section className="spread border-border border-b pb-12">
+          <div>
+            <p className="lbl">検索</p>
+            <div className="rail-jp">索引</div>
+          </div>
 
-      <form
-        action="/search"
-        className="mx-auto flex min-h-screen w-full max-w-[94rem] flex-col gap-6 px-5 py-[5.5rem] md:px-8 md:py-24 xl:px-10 xl:py-24"
-      >
-        <section className="collection-panel relative overflow-hidden px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--accent)_20%,transparent),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_94%,transparent)_0%,color-mix(in_oklab,var(--surface-soft)_88%,var(--background))_100%)]" />
-          <div className="relative grid gap-6">
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                Search
-              </p>
-              <h1 className="font-heading text-foreground max-w-5xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5.15rem]">
-                先找到正确的 SKU
-              </h1>
-            </div>
+          <div className="min-w-0">
+            <h1 className="text-[clamp(28px,3.6vw,44px)] leading-[1.14]">
+              先找到正确的条目
+            </h1>
+            <div className="rule-kin mt-4" />
 
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+            {/* 检索框不做 autoFocus：直接进搜索页的人会自己点，从其他页带着
+                关键词过来的人则会被强行拉到输入框、页面跳一下。 */}
+            <div className="border-input mt-6 flex max-w-[560px] border focus-within:border-[var(--shu)]">
               <input
                 autoComplete="off"
-                autoFocus
-                className="ui-field-lg h-15 px-5 text-base sm:text-lg"
+                className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[15px] focus-visible:shadow-none"
                 defaultValue={controls.query ?? ''}
                 name="query"
-                placeholder="角色名、系列名、SKU 编号"
+                placeholder="商品名、型号，或者角色名"
                 type="search"
               />
-              <Button
-                className="h-15 rounded-[var(--radius)] px-7 text-base"
-                size="lg"
+              <button
+                className="shrink-0 bg-[var(--shu)] px-6 text-[14px] font-medium text-[var(--shu-ink)]"
                 type="submit"
               >
                 搜索
-              </Button>
+              </button>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-          <SearchFilters
-            controls={controls}
-            filterOptions={pageData?.filterOptions}
-          />
-          <SearchResults
-            controls={controls}
-            filterOptions={pageData?.filterOptions}
-            isAuthenticated={Boolean(authUser)}
-            result={pageData?.results}
-            state={state}
-          />
+        <section className="spread py-12">
+          <div>
+            <p className="lbl">筛选</p>
+            <div className="rail-jp">絞込</div>
+          </div>
+
+          <div className="min-w-0">
+            <SearchFilters
+              controls={controls}
+              filterOptions={pageData?.filterOptions}
+            />
+            <div className="mt-10">
+              <SearchResults
+                controls={controls}
+                filterOptions={pageData?.filterOptions}
+                isAuthenticated={Boolean(authUser)}
+                result={pageData?.results}
+                state={state}
+              />
+            </div>
+          </div>
         </section>
       </form>
     </main>

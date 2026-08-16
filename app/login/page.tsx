@@ -45,15 +45,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       : ['收藏墙', '交换板', '评分记录'];
 
   return (
-    <main className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--accent)_18%,transparent),transparent_58%)]" />
-      <div className="pointer-events-none absolute top-[-4rem] right-[-10rem] size-[22rem] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_14%,transparent),transparent_68%)] blur-xl" />
-
-      <div className="mx-auto flex min-h-screen w-full max-w-[90rem] items-center px-5 py-[5.5rem] md:px-8 md:py-24 xl:px-10 xl:py-24">
+    <main>
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10 px-5 py-14 md:px-10">
         <section className="grid w-full gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
           <article className="collection-panel relative overflow-hidden px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--accent)_20%,transparent),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_94%,transparent)_0%,color-mix(in_oklab,var(--surface-soft)_88%,var(--background))_100%)]" />
-
             <div className="relative space-y-6">
               <div className="space-y-4">
                 <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
