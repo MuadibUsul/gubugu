@@ -1,16 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-// Re-implemented here rather than imported: server/data/search-service.ts pulls
-// in `server-only`, which refuses to load outside the Next server runtime.
-// Keep this in sync with buildContainsPattern.
-function buildContainsPattern(query: string) {
-  const escaped = query
-    .replaceAll('\\', '\\\\')
-    .replaceAll('%', '\\%')
-    .replaceAll('_', '\\_');
-
-  return `%${escaped}%`;
-}
+import { buildContainsPattern } from './search-service';
 
 describe('buildContainsPattern', () => {
   it('wraps a plain term', () => {
