@@ -158,6 +158,19 @@ const backstagePassReleaseDate = new Date('2026-06-27T00:00:00.000Z');
 const winterArchiveReleaseDate = new Date('2026-01-30T00:00:00.000Z');
 const starlightReleaseDate = new Date('2026-02-21T00:00:00.000Z');
 
+/**
+ * 从 id 末尾派生取图序号。
+ *
+ * 需要的是「稳定且分散」：同一条记录每次 seed 拿到同一张图，相邻记录不会
+ * 拿到同一张。用可变计数器也能分散，但它依赖调用顺序，改动数组顺序就会让
+ * 全站的图整体错位。
+ */
+function sampleIndexFromId(id: string) {
+  const digits = id.replace(/\D/g, '').slice(-6);
+
+  return (Number.parseInt(digits, 10) || 1) % 997;
+}
+
 function makeGoodsImage(
   id: string,
   goodsId: string,
@@ -168,7 +181,11 @@ function makeGoodsImage(
   return {
     id,
     goodsId,
-    imageUrl: buildDemoAssetUrl(assetPath),
+    // 调用方可能已经自己解析过（传进来的是 URL），也可能传的是裸 asset 路径。
+    // 已解析的直接用，避免在这里再解析一次把调用方的选择覆盖掉。
+    imageUrl: assetPath.startsWith('/')
+      ? assetPath
+      : resolveSeedImageUrl(sampleIndexFromId(id), assetPath),
     altText,
     sortOrder,
     isPrimary: sortOrder === 0,
@@ -232,7 +249,7 @@ export const expandedIpSeed: IpSeed[] = [
     nameLocalized: 'Velvet Circuit',
     description:
       'A live-house band franchise built around neon cables, analog synth visuals, and tour goods with strong stage identity.',
-    coverImageUrl: buildDemoAssetUrl('velvet-circuit/brand/ip-cover.svg'),
+    coverImageUrl: resolveSeedImageUrl(40, 'velvet-circuit/brand/ip-cover.svg'),
     status: 'published',
   },
   {
@@ -242,7 +259,7 @@ export const expandedIpSeed: IpSeed[] = [
     nameLocalized: 'Aurora Archive',
     description:
       'A celestial fantasy line known for archive-style art boards, foil paper goods, and astronomy-themed display pieces.',
-    coverImageUrl: buildDemoAssetUrl('aurora-archive/brand/ip-cover.svg'),
+    coverImageUrl: resolveSeedImageUrl(41, 'aurora-archive/brand/ip-cover.svg'),
     status: 'published',
   },
 ];
@@ -256,7 +273,8 @@ export const expandedCharacterSeed: CharacterSeed[] = [
     nameLocalized: 'Rio Kisaragi',
     description:
       'Lead guitarist with bright red accents and a goods line that leans into acrylic display pieces.',
-    avatarImageUrl: buildDemoAssetUrl(
+    avatarImageUrl: resolveSeedImageUrl(
+      42,
       'velvet-circuit/characters/rio-avatar.svg',
     ),
     status: 'published',
@@ -269,7 +287,8 @@ export const expandedCharacterSeed: CharacterSeed[] = [
     nameLocalized: 'Sora Amane',
     description:
       'Keyboardist with midnight-blue styling, often featured on hologram badges and large-format wall goods.',
-    avatarImageUrl: buildDemoAssetUrl(
+    avatarImageUrl: resolveSeedImageUrl(
+      43,
       'velvet-circuit/characters/sora-avatar.svg',
     ),
     status: 'published',
@@ -282,7 +301,8 @@ export const expandedCharacterSeed: CharacterSeed[] = [
     nameLocalized: 'Yuna Hoshimi',
     description:
       'Observatory guide character whose line favors foil paper goods, acrylic blocks, and star-map motifs.',
-    avatarImageUrl: buildDemoAssetUrl(
+    avatarImageUrl: resolveSeedImageUrl(
+      44,
       'aurora-archive/characters/yuna-avatar.svg',
     ),
     status: 'published',
@@ -295,7 +315,8 @@ export const expandedCharacterSeed: CharacterSeed[] = [
     nameLocalized: 'Kaito Asagiri',
     description:
       'Night archivist with subdued navy tones, frequently paired with Yuna on calm winter event visuals.',
-    avatarImageUrl: buildDemoAssetUrl(
+    avatarImageUrl: resolveSeedImageUrl(
+      45,
       'aurora-archive/characters/kaito-avatar.svg',
     ),
     status: 'published',
@@ -310,7 +331,8 @@ export const expandedSeriesSeed: SeriesSeed[] = [
     name: '2026 Midnight Encore Live',
     description:
       'A darker encore line with city-light gradients, live photo bromides, and after-show goods.',
-    coverImageUrl: buildDemoAssetUrl(
+    coverImageUrl: resolveSeedImageUrl(
+      46,
       'neon-requiem/series/midnight-encore-cover.svg',
     ),
     seriesType: 'live',
@@ -324,7 +346,8 @@ export const expandedSeriesSeed: SeriesSeed[] = [
     name: '2026 Voltage Shift Tour',
     description:
       'A touring line centered on electric gradients, contrast-heavy key art, and portable collector goods.',
-    coverImageUrl: buildDemoAssetUrl(
+    coverImageUrl: resolveSeedImageUrl(
+      47,
       'velvet-circuit/series/voltage-shift-cover.svg',
     ),
     seriesType: 'tour',
@@ -338,7 +361,8 @@ export const expandedSeriesSeed: SeriesSeed[] = [
     name: '2026 Backstage Pass Drop',
     description:
       'A limited backstage capsule with large textiles, holder-style goods, and monochrome venue photos.',
-    coverImageUrl: buildDemoAssetUrl(
+    coverImageUrl: resolveSeedImageUrl(
+      48,
       'velvet-circuit/series/backstage-pass-cover.svg',
     ),
     seriesType: 'event',
@@ -352,7 +376,8 @@ export const expandedSeriesSeed: SeriesSeed[] = [
     name: '2026 Winter Archive Fair',
     description:
       'A winter release with snow-lit foil art, collector paper goods, and softly framed museum styling.',
-    coverImageUrl: buildDemoAssetUrl(
+    coverImageUrl: resolveSeedImageUrl(
+      49,
       'aurora-archive/series/winter-archive-cover.svg',
     ),
     seriesType: 'event',
@@ -366,7 +391,8 @@ export const expandedSeriesSeed: SeriesSeed[] = [
     name: '2026 Starlight Observatory',
     description:
       'A star-map themed line mixing acrylic display blocks, photo sets, and night-sky gradients.',
-    coverImageUrl: buildDemoAssetUrl(
+    coverImageUrl: resolveSeedImageUrl(
+      50,
       'aurora-archive/series/starlight-observatory-cover.svg',
     ),
     seriesType: 'event',
@@ -1232,3 +1258,109 @@ export const expandedExchangeListingSeed: ExchangeListingSeed[] = [
     moderationStatus: 'approved',
   },
 ];
+
+/**
+ * 补齐实物记录的图片覆盖。
+ *
+ * 此前 16 个 SKU 里只有 6 个有社区图片，其余十个的详情页「实物记录」一段
+ * 长期显示「暂无图片」—— 演示数据里的空白比真实的空白更没有意义，它只是
+ * 没被写进种子而已。
+ *
+ * 用确定的 UUID，与其他种子一样可重复执行。
+ */
+const communityBackfill: Array<{
+  suffix: string;
+  goodsId: string;
+  userId: string;
+  body: string;
+}> = [
+  {
+    suffix: '01',
+    goodsId: baseIds.goodsDuoShikishi,
+    userId: demoUserIds.collector,
+    body: '烫金在灯下会随角度变色，扫描件完全拍不出这个效果。',
+  },
+  {
+    suffix: '02',
+    goodsId: ids.goodsDuoBromide,
+    userId: demoUserIds.trader,
+    body: '一套四张的边缘裁切很整齐，收进册子里不会卡。',
+  },
+  {
+    suffix: '03',
+    goodsId: ids.goodsRenKeychain,
+    userId: demoUserIds.reviewer,
+    body: '挂在包上两个月，漆面没有明显磨损。',
+  },
+  {
+    suffix: '04',
+    goodsId: ids.goodsSoraBadge,
+    userId: demoUserIds.collector,
+    body: '镭射层在室内光下偏冷，户外才看得出完整的渐变。',
+  },
+  {
+    suffix: '05',
+    goodsId: ids.goodsRioSoraCardSet,
+    userId: demoUserIds.trader,
+    body: '卡面比想象中厚，双人图的构图在实物上更舒展。',
+  },
+  {
+    suffix: '06',
+    goodsId: ids.goodsRioPassHolder,
+    userId: demoUserIds.reviewer,
+    body: '挂绳的长度适合站着用，坐下会有点短。',
+  },
+  {
+    suffix: '07',
+    goodsId: ids.goodsKaitoBadge,
+    userId: demoUserIds.collector,
+    body: '马口铁的边缘做了收口，别针位置正。',
+  },
+  {
+    suffix: '08',
+    goodsId: ids.goodsYunaBlock,
+    userId: demoUserIds.trader,
+    body: '亚克力块比图上厚一圈，放在桌面很稳。',
+  },
+  {
+    suffix: '09',
+    goodsId: ids.goodsYunaKaitoPhotoSet,
+    userId: demoUserIds.reviewer,
+    body: '相纸是哑面的，指纹不明显。',
+  },
+  {
+    suffix: '10',
+    goodsId: ids.goodsKaitoCharm,
+    userId: demoUserIds.collector,
+    body: '双面印刷，背面的星图细节没有偷工。',
+  },
+];
+
+export const backfilledPostSeed: PostSeed[] = communityBackfill.map(
+  (entry) => ({
+    id: `10000000-0000-4000-8000-0000000031${entry.suffix}`,
+    goodsId: entry.goodsId,
+    userId: entry.userId,
+    body: entry.body,
+    status: 'visible',
+    moderationStatus: 'approved',
+  }),
+);
+
+export const backfilledPostImageSeed: PostImageSeed[] = communityBackfill.map(
+  (entry, index) => ({
+    id: `10000000-0000-4000-8000-0000000032${entry.suffix}`,
+    postId: `10000000-0000-4000-8000-0000000031${entry.suffix}`,
+    imageUrl: resolveSeedImageUrl(
+      index + 12,
+      'neon-requiem/community/backfill.svg',
+    ),
+    storagePath: resolveSeedStoragePath(
+      index + 12,
+      `legacy/demo/community/backfill-${entry.suffix}.webp`,
+    ),
+    altText: '用户上传的实物照片。',
+    sortOrder: 0,
+    moderationStatus: 'approved',
+  }),
+);

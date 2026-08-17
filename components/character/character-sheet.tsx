@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { GoodsCardArt } from '@/components/goods/goods-card-art';
+import { formatCatalogDate } from '@/lib/formatters';
 import type { CharacterCollectionGoodsCard } from '@/server/data';
 
 type CharacterSheetProps = {
@@ -23,6 +24,10 @@ function SheetEntry({
   item: CharacterCollectionGoodsCard;
   index: number;
 }) {
+  const acquiredAt =
+    item.viewerState.find((entry) => entry.status === 'owned')?.updatedAt ??
+    null;
+
   return (
     <Link
       className={`goods-card group ${item.isOwned ? 'goods-card--lit' : 'goods-card--dormant'}`}
@@ -47,7 +52,13 @@ function SheetEntry({
 
         <div className="mt-auto pt-2">
           {item.isOwned ? (
-            <span className="state state--lit">已收录</span>
+            // 入藏日期本来就在 viewerState 里，只是一直没取用 —— 收集表上
+            // 每一件都只是「有/没有」，缺了「什么时候进来的」。
+            acquiredAt ? (
+              <span className="acquired">{formatCatalogDate(acquiredAt)}</span>
+            ) : (
+              <span className="state state--lit">已收录</span>
+            )
           ) : (
             <span className="state state--off">还没有</span>
           )}

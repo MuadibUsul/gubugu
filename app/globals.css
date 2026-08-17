@@ -669,11 +669,6 @@
     animation: slot-ink-fill 460ms var(--ease);
   }
 
-  .slot--current {
-    outline: 1px solid var(--ink);
-    outline-offset: 2px;
-  }
-
   /* ---------- 状态与进度 ---------- */
 
   .state {

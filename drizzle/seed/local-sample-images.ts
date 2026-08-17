@@ -61,12 +61,22 @@ export function getLocalSampleImageAssets(): LocalSampleImageAsset[] {
   });
 }
 
+/**
+ * 按序号取一张样例图，超出可用张数时回绕。
+ *
+ * 图位（商品图、作品封面、角色头像、系列封面、帖子图）比 images/ 里的图多，
+ * 早先的实现在序号越界时返回 null，调用方就退回生成的占位 SVG —— 结果是站
+ * 上大部分位置都在显示占位图，而真图闲置。回绕之后每个位置都拿得到真图，
+ * 重复使用好过空着。
+ */
 export function getLocalSampleImageAsset(sampleIndex: number) {
-  return (
-    getLocalSampleImageAssets().find(
-      (item) => item.sampleIndex === sampleIndex,
-    ) ?? null
-  );
+  const assets = getLocalSampleImageAssets();
+
+  if (assets.length === 0 || !Number.isFinite(sampleIndex) || sampleIndex < 1) {
+    return null;
+  }
+
+  return assets[(Math.floor(sampleIndex) - 1) % assets.length] ?? null;
 }
 
 export function syncLocalSampleImages() {

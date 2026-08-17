@@ -102,7 +102,7 @@ export const ipSeed: IpSeed[] = [
     nameLocalized: 'Neon Requiem',
     description:
       'A stage-driven sci-fi idol franchise known for luminous costumes, event visuals, and collector-focused merchandise drops.',
-    coverImageUrl: buildDemoAssetUrl('neon-requiem/brand/ip-cover.svg'),
+    coverImageUrl: resolveSeedImageUrl(31, 'neon-requiem/brand/ip-cover.svg'),
     status: 'published',
   },
 ];
@@ -116,7 +116,10 @@ export const characterSeed: CharacterSeed[] = [
     nameLocalized: 'Aoi Tsukishiro',
     description:
       'Cool-toned lead vocalist whose spring event goods lean toward acrylic display pieces and layered art.',
-    avatarImageUrl: buildDemoAssetUrl('neon-requiem/characters/aoi-avatar.svg'),
+    avatarImageUrl: resolveSeedImageUrl(
+      32,
+      'neon-requiem/characters/aoi-avatar.svg',
+    ),
     status: 'published',
   },
   {
@@ -127,7 +130,10 @@ export const characterSeed: CharacterSeed[] = [
     nameLocalized: 'Ren Kagetsu',
     description:
       'Fast-rising guitarist frequently featured on blind-pack badges, foil prints, and event-exclusive pair art.',
-    avatarImageUrl: buildDemoAssetUrl('neon-requiem/characters/ren-avatar.svg'),
+    avatarImageUrl: resolveSeedImageUrl(
+      33,
+      'neon-requiem/characters/ren-avatar.svg',
+    ),
     status: 'published',
   },
 ];
@@ -140,7 +146,8 @@ export const seriesSeed: SeriesSeed[] = [
     name: '2026 Spring Bloom Fair',
     description:
       'A sakura-themed event line with soft pink lighting, glitter accents, and venue-first merchandise variants.',
-    coverImageUrl: buildDemoAssetUrl(
+    coverImageUrl: resolveSeedImageUrl(
+      34,
       'neon-requiem/series/spring-bloom-cover.svg',
     ),
     seriesType: 'event',
@@ -230,7 +237,7 @@ export const goodsImageSeed: GoodImageSeed[] = [
   {
     id: ids.goodsImageAoiDesk,
     goodsId: ids.goodsAoiStand,
-    imageUrl: buildDemoAssetUrl('neon-requiem/goods/aoi-stand/desk.svg'),
+    imageUrl: resolveSeedImageUrl(35, 'neon-requiem/goods/aoi-stand/desk.svg'),
     altText: 'Desk display photo of the Aoi acrylic stand under warm lighting.',
     sortOrder: 1,
     isPrimary: false,
@@ -246,7 +253,10 @@ export const goodsImageSeed: GoodImageSeed[] = [
   {
     id: ids.goodsImageRenDetail,
     goodsId: ids.goodsRenBadge,
-    imageUrl: buildDemoAssetUrl('neon-requiem/goods/ren-badge/detail.svg'),
+    imageUrl: resolveSeedImageUrl(
+      36,
+      'neon-requiem/goods/ren-badge/detail.svg',
+    ),
     altText: 'Close-up detail showing the glitter finish on the Ren badge.',
     sortOrder: 1,
     isPrimary: false,
@@ -265,7 +275,10 @@ export const goodsImageSeed: GoodImageSeed[] = [
   {
     id: ids.goodsImageDuoFoil,
     goodsId: ids.goodsDuoShikishi,
-    imageUrl: buildDemoAssetUrl('neon-requiem/goods/duo-shikishi/foil.svg'),
+    imageUrl: resolveSeedImageUrl(
+      37,
+      'neon-requiem/goods/duo-shikishi/foil.svg',
+    ),
     altText: 'Foil detail shot of the duo mini shikishi signatures.',
     sortOrder: 1,
     isPrimary: false,
@@ -273,7 +286,10 @@ export const goodsImageSeed: GoodImageSeed[] = [
   {
     id: ids.goodsImageDuoBack,
     goodsId: ids.goodsDuoShikishi,
-    imageUrl: buildDemoAssetUrl('neon-requiem/goods/duo-shikishi/back.svg'),
+    imageUrl: resolveSeedImageUrl(
+      38,
+      'neon-requiem/goods/duo-shikishi/back.svg',
+    ),
     altText: 'Back product shot of the duo mini shikishi packaging.',
     sortOrder: 2,
     isPrimary: false,

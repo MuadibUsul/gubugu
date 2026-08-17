@@ -52,6 +52,8 @@ import {
   expandedSeriesSeed,
   expandedTagSeed,
   expandedUserGoodsSeed,
+  backfilledPostSeed,
+  backfilledPostImageSeed,
 } from './expanded-data';
 import { achievementSeed } from './achievements';
 import { syncLocalSampleImages } from './local-sample-images';
@@ -91,8 +93,12 @@ const allCatalogSubmissionSeed = [
   ...catalogSubmissionSeed,
   ...expandedCatalogSubmissionSeed,
 ];
-const allPostSeed = [...postSeed, ...expandedPostSeed];
-const allPostImageSeed = [...postImageSeed, ...expandedPostImageSeed];
+const allPostSeed = [...postSeed, ...expandedPostSeed, ...backfilledPostSeed];
+const allPostImageSeed = [
+  ...postImageSeed,
+  ...expandedPostImageSeed,
+  ...backfilledPostImageSeed,
+];
 const allExchangeListingSeed = [
   ...exchangeListingSeed,
   ...expandedExchangeListingSeed,
