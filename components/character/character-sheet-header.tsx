@@ -9,7 +9,7 @@ type CharacterSheetHeaderProps = {
 };
 
 /**
- * 収集帖的表头。
+ * 收集册的表头。
  *
  * 旧页面把「商品视图 / 进度视图」做成两个标签互相切换 —— 那是让结构跟自己
  * 打架：一张收集表上，进度就是表头，条目就是表身，本来是一件事。这里把它
@@ -25,8 +25,8 @@ export function CharacterSheetHeader({
   return (
     <section className="spread border-border border-b pb-14">
       <div>
-        <p className="lbl">収集帖</p>
-        <div className="rail-jp">収集</div>
+        <p className="lbl">收集册</p>
+        <div className="rail-jp">收集</div>
       </div>
 
       <div className="min-w-0">

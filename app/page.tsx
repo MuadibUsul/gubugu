@@ -14,7 +14,7 @@ import { listHotIps, searchGoodsCatalog } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 /**
- * 首页读作一本图录的前几页：扉 → 目次 → 近収蔵 → 索引。
+ * 首页读作一本图录的前几页：扉 → 目次 → 近收藏 → 索引。
  *
  * 不是 hero + 侧栏 + 卡片墙。这个顺序有它的道理：先说明这是什么、收了多少，
  * 再给出可以从哪儿翻进去，最后才是最近新增。

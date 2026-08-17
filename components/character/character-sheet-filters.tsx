@@ -65,16 +65,27 @@ export function CharacterSheetFilters({
 
   return (
     <div className="mb-10">
-      {/* 查漏是这一页的主要动作，给它独立一行 */}
+      {/* 查漏是这一页的主要动作，给它独立一行。
+          此前这里只有「只看已收录」—— 那把缺口藏了起来，而整页的立论正是
+          缺口驱动收集。缺什么现在排在第一位，已收录退到它后面。 */}
       <div className="border-border flex flex-wrap items-baseline gap-x-5 border-b py-3">
         <FilterLink
-          active={controls.ownedOnly}
+          active={controls.collected === 'missing'}
           href={buildCharacterEncyclopediaHref({
             ...controls,
-            ownedOnly: !controls.ownedOnly,
+            collected: controls.collected === 'missing' ? undefined : 'missing',
           })}
         >
-          {controls.ownedOnly ? '✓ 只看已收录' : '只看已收录'}
+          {controls.collected === 'missing' ? '✓ 只看还没有的' : '只看还没有的'}
+        </FilterLink>
+        <FilterLink
+          active={controls.collected === 'owned'}
+          href={buildCharacterEncyclopediaHref({
+            ...controls,
+            collected: controls.collected === 'owned' ? undefined : 'owned',
+          })}
+        >
+          {controls.collected === 'owned' ? '✓ 只看已收录' : '只看已收录'}
         </FilterLink>
         <FilterLink
           active={false}
@@ -84,7 +95,6 @@ export function CharacterSheetFilters({
             view: controls.view,
             viewer: controls.viewer,
             tagSlugs: [],
-            ownedOnly: false,
           })}
         >
           清除全部筛选

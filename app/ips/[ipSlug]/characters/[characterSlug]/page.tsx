@@ -36,7 +36,7 @@ const characterPageSearchSchema = z.object({
   goodsType: z.string().trim().min(1).optional(),
   seriesSlug: z.string().trim().min(1).optional(),
   tagSlugs: z.array(z.string().trim().min(1)).max(12).default([]),
-  ownedOnly: z.boolean().default(false),
+  collected: z.enum(['owned', 'missing']).optional(),
   viewer: z.string().trim().min(1).default(defaultDemoViewerKey),
 });
 
@@ -84,7 +84,7 @@ function buildCharacterPageControls({
         getMultiSearchParamValues(searchParams.tag).map((tag) => tag.trim()),
       ),
     ).filter(Boolean),
-    ownedOnly: getSingleSearchParamValue(searchParams.owned) === '1',
+    collected: getSingleSearchParamValue(searchParams.collected),
     viewer: viewerKey,
   }) satisfies Omit<CharacterPageControls, 'ipSlug' | 'characterSlug'>;
 }
@@ -105,7 +105,12 @@ function applyCharacterFilters({
       return false;
     }
 
-    if (controls.ownedOnly && !item.isOwned) {
+    if (controls.collected === 'owned' && !item.isOwned) {
+      return false;
+    }
+
+    // 查漏：只留还没有的那几件
+    if (controls.collected === 'missing' && item.isOwned) {
       return false;
     }
 
@@ -169,8 +174,8 @@ export default async function CharacterPage({
 
       <section className="spread py-14">
         <div>
-          <p className="lbl">一覧</p>
-          <div className="rail-jp">図鑑</div>
+          <p className="lbl">一览</p>
+          <div className="rail-jp">图鉴</div>
         </div>
 
         <div className="min-w-0">

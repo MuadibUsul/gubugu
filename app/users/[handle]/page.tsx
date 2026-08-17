@@ -126,15 +126,15 @@ export default async function UserPage({
       <UserCollectionHeader
         data={data}
         displayName={profile.displayName}
-        eyebrow="収蔵帖"
+        eyebrow="收藏帖"
         handle={formatProfileHandle(profile.handle)}
-        railLabel="収蔵者"
+        railLabel="收藏者"
       />
 
       <section className="spread py-14">
         <div>
-          <p className="lbl">一覧</p>
-          <div className="rail-jp">目録</div>
+          <p className="lbl">一览</p>
+          <div className="rail-jp">目录</div>
         </div>
         <div className="min-w-0">
           <UserCollectionSheet
@@ -148,7 +148,7 @@ export default async function UserPage({
       <section className="spread border-border border-t py-14">
         <div>
           <p className="lbl">交换</p>
-          <div className="rail-jp">交換</div>
+          <div className="rail-jp">交换</div>
         </div>
         <div className="min-w-0">
           <UserExchangeListings

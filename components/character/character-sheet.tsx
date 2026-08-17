@@ -10,7 +10,7 @@ type CharacterSheetProps = {
 };
 
 /**
- * 一覧 —— 収集帖的表身。
+ * 一览 —— 收集册的表身。
  *
  * 旧版是 2 列大卡，每张带描述、标签和三个按钮。那样一屏只放得下四件，缺口
  * 就看不出来了 —— 而缺口正是图鉴的驱动力。这里改成 4 列密排图版，一屏能看
@@ -74,7 +74,7 @@ export function CharacterSheet({ items, totalCount }: CharacterSheetProps) {
   return (
     <div>
       <div className="mb-5 flex items-baseline justify-between gap-5">
-        <h2 className="text-[22px]">一覧</h2>
+        <h2 className="text-[22px]">一览</h2>
         <span className="num">
           {items.length === totalCount
             ? `全 ${totalCount} 件`

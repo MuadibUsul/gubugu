@@ -12,6 +12,8 @@ import {
   type SearchPageControls,
 } from './search-query';
 import { SearchPanelState } from './search-panel-state';
+import type { UserGoodsStatus } from '@/lib/user-goods-status';
+
 import { SearchResultCard } from './search-result-card';
 
 type SearchResultsProps = {
@@ -20,6 +22,8 @@ type SearchResultsProps = {
   filterOptions?: GoodsSearchFilterOptions;
   state?: 'ready' | 'error';
   isAuthenticated: boolean;
+  /** 当前用户对本页结果的收藏状态，按 goodsId 索引。 */
+  viewerStatuses?: Record<string, UserGoodsStatus[]>;
 };
 
 function resolveFacetLabel({
@@ -42,6 +46,7 @@ export function SearchResults({
   filterOptions,
   state = 'ready',
   isAuthenticated,
+  viewerStatuses = {},
 }: SearchResultsProps) {
   if (state === 'error' || !result) {
     return (
@@ -135,9 +140,10 @@ export function SearchResults({
             最佳匹配
           </p>
           <SearchResultCard
+            activeStatuses={viewerStatuses[bestMatch.id] ?? []}
             isAuthenticated={isAuthenticated}
+            isBestMatch
             item={bestMatch}
-            priority="featured"
           />
         </div>
       ) : null}
@@ -150,6 +156,7 @@ export function SearchResults({
           <div className="grid gap-4 2xl:grid-cols-2">
             {otherItems.map((item) => (
               <SearchResultCard
+                activeStatuses={viewerStatuses[item.id] ?? []}
                 isAuthenticated={isAuthenticated}
                 item={item}
                 key={item.id}

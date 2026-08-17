@@ -209,6 +209,7 @@ export default async function IpPage({ params }: IpPageProps) {
             <div className="grid gap-4 2xl:grid-cols-2">
               {data.goods.map((item) => (
                 <SearchResultCard
+                  activeStatuses={[]}
                   isAuthenticated={false}
                   item={item}
                   key={item.id}

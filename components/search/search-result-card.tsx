@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { GoodsCardArt } from '@/components/goods/goods-card-art';
+import type { UserGoodsStatus } from '@/lib/user-goods-status';
 import type { GoodsCardData } from '@/server/data/_shared';
 
 import { formatGoodsTypeLabel } from './search-query';
@@ -9,145 +10,76 @@ import { SearchCardActions } from './search-card-actions';
 type SearchResultCardProps = {
   item: GoodsCardData;
   isAuthenticated: boolean;
-  priority?: 'featured' | 'default';
+  /** 当前用户对这一件的收藏状态。空数组＝尚未标记。 */
+  activeStatuses: UserGoodsStatus[];
+  isBestMatch?: boolean;
 };
 
-function buildTrustSignals(item: GoodsCardData) {
-  return [
-    item.primaryImageUrl ? '有主图' : null,
-    item.description ? '资料完整' : null,
-    item.characters.length > 0 ? '角色已关联' : null,
-  ].filter((value): value is string => Boolean(value));
-}
-
+/**
+ * 搜索结果卡。
+ *
+ * `goods-card--lit`（金色装裱内衬）此前被用来标「最佳匹配」，而它在角色页和
+ * 收藏页表示「已收录」—— 同一套视觉语言背两个含义。金只属于「拥有」那一层，
+ * 所以最佳匹配换成一行文字标记，金留给真正拥有的条目。
+ */
 export function SearchResultCard({
   item,
   isAuthenticated,
-  priority = 'default',
+  activeStatuses,
+  isBestMatch = false,
 }: SearchResultCardProps) {
   const detailsHref = `/goods/${item.slug}`;
-  const isFeatured = priority === 'featured';
-  const trustSignals = buildTrustSignals(item);
+  const owned = activeStatuses.includes('owned');
 
   return (
-    <article
-      className={`goods-card group ${isFeatured ? 'goods-card--lit' : ''}`}
-    >
-      <div
-        className={
-          isFeatured
-            ? 'grid gap-0 xl:grid-cols-[minmax(22rem,0.92fr)_minmax(0,1.08fr)]'
-            : ''
-        }
+    <article className={`goods-card group ${owned ? 'goods-card--lit' : ''}`}>
+      <GoodsCardArt
+        alt={item.name}
+        className="aspect-[4/3]"
+        imageUrl={item.primaryImageUrl}
+        priority={isBestMatch}
+        sizes="(max-width: 639px) 100vw, (max-width: 1535px) 50vw, 33vw"
       >
-        <GoodsCardArt
-          alt={item.name}
-          className={`border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] ${
-            isFeatured
-              ? 'min-h-[22rem] border-b xl:min-h-full xl:border-r xl:border-b-0'
-              : 'h-56 border-b sm:h-64'
-          }`}
-          imageUrl={item.primaryImageUrl}
-          // The featured result is the largest thing above the fold on /search,
-          // so it should not wait for the lazy-loading observer.
-          priority={isFeatured}
-          sizes={
-            isFeatured
-              ? '(max-width: 1279px) 100vw, 45vw'
-              : '(max-width: 1279px) 100vw, 30vw'
-          }
-        >
-          <Link className="absolute inset-0 z-10" href={detailsHref}>
-            <span className="sr-only">打开 {item.name}</span>
-          </Link>
+        <Link className="absolute inset-0 z-10" href={detailsHref}>
+          <span className="sr-only">打开 {item.name}</span>
+        </Link>
 
-          <div className="goods-card__art-content flex h-full flex-col justify-between p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex flex-wrap gap-2">
-                {isFeatured ? (
-                  <span className="hud-chip hud-chip--lit px-3 py-1 text-[0.68rem] font-semibold uppercase">
-                    最佳匹配
-                  </span>
-                ) : null}
-                <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold uppercase">
-                  {item.skuCode}
-                </span>
-              </div>
-              <span className="hud-chip px-3 py-1 text-[0.7rem] font-semibold">
-                {formatGoodsTypeLabel(item.goodsType)}
-              </span>
-            </div>
+        {owned ? <span className="seal">藏</span> : null}
+      </GoodsCardArt>
 
-            <div className="hud-card max-w-[20rem] px-4 py-3">
-              <p className="text-foreground text-sm font-semibold">
-                {item.series.name}
-              </p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                {item.ip.name}
-              </p>
-            </div>
-          </div>
-        </GoodsCardArt>
+      <div className="flex flex-1 flex-col gap-2 px-1 pt-3 pb-1">
+        {isBestMatch ? <p className="lbl text-[var(--shu)]">最接近</p> : null}
 
-        <div className={isFeatured ? 'space-y-6 p-6 sm:p-7' : 'space-y-5 p-5'}>
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {item.characters.slice(0, 2).map((character) => (
-                <span
-                  className="hud-chip text-muted-foreground px-3 py-1 text-xs"
-                  key={character.id}
-                >
-                  {character.name}
-                </span>
-              ))}
-            </div>
+        <h3 className="text-[15px] leading-snug transition-colors group-hover:text-[var(--shu)]">
+          <Link href={detailsHref}>{item.name}</Link>
+        </h3>
 
-            <div>
-              <h2
-                className={
-                  isFeatured
-                    ? 'font-heading text-foreground text-4xl leading-[0.96] sm:text-5xl'
-                    : 'font-heading text-foreground text-3xl leading-none'
-                }
-              >
-                <Link
-                  className="hover:text-primary relative z-20 transition-colors"
-                  href={detailsHref}
-                >
-                  {item.name}
-                </Link>
-              </h2>
-              {item.description ? (
-                <p className="text-muted-foreground mt-3 line-clamp-2 text-sm leading-7">
-                  {item.description}
-                </p>
-              ) : null}
-            </div>
-          </div>
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          <span className="sku-code">{item.skuCode}</span>
+          <span className="text-muted-foreground text-[12.5px]">
+            {formatGoodsTypeLabel(item.goodsType)}
+          </span>
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            {trustSignals.map((signal) => (
-              <span
-                className="hud-chip text-foreground/84 border-[color:color-mix(in_oklab,var(--accent)_34%,var(--border))] px-3 py-1 text-xs"
-                key={signal}
-              >
-                {signal}
-              </span>
-            ))}
-            {item.tags.slice(0, 2).map((tag) => (
-              <span
-                className="hud-chip text-foreground/84 px-3 py-1 text-xs"
-                key={tag.id}
-              >
-                {tag.name}
-              </span>
-            ))}
-          </div>
+        <p className="text-muted-foreground text-[12.5px]">
+          {item.ip.name} · {item.series.name}
+        </p>
 
+        {/* 归属状态必须在结果里可见：看不见的话，收藏者会重复买已经有的东西。 */}
+        <div className="mt-1">
+          {owned ? (
+            <span className="state state--lit">已收录</span>
+          ) : activeStatuses.length > 0 ? (
+            <span className="state state--off">
+              {activeStatuses.includes('wanted') ? '想要' : '可交换'}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="mt-auto pt-3">
           <SearchCardActions
-            compact={!isFeatured}
+            activeStatuses={activeStatuses}
             goodsId={item.id}
-            goodsSlug={item.slug}
             isAuthenticated={isAuthenticated}
           />
         </div>

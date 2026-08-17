@@ -19,8 +19,8 @@ export default function Error({
     <PageNotice
       description="读取角色收集数据时出错了。可以重试一次。"
       eyebrow="角色页出错"
-      railLabel="エラー"
-      title="収集帖没能加载出来"
+      railLabel="出错"
+      title="收集册没能加载出来"
     >
       <button
         className="mt-6 rounded-[var(--radius)] bg-[var(--shu)] px-5 py-2.5 text-[14px] font-medium text-[var(--shu-ink)]"

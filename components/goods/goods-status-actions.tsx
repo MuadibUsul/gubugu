@@ -83,7 +83,7 @@ export function GoodsStatusActions({
   if (!isAuthenticated) {
     return (
       <div className="border-border border-t pt-6">
-        <p className="lbl">収蔵状態</p>
+        <p className="lbl">收藏状态</p>
         <p className="text-muted-foreground mt-2 text-sm">
           登录后可以把它记进你的收藏。
         </p>
@@ -102,7 +102,7 @@ export function GoodsStatusActions({
       <RecordSlips unlocked={state.unlocked} />
 
       <div className="flex items-baseline justify-between gap-4">
-        <p className="lbl">収蔵状態</p>
+        <p className="lbl">收藏状态</p>
         <span className="lbl">{userLabel ?? '已登录'}</span>
       </div>
 
@@ -113,7 +113,7 @@ export function GoodsStatusActions({
             <span
               className={`seal seal--inline ${justAcquired ? 'seal--stamp' : ''}`}
             >
-              蔵
+              藏
             </span>
             <span className="state state--lit">已收录</span>
           </>

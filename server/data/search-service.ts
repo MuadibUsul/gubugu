@@ -13,6 +13,11 @@ import {
   tags,
 } from '@/drizzle/schema';
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
+import {
+  getUserGoodsStateFlags,
+  getUserGoodsStateMap,
+} from '@/server/data/user-goods';
+import type { UserGoodsStatus } from '@/lib/user-goods-status';
 import { getDb } from '@/server/db/client';
 
 export const goodsSearchInputSchema = z.object({
@@ -89,6 +94,14 @@ export type GoodsSearchFilterOptions = {
 export type GoodsSearchPageData = {
   results: GoodsSearchResult;
   filterOptions: GoodsSearchFilterOptions;
+  /**
+   * 当前用户对本页结果的收藏状态，按 goodsId 索引。
+   *
+   * 缺了它会出数据事故而不只是体验问题：搜索卡的收藏按钮会一律显示未选中，
+   * 而 toggleUserGoodsStatus 是按数据库真实状态切换的 —— 对一件已拥有的条目
+   * 点「我有这件」，服务端找到已存在的行并删除，收藏就这么没了。
+   */
+  viewerStatuses: Record<string, UserGoodsStatus[]>;
 };
 
 const goodsSearchFilterOptionsInputSchema = z.object({
@@ -553,7 +566,10 @@ export async function getGoodsSearchFilterOptions(
   } satisfies GoodsSearchFilterOptions;
 }
 
-export async function getGoodsSearchPageData(input: GoodsSearchInput) {
+export async function getGoodsSearchPageData(
+  input: GoodsSearchInput,
+  viewerId?: string,
+) {
   const params = goodsSearchInputSchema.parse(input);
   const [results, filterOptions] = await Promise.all([
     goodsSearchProvider.searchGoods(params),
@@ -565,8 +581,31 @@ export async function getGoodsSearchPageData(input: GoodsSearchInput) {
     }),
   ]);
 
+  // 只查本页结果的状态，不是整个收藏。
+  const viewerStatuses: Record<string, UserGoodsStatus[]> = {};
+
+  if (viewerId && results.items.length > 0) {
+    const stateMap = await getUserGoodsStateMap({
+      userId: viewerId,
+      goodsIds: results.items.map((item) => item.id),
+    });
+
+    for (const item of results.items) {
+      const snapshot = stateMap[item.id];
+
+      if (snapshot) {
+        const { activeStatuses } = getUserGoodsStateFlags(snapshot);
+
+        if (activeStatuses.length > 0) {
+          viewerStatuses[item.id] = activeStatuses;
+        }
+      }
+    }
+  }
+
   return {
     results,
     filterOptions,
+    viewerStatuses,
   } satisfies GoodsSearchPageData;
 }

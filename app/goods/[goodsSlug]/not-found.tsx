@@ -9,7 +9,7 @@ export default function NotFound() {
       ]}
       description="这个路径下没有对应的条目。如果手上有实物，可以用拍照识别反查。"
       eyebrow="未找到"
-      railLabel="該当なし"
+      railLabel="无结果"
       title="这件周边还没有收录"
     />
   );

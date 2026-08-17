@@ -6,7 +6,7 @@ export default function NotFound() {
       actions={[{ href: '/', label: '回到图鉴首页' }]}
       description="这个收藏者主页不存在，或者对方把主页设成了私密。"
       eyebrow="未找到"
-      railLabel="該当なし"
+      railLabel="无结果"
       title="找不到这位收藏者"
     />
   );

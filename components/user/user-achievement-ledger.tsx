@@ -8,7 +8,7 @@ type UserAchievementLedgerProps = {
 };
 
 /**
- * 収蔵記録 —— 一份登录簿，不是奖章墙。
+ * 收藏记录 —— 一份登录簿，不是奖章墙。
  *
  * 用和规格表相同的细线、和藏品编号相同的等宽数字：这是同一套语言里的一个
  * 部件，不是贴上去的游戏化模块。
@@ -48,13 +48,13 @@ export function UserAchievementLedger({
     <section className="mt-14" id="achievement-ledger">
       <div className="spread">
         <div>
-          <p className="lbl">記録</p>
-          <div className="rail-jp">収蔵記録</div>
+          <p className="lbl">记录</p>
+          <div className="rail-jp">收藏记录</div>
         </div>
 
         <div className="min-w-0">
           <div className="flex items-baseline justify-between gap-5">
-            <h2 className="text-[26px]">収蔵記録</h2>
+            <h2 className="text-[26px]">收藏记录</h2>
             <span className="accession">
               <b>{achievedCount}</b> <i>/ {entries.length}</i>
             </span>
@@ -64,44 +64,50 @@ export function UserAchievementLedger({
             收藏路上的节点，按达成时间登记在册。
           </p>
 
-          <table className="ledger mt-6">
-            <thead>
-              <tr>
-                <th />
-                <th>项目</th>
-                <th />
-                <th className="text-right">达成</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry, index) => {
-                const achieved = entry.achievedAt !== null;
+          {/* 表格不会收缩到 min-content 以下：窄屏时让它在自己的容器里横滚，
+              而不是把整页撑出横向滚动条。 */}
+          <div className="mt-6 overflow-x-auto">
+            <table className="ledger">
+              <thead>
+                <tr>
+                  <th />
+                  <th>项目</th>
+                  <th />
+                  <th className="text-right">达成</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry, index) => {
+                  const achieved = entry.achievedAt !== null;
 
-                return (
-                  <tr
-                    className={achieved ? 'is-done' : 'is-pending'}
-                    key={entry.code}
-                  >
-                    <td className="ledger__no">
-                      {String(index + 1).padStart(3, '0')}
-                    </td>
-                    <td className="ledger__name">
-                      {entry.name}
-                      {entry.achievedCount > 1 ? (
-                        <span className="num ml-2">×{entry.achievedCount}</span>
-                      ) : null}
-                    </td>
-                    <td className="ledger__cond">{entry.description}</td>
-                    <td className="ledger__date">
-                      {achieved
-                        ? formatCatalogDate(entry.achievedAt)
-                        : describeProgress(entry, ownedTotal)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr
+                      className={achieved ? 'is-done' : 'is-pending'}
+                      key={entry.code}
+                    >
+                      <td className="ledger__no">
+                        {String(index + 1).padStart(3, '0')}
+                      </td>
+                      <td className="ledger__name">
+                        {entry.name}
+                        {entry.achievedCount > 1 ? (
+                          <span className="num ml-2">
+                            ×{entry.achievedCount}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="ledger__cond">{entry.description}</td>
+                      <td className="ledger__date">
+                        {achieved
+                          ? formatCatalogDate(entry.achievedAt)
+                          : describeProgress(entry, ownedTotal)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>

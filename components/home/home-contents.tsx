@@ -19,7 +19,7 @@ function ContentsRow({ ip, index }: { ip: HomeHotIp; index: number }) {
         {String(index + 1).padStart(3, '0')}
       </span>
 
-      <span className="min-w-0 shrink-0">
+      <span className="min-w-0">
         <span className="font-heading block text-[22px] leading-tight font-semibold transition-colors group-hover:text-[var(--shu)]">
           {ip.name}
         </span>

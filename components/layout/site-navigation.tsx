@@ -32,7 +32,7 @@ export async function SiteNavigation() {
     >
       <div className="mx-auto flex h-[62px] max-w-[1180px] items-center gap-7 px-5 md:px-10">
         <Link className="font-heading mr-auto text-xl font-semibold" href="/">
-          谷布谷<span className="text-[17px] text-[var(--shu)]">図鑑</span>
+          谷布谷<span className="text-[17px] text-[var(--shu)]">图鉴</span>
         </Link>
 
         <div className="hidden items-center gap-7 md:flex">

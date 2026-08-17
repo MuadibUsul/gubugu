@@ -1,4 +1,4 @@
-/** 骨架屏画的是収集帖的形状：表头（缺口 + 收集条 + 系列行）与密排的一覧。 */
+/** 骨架屏画的是收集册的形状：表头（缺口 + 收集条 + 系列行）与密排的一览。 */
 function Line({ className }: { className: string }) {
   return <div className={`bg-muted animate-pulse ${className}`} />;
 }

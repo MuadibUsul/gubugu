@@ -19,7 +19,7 @@ export default function Error({
     <PageNotice
       description="读取条目详情时出错了。可以重试一次。"
       eyebrow="条目出错"
-      railLabel="エラー"
+      railLabel="出错"
       title="这个条目没能加载出来"
     >
       <button

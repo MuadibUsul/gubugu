@@ -18,8 +18,8 @@ export function HomeFrontispiece({
   return (
     <section className="spread border-border border-b pb-16">
       <div>
-        <p className="lbl">図鑑</p>
-        <div className="rail-jp">谷布谷図鑑</div>
+        <p className="lbl">图鉴</p>
+        <div className="rail-jp">谷布谷图鉴</div>
       </div>
 
       <div className="min-w-0">

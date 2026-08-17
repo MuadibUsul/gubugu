@@ -23,7 +23,7 @@ export function UserPhotoStrip({ items }: UserPhotoStripProps) {
     <section className="spread border-border border-t py-14">
       <div>
         <p className="lbl">写真</p>
-        <div className="rail-jp">記録写真</div>
+        <div className="rail-jp">实物记录</div>
       </div>
 
       <div className="min-w-0">

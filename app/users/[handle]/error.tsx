@@ -19,7 +19,7 @@ export default function Error({
     <PageNotice
       description="读取收藏者主页时出错了。可以重试一次。"
       eyebrow="主页出错"
-      railLabel="エラー"
+      railLabel="出错"
       title="这个主页没能加载出来"
     >
       <button

@@ -4,7 +4,7 @@
    金銀朱 — 漆器与和装书的配色。
    两个强调色有明确分工，不是两种装饰：
      朱 (--shu)  行为：主操作、当前项、入藏印（印泥本来就是朱）
-     金 (--kin)  拥有：已收录的格子、已拥有条目的装裱内衬、収蔵記録的达成印
+     金 (--kin)  拥有：已收录的格子、已拥有条目的装裱内衬、收藏记录的达成印
    「拥有」因此在视觉上本身就是贵重的，不靠额外装饰去暗示。
    分隔靠细线与留白，不靠阴影、辉光或毛玻璃。
    ========================================================================= */
@@ -443,9 +443,33 @@
     transition: outline-color 520ms var(--ease);
   }
 
-  /* 已拥有：装裱内衬转金 */
+  /* 已拥有：装裱内衬转金，右上角落一枚朱印。
+     朱印是整套设计里最有力的「拥有」标记，此前只出现在详情页一处 —— 卡片
+     上一个都没有，等于把最强的信号留在了最少被看到的地方。 */
   .goods-card--lit .goods-card__art {
     outline-color: color-mix(in oklab, var(--kin) 62%, var(--rule));
+  }
+
+  .goods-card--lit .goods-card__art::after {
+    content: '藏';
+    position: absolute;
+    right: 9px;
+    top: 9px;
+    z-index: 3;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--shu);
+    color: var(--shu-ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading-family);
+    font-size: 12.5px;
+    line-height: 1;
+    box-shadow:
+      0 0 0 2px var(--surface),
+      0 0 0 3px color-mix(in oklab, var(--kin) 45%, transparent);
+    pointer-events: none;
   }
 
   .goods-card__art-image {
@@ -585,7 +609,7 @@
     animation: ink-spread 580ms var(--ease) 100ms;
   }
 
-  /* ---------- 収蔵日 ---------- */
+  /* ---------- 收藏日 ---------- */
 
   .acquired {
     display: inline-flex;
@@ -597,7 +621,7 @@
   }
 
   .acquired::before {
-    content: '収蔵';
+    content: '收藏';
     font-family: var(--font-heading-family);
     font-size: 11px;
     color: var(--kin-2);
@@ -735,7 +759,7 @@
     white-space: nowrap;
   }
 
-  /* ---------- 収蔵記録 ----------
+  /* ---------- 收藏记录 ----------
      登录簿，不是奖章。用和规格表相同的细线、和藏品编号相同的等宽数字。 */
 
   .ledger {
@@ -822,7 +846,7 @@
     animation: row-gild 1800ms var(--ease);
   }
 
-  /* 記録纸条 */
+  /* 记录纸条 */
   .slip {
     background: var(--surface);
     border: 1px solid var(--rule-2);

@@ -5,7 +5,7 @@ export type CharacterPageControls = {
   goodsType?: string;
   seriesSlug?: string;
   tagSlugs: string[];
-  ownedOnly: boolean;
+  collected?: 'owned' | 'missing';
   viewer: string;
 };
 
@@ -16,7 +16,7 @@ export function buildCharacterEncyclopediaHref({
   goodsType,
   seriesSlug,
   tagSlugs,
-  ownedOnly,
+  collected,
   viewer,
 }: CharacterPageControls) {
   const params = new URLSearchParams();
@@ -37,8 +37,8 @@ export function buildCharacterEncyclopediaHref({
     params.append('tag', tagSlug);
   }
 
-  if (ownedOnly) {
-    params.set('owned', '1');
+  if (collected) {
+    params.set('collected', collected);
   }
 
   if (viewer) {

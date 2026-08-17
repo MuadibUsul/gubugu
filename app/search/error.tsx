@@ -19,7 +19,7 @@ export default function Error({
     <PageNotice
       description="检索时出错了。可以重试，或者换一组关键词。"
       eyebrow="搜索出错"
-      railLabel="検索"
+      railLabel="检索"
       title="搜索没能完成"
     >
       <button

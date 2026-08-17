@@ -67,16 +67,18 @@ export function GoodsSpecTable({ goods }: GoodsSpecTableProps) {
 
   return (
     <div>
-      <table className="spec-table">
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.label}>
-              <th scope="row">{row.label}</th>
-              <td>{row.value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="spec-table">
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.label}>
+                <th scope="row">{row.label}</th>
+                <td>{row.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {goods.tags.length > 0 ? (
         <div className="text-muted-foreground mt-6 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[13px]">

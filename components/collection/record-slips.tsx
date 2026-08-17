@@ -5,7 +5,7 @@ type RecordSlipsProps = {
 };
 
 /**
- * 記録纸条 —— 达成収蔵記録时的回执。
+ * 记录纸条 —— 达成收藏记录时的回执。
  *
  * 一张纸条，靠细线不靠阴影；金色左边框，因为「达成」属于拥有那一层。
  * 不做弹窗、不拦操作：它是一条记录被写下的回执，不是需要确认的事件。
@@ -26,7 +26,7 @@ export function RecordSlips({ unlocked }: RecordSlipsProps) {
     >
       {unlocked.map((record) => (
         <div className="slip" key={record.code}>
-          <p className="font-heading text-[11.5px] text-[var(--kin-2)]">記録</p>
+          <p className="font-heading text-[11.5px] text-[var(--kin-2)]">记录</p>
           <div>
             <p className="font-heading text-[15.5px] font-semibold">
               {record.name}

@@ -1,5 +1,5 @@
 /**
- * 骨架屏要画的是**这一页的**形状 —— 扉、目次、近収蔵。
+ * 骨架屏要画的是**这一页的**形状 —— 扉、目次、近收藏。
  * 旧版画的是已经不存在的 hero 卡与统计卡组，那会让首屏先闪一个完全不同的
  * 布局再跳到真实内容。
  */
@@ -48,7 +48,7 @@ export default function HomeLoading() {
         </div>
       </section>
 
-      {/* 近収蔵 */}
+      {/* 近收藏 */}
       <section className="spread py-16">
         <div>
           <Line className="h-3 w-10" />

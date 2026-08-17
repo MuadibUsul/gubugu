@@ -19,7 +19,7 @@ export default function Error({
     <PageNotice
       description="页面渲染时出错了。可以重试一次，如果还是不行，稍后再来。"
       eyebrow="页面出错"
-      railLabel="エラー"
+      railLabel="出错"
       title="这一页没能加载出来"
     >
       <button

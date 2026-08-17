@@ -51,15 +51,15 @@ export default async function MyCollectionPage({
       <UserCollectionHeader
         data={data}
         displayName={user.displayLabel}
-        eyebrow="収集帖"
+        eyebrow="收集册"
         handle={user.handle ?? user.email ?? null}
-        railLabel="私の収蔵"
+        railLabel="我的收藏"
       />
 
       <section className="spread py-14">
         <div>
-          <p className="lbl">一覧</p>
-          <div className="rail-jp">目録</div>
+          <p className="lbl">一览</p>
+          <div className="rail-jp">目录</div>
         </div>
         <div className="min-w-0">
           <UserCollectionSheet
@@ -78,7 +78,7 @@ export default async function MyCollectionPage({
       <section className="spread border-border border-t py-14">
         <div>
           <p className="lbl">交换</p>
-          <div className="rail-jp">交換</div>
+          <div className="rail-jp">交换</div>
         </div>
         <div className="min-w-0">
           <UserExchangeListings

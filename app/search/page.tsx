@@ -76,10 +76,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   let state: 'ready' | 'error' = 'ready';
 
   try {
-    pageData = await getGoodsSearchPageData({
-      ...controls,
-      pageSize: 12,
-    });
+    pageData = await getGoodsSearchPageData(
+      {
+        ...controls,
+        pageSize: 12,
+      },
+      authUser?.id,
+    );
   } catch (error) {
     if (!isDatabaseAccessConfigurationError(error)) {
       console.error(error);
@@ -93,7 +96,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <form action="/search">
         <section className="spread border-border border-b pb-12">
           <div>
-            <p className="lbl">検索</p>
+            <p className="lbl">检索</p>
             <div className="rail-jp">索引</div>
           </div>
 
@@ -127,7 +130,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <section className="spread py-12">
           <div>
             <p className="lbl">筛选</p>
-            <div className="rail-jp">絞込</div>
+            <div className="rail-jp">筛选</div>
           </div>
 
           <div className="min-w-0">
@@ -142,6 +145,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 isAuthenticated={Boolean(authUser)}
                 result={pageData?.results}
                 state={state}
+                viewerStatuses={pageData?.viewerStatuses}
               />
             </div>
           </div>

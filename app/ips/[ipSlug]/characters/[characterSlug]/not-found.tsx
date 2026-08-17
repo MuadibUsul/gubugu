@@ -9,7 +9,7 @@ export default function NotFound() {
       ]}
       description="这个路径下没有对应的角色。可以从作品目次进入，或者直接搜角色名。"
       eyebrow="未找到"
-      railLabel="該当なし"
+      railLabel="无结果"
       title="这个角色还没有收录"
     />
   );

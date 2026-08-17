@@ -96,12 +96,12 @@ export default async function GoodsDetailPage({
         </div>
       ) : null}
 
-      {/* 図版 —— 图占主位，规格在右，操作紧随规格。三者本来就是一件事，
+      {/* 图版 —— 图占主位，规格在右，操作紧随规格。三者本来就是一件事，
           旧版把它们拆成「信息 / 交换 / 讨论」三个互斥视图。 */}
       <section className="spread border-border border-b pb-14">
         <div>
           <p className="lbl">条目</p>
-          <div className="rail-jp">図版</div>
+          <div className="rail-jp">图版</div>
         </div>
 
         <div className="min-w-0">
@@ -150,7 +150,7 @@ export default async function GoodsDetailPage({
       <section className="spread border-border border-b py-14">
         <div>
           <p className="lbl">交换</p>
-          <div className="rail-jp">交換</div>
+          <div className="rail-jp">交换</div>
         </div>
         <div className="min-w-0">
           <GoodsExchangePanel
@@ -170,7 +170,7 @@ export default async function GoodsDetailPage({
       <section className="spread py-14">
         <div>
           <p className="lbl">讨论</p>
-          <div className="rail-jp">記録</div>
+          <div className="rail-jp">记录</div>
         </div>
         <div className="min-w-0">
           <GoodsCommunityPanel
