@@ -533,6 +533,14 @@
     pointer-events: none;
   }
 
+  /* 朱印默认压在图版右上角。收藏状态那一行需要它排在文字流里，所以给一个
+     正规的修饰类，而不是在组件里用 !important 去掀翻定位。 */
+  .seal--inline {
+    position: relative;
+    inset: auto;
+    flex: none;
+  }
+
   @keyframes seal-stamp {
     0% {
       transform: scale(2) rotate(-12deg);
@@ -827,19 +835,28 @@
     min-width: 280px;
   }
 
-  @keyframes slip-in {
+  /* 出现与淡出都是一次性的挂载动画，所以整段生命周期写在 CSS 里 ——
+     组件不需要计时器，也就没有需要清理的副作用。 */
+  @keyframes slip-life {
     0% {
       transform: translateY(10px);
       opacity: 0;
     }
-    100% {
+    7% {
       transform: translateY(0);
       opacity: 1;
+    }
+    86% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      visibility: hidden;
     }
   }
 
   .slip {
-    animation: slip-in 300ms var(--ease);
+    animation: slip-life 4600ms var(--ease) forwards;
   }
 
   /* ---------- 详情页图版 ---------- */

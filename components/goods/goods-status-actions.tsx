@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 
-import { Button } from '@/components/ui/button';
+import { RecordSlips } from '@/components/collection/record-slips';
 import {
   userGoodsStatusMeta,
   userGoodsStatusValues,
@@ -23,14 +23,19 @@ type GoodsStatusActionsProps = {
   userLabel: string | null;
 };
 
-function StatusToggleButton({
+/** 「我有这件」比「已拥有」更像一句话，而不是一个字段名。 */
+const actionLabels = {
+  owned: '我有这件',
+  wanted: '想要',
+  exchange: '可以交换',
+} as const satisfies Record<UserGoodsStatus, string>;
+
+function StatusButton({
   active,
-  description,
   label,
   status,
 }: {
   active: boolean;
-  description: string;
   label: string;
   status: UserGoodsStatus;
 }) {
@@ -41,33 +46,15 @@ function StatusToggleButton({
       aria-pressed={active}
       className={
         active
-          ? 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_72%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_16%,white),color-mix(in_oklab,var(--background)_90%,var(--card)))] px-4 py-4 text-left transition disabled:translate-y-0 disabled:opacity-60'
-          : 'group flex h-full min-h-[10.5rem] w-full flex-col justify-between rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--border)_84%,white_8%)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-strong)_82%,transparent),color-mix(in_oklab,var(--surface-soft)_88%,var(--background)))] px-4 py-4 text-left transition hover:border-[color:color-mix(in_oklab,var(--accent)_48%,var(--border))] disabled:translate-y-0 disabled:opacity-60'
+          ? 'rounded-[var(--radius)] border border-[var(--shu)] bg-[var(--shu)] px-4 py-2 text-[14px] font-medium text-[var(--shu-ink)] disabled:opacity-60'
+          : 'border-input text-muted-foreground hover:border-rule-2 hover:text-foreground rounded-[var(--radius)] border px-4 py-2 text-[14px] disabled:opacity-60'
       }
       disabled={pending}
       name="status"
       type="submit"
       value={status}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-foreground text-lg leading-tight font-semibold">
-            {label}
-          </p>
-          <p className="text-muted-foreground mt-2 text-sm leading-6">
-            {description}
-          </p>
-        </div>
-        <span
-          className={
-            active
-              ? 'text-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border border-[color:color-mix(in_oklab,var(--accent)_74%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-center text-[0.68rem] font-semibold whitespace-nowrap uppercase'
-              : 'border-border/70 bg-card/76 text-muted-foreground inline-flex min-h-9 min-w-[5rem] shrink-0 items-center justify-center rounded-full border px-3 py-1 text-center text-[0.68rem] font-semibold whitespace-nowrap uppercase'
-          }
-        >
-          {pending ? '保存中' : active ? '已选中' : '未选中'}
-        </span>
-      </div>
+      {label}
     </button>
   );
 }
@@ -86,92 +73,90 @@ export function GoodsStatusActions({
     activeStatuses,
   } satisfies ToggleUserGoodsStatusActionState);
 
+  const owned = state.activeStatuses.includes('owned');
+
+  // 盖章只属于「刚进来」那一刻，已经拥有的条目每次渲染都盖一遍会把它降级成
+  // 装饰。这个判断由服务端给出：动作完成后会 revalidate 重渲染，客户端那时
+  // 比对前后状态两边都已经是已拥有，比不出翻转。
+  const justAcquired = state.justAcquired === true;
+
   if (!isAuthenticated) {
     return (
-      <section className="collection-panel p-5 sm:p-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
-              收藏状态
-            </p>
-            <h2 className="font-heading text-foreground text-4xl leading-none">
-              登录后管理
-            </h2>
-          </div>
-
-          <Button asChild>
-            <Link href={`/login?next=${encodeURIComponent(nextPath)}`}>
-              登录
-            </Link>
-          </Button>
-        </div>
-      </section>
+      <div className="border-border border-t pt-6">
+        <p className="lbl">収蔵状態</p>
+        <p className="text-muted-foreground mt-2 text-sm">
+          登录后可以把它记进你的收藏。
+        </p>
+        <Link
+          className="mt-4 inline-block rounded-[var(--radius)] bg-[var(--shu)] px-5 py-2.5 text-[14px] font-medium text-[var(--shu-ink)]"
+          href={`/login?next=${encodeURIComponent(nextPath)}`}
+        >
+          登录
+        </Link>
+      </div>
     );
   }
 
   return (
-    <section className="collection-panel p-5 sm:p-6">
-      <div className="space-y-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
-              收藏状态
-            </p>
-            <h2 className="font-heading text-foreground text-4xl leading-none">
-              标记这件 SKU
-            </h2>
-          </div>
-          <div className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-4 py-2 text-sm">
-            {userLabel ?? '已登录'}
-          </div>
-        </div>
+    <div className="border-border border-t pt-6">
+      <RecordSlips unlocked={state.unlocked} />
+
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="lbl">収蔵状態</p>
+        <span className="lbl">{userLabel ?? '已登录'}</span>
+      </div>
+
+      {/* 入藏的印记。朱印落在这里，因为这一行说的就是「它已经进来了」。 */}
+      <div className="mt-3 flex min-h-[34px] items-center gap-3">
+        {owned ? (
+          <>
+            <span
+              className={`seal seal--inline ${justAcquired ? 'seal--stamp' : ''}`}
+            >
+              蔵
+            </span>
+            <span className="state state--lit">已收录</span>
+          </>
+        ) : (
+          <span className="state state--off">还没有收录</span>
+        )}
+
+        {state.activeStatuses
+          .filter((status) => status !== 'owned')
+          .map((status) => (
+            <span className="lbl" key={status}>
+              {userGoodsStatusMeta[status].label}
+            </span>
+          ))}
+      </div>
+
+      <form action={formAction} className="mt-5">
+        <input name="goodsId" type="hidden" value={goodsId} />
+        <input name="nextPath" type="hidden" value={nextPath} />
 
         <div className="flex flex-wrap gap-2">
-          {state.activeStatuses.length > 0 ? (
-            state.activeStatuses.map((status) => (
-              <span
-                className="text-foreground rounded-full border border-[color:color-mix(in_oklab,var(--accent)_60%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_16%,white)] px-3 py-1 text-xs font-semibold uppercase"
-                key={status}
-              >
-                {userGoodsStatusMeta[status].label}
-              </span>
-            ))
-          ) : (
-            <span className="border-border/70 text-muted-foreground rounded-full border border-dashed px-3 py-1 text-xs uppercase">
-              尚未标记
-            </span>
-          )}
+          {userGoodsStatusValues.map((status) => (
+            <StatusButton
+              active={state.activeStatuses.includes(status)}
+              key={status}
+              label={actionLabels[status]}
+              status={status}
+            />
+          ))}
         </div>
 
-        <form action={formAction} className="space-y-4">
-          <input name="goodsId" type="hidden" value={goodsId} />
-          <input name="nextPath" type="hidden" value={nextPath} />
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            {userGoodsStatusValues.map((status) => (
-              <StatusToggleButton
-                active={state.activeStatuses.includes(status)}
-                description={userGoodsStatusMeta[status].description}
-                key={status}
-                label={userGoodsStatusMeta[status].label}
-                status={status}
-              />
-            ))}
-          </div>
-
-          {state.message ? (
-            <p
-              className={
-                state.status === 'error'
-                  ? 'border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7'
-                  : 'border-border/70 bg-background/78 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7'
-              }
-            >
-              {state.message}
-            </p>
-          ) : null}
-        </form>
-      </div>
-    </section>
+        {state.message ? (
+          <p
+            className={
+              state.status === 'error'
+                ? 'mt-4 text-[13px] text-[var(--destructive)]'
+                : 'text-muted-foreground mt-4 text-[13px]'
+            }
+          >
+            {state.message}
+          </p>
+        ) : null}
+      </form>
+    </div>
   );
 }

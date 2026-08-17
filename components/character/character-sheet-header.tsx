@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { SlotStrip } from '@/components/collection/slot-strip';
 import type { CharacterEncyclopediaViewData } from '@/server/data';
 
 type CharacterSheetHeaderProps = {
@@ -14,36 +15,6 @@ type CharacterSheetHeaderProps = {
  * 打架：一张收集表上，进度就是表头，条目就是表身，本来是一件事。这里把它
  * 合回一页：先看见缺口，再看见条目。
  */
-function SlotStrip({
-  total,
-  owned,
-  label,
-}: {
-  total: number;
-  owned: number;
-  label?: string;
-}) {
-  // 收集条只在数量可数时有意义；上千件时一格一件反而读不出来。
-  if (total <= 0 || total > 120) {
-    return null;
-  }
-
-  return (
-    <div
-      className="slot-strip"
-      role="img"
-      aria-label={label ?? `${owned} / ${total}`}
-    >
-      {Array.from({ length: total }).map((_, index) => (
-        <span
-          className={index < owned ? 'slot slot--filled' : 'slot'}
-          key={index}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function CharacterSheetHeader({
   data,
   viewerLabel,

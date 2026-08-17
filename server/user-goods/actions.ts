@@ -38,6 +38,14 @@ export type ToggleUserGoodsStatusActionState = {
   activeStatuses: UserGoodsStatus[];
   /** 本次操作新达成的収蔵記録，用于展示纸条。 */
   unlocked?: RecordedUnlock[];
+  /**
+   * 这一次操作是否让它「变成」已收录。
+   *
+   * 由服务端给出而不是让客户端比对前后状态：动作完成后会 revalidate 并重渲
+   * 染，客户端那时看到的两侧都已经是「已拥有」，比不出翻转。执行切换的是
+   * 服务端，它本来就知道结果。
+   */
+  justAcquired?: boolean;
 };
 
 export async function toggleUserGoodsStatusAction(
@@ -67,6 +75,8 @@ export async function toggleUserGoodsStatusAction(
   });
   const flags = getUserGoodsStateFlags(snapshot);
   const nowOwned = flags.activeStatuses.includes('owned');
+  const wasOwned = previousState.activeStatuses.includes('owned');
+  const justAcquired = nowOwned && !wasOwned;
 
   // 只在刚变成「已拥有」时判定；移除状态不该撤销已经记下的収蔵記録，那是
   // 一条历史记录，不是当前状态的镜像。
@@ -94,5 +104,6 @@ export async function toggleUserGoodsStatusAction(
       : `已从“${userGoodsStatusMeta[status].label}”状态中移除。`,
     activeStatuses: sortUserGoodsStatuses(flags.activeStatuses),
     unlocked,
+    justAcquired,
   };
 }

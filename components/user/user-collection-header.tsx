@@ -1,3 +1,4 @@
+import { SlotStrip } from '@/components/collection/slot-strip';
 import type { UserProfilePageData } from '@/server/data';
 
 type UserCollectionHeaderProps = {
@@ -61,11 +62,27 @@ export function UserCollectionHeader({
           </div>
         </div>
 
-        <div className="bar mt-8 max-w-[420px]">
-          <span style={{ width: `${summary.litProgressPercentage}%` }} />
+        {/* 收集条而不是进度条。这一页原本只有一根百分比长条 —— 而「看得见
+            的缺口」正是整套设计的论点，最需要它的地方反而没用上。 */}
+        <div className="mt-8">
+          <SlotStrip
+            label={`追踪 ${summary.trackedGoodsCount} 件，已收录 ${summary.ownedCount} 件`}
+            owned={summary.ownedCount}
+            total={summary.trackedGoodsCount}
+          />
+          {summary.trackedGoodsCount > 0 && summary.trackedGoodsCount <= 120 ? (
+            <p className="lbl mt-2">
+              实心为已收录。空格是标记过、但还没到手的那些。
+            </p>
+          ) : (
+            // 数量太多时一格一件会糊成一片，退回长条。
+            <div className="bar max-w-[420px]">
+              <span style={{ width: `${summary.litProgressPercentage}%` }} />
+            </div>
+          )}
         </div>
 
-        <p className="text-muted-foreground mt-4 text-sm">
+        <p className="text-muted-foreground mt-5 text-sm">
           共追踪 {summary.trackedGoodsCount} 件 · {summary.visiblePhotoCount}{' '}
           张图片 · {summary.ratingCount} 条评分
         </p>
