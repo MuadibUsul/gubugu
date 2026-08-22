@@ -463,29 +463,23 @@
     transition: outline-color 180ms var(--ease);
   }
 
-  /* 已点亮：装裱内衬转金，右上角落一枚朱印。
-     朱印是整套设计里最有力的「点亮」标记，此前只出现在详情页一处 —— 卡片
-     上一个都没有，等于把最强的信号留在了最少被看到的地方。 */
+  /* 已点亮：装裱内衬转金，右上角一枚金点。
+     不再用「亮」字印章 —— 点亮态靠转金的装裱和角标金点表达，卡片上不落汉字；
+     状态文案仍由每张卡的 aria-label 提供给读屏。 */
   .goods-card--lit .goods-card__art {
     outline-color: color-mix(in oklab, var(--kin) 62%, var(--rule));
   }
 
   .goods-card--lit .goods-card__art::after {
-    content: '亮';
+    content: '';
     position: absolute;
     right: 9px;
     top: 9px;
     z-index: 3;
-    width: 26px;
-    height: 26px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background: var(--shu);
-    color: var(--shu-ink);
-    display: grid;
-    place-items: center;
-    font-family: var(--font-heading-family);
-    font-size: 12.5px;
-    line-height: 1;
+    background: var(--kin);
     box-shadow:
       0 0 0 2px var(--surface),
       0 0 0 3px color-mix(in oklab, var(--kin) 45%, transparent);
