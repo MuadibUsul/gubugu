@@ -14,8 +14,8 @@ export const userGoodsStatusMeta: Record<
   }
 > = {
   owned: {
-    label: '已拥有',
-    description: '计入收藏进度',
+    label: '谷柜收藏',
+    description: '收入谷柜；扫描实物后才会点亮',
   },
   wanted: {
     label: '想要',

@@ -26,12 +26,9 @@ export { getGoodsDetailViewData } from '@/server/data/goods-detail';
 export type { GoodsDetailViewData } from '@/server/data/goods-detail';
 export { getAdminDashboardData } from '@/server/data/admin-dashboard';
 export type {
-  AdminCommentRecord,
   AdminDashboardData,
-  AdminExchangeRecord,
   AdminGoodsRecord,
   AdminStatisticCard,
-  AdminSubmissionRecord,
 } from '@/server/data/admin-dashboard';
 export {
   getAdminCatalogPageData,
@@ -52,20 +49,11 @@ export { getModerationQueueData } from '@/server/data/moderation';
 export type {
   CatalogSubmissionQueueItem,
   CommentModerationQueueItem,
-  ExchangeModerationQueueItem,
   ModerationModuleSummary,
   ModerationQueueData,
   PhotoModerationQueueItem,
+  ReportQueueItem,
 } from '@/server/data/moderation';
-export {
-  listExchangeGoodsOptions,
-  listGoodsExchangeListings,
-  listUserExchangeListings,
-} from '@/server/data/exchange';
-export type {
-  ExchangeGoodsOption,
-  ExchangeListingViewItem,
-} from '@/server/data/exchange';
 export {
   getGoodsCommunityData,
   getGoodsRatingSummary,
@@ -77,6 +65,7 @@ export type {
 } from '@/server/data/community';
 export {
   getGoodsSearchFilterOptions,
+  getGoodsCardViewerStateMap,
   getGoodsSearchPageData,
   goodsSearchInputSchema,
   registerGoodsSearchProvider,
@@ -84,6 +73,7 @@ export {
 } from '@/server/data/search-service';
 export type {
   GoodsSearchFilterOptions,
+  GoodsCardViewerState,
   GoodsSearchGoodsTypeFacet,
   GoodsSearchIpFacet,
   GoodsSearchPageData,

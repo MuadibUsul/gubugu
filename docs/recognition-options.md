@@ -39,7 +39,7 @@ pnpm db:embed
 - 幂等：已有 `ready` 且校验和未变的图片会跳过，重跑只处理新增或变更的图片
 - `pnpm db:embed --force` 强制重建全部
 - 失败的图片会写入 `status: 'failed'` 与 `last_error`，不会静默从检索中消失
-- 需要 `DATABASE_URL`；同源相对路径的图片会按 `NEXT_PUBLIC_APP_URL` 解析，因此本地跑之前应用要在运行
+- 需要 `DATABASE_URL`；同源相对路径的图片会按 `APP_URL`（兼容旧本地配置时再读 `NEXT_PUBLIC_APP_URL`）解析，因此本地跑之前应用要在运行
 
 ### 网络要求
 
@@ -60,6 +60,41 @@ NODE_USE_ENV_PROXY=1 pnpm db:embed
 - 响应里 `pipeline.provider` 为 `mock-placeholder`，`embeddingVersion` 为 `null`
 
 真实匹配时来源标签为「图像特征匹配」，`embeddingVersion` 带上 provider 与模型名。
+
+## 扫描点亮安全边界
+
+识别候选与收藏点亮是两个独立步骤。候选接口会在服务端创建一次短期
+`recognition_attempts` 记录，把当前用户、来源、识别 provider 与候选 SKU
+映射绑定在一起；记录自生成起 **15 分钟**内有效，过期后必须重新扫描。
+
+只有同时满足以下条件的 attempt 才能点亮收藏：
+
+- 来源为 `camera`
+- provider 为 `embedding-search`
+- 用户确认的是该 attempt 里由服务端生成的候选
+- 对应 SKU 在确认时仍处于已发布状态
+
+`upload` 与 `mock-placeholder` 结果只能用于查看候选和进入详情，不能写入
+`lit_at`。尤其是无图像索引时返回的 mock 候选与图片内容无关，绝不能作为点亮
+依据。
+
+确认动作只接收 `requestId` 与 `candidateId`，不接受浏览器提交的 `goodsId`、
+slug 或来源作为 SKU 授权依据。服务端按当前登录用户读取 attempt，从其持久化的
+候选映射解析 SKU，并在事务中对 attempt 行执行 `FOR UPDATE`：同一 attempt 最多
+确认一个候选，并发重复确认同一候选保持幂等，尝试确认第二个候选会被拒绝。确认
+成功后只写入 `user_goods.lit_at`；已有 owned 数量不会因此增加。
+
+`recognition_attempts` 开启了 RLS 且不提供客户端访问策略。浏览器不能直接读取、
+创建或修改这些证明记录，所有确认都必须经过服务端领域动作。
+
+### 能力限制
+
+Web 浏览器无法证明镜头前一定是用户现实持有的实物，也无法提供可靠的活体或防
+翻拍证明。即使界面启动了相机，用户仍可能对着屏幕、打印图或其他复制品拍摄；客
+户端上报的来源本身也不能视为硬件级证明。因此当前能力应描述为“完成真实图像匹
+配流程后点亮”，不能宣称完成了真伪鉴定、实物持有证明或活体校验。若未来需要更
+强保证，应另行设计多角度随机挑战、可信设备证明或人工复核，不能由当前单张图片
+流程推导出来。
 
 ## 部署注意
 

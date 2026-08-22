@@ -4,22 +4,13 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath, updateTag } from 'next/cache';
 import { z } from 'zod';
 
-import {
-  catalogSubmissions,
-  exchangeListings,
-  goods,
-  postImages,
-  posts,
-} from '@/drizzle/schema';
+import { catalogSubmissions, goods, postImages, posts } from '@/drizzle/schema';
 import { goodsCacheTag } from '@/lib/cache-tags';
+import { internalPathSchema } from '@/lib/internal-path';
 import {
   moderationQueueModuleSchema,
   moderationStatusSchema,
-  moderationSubjectTypeSchema,
-  type ModerationQueueModule,
-  type ModerationSubjectType,
 } from '@/lib/moderation';
-import type { SaveModerationDecisionActionState } from '@/server/admin/moderation/action-state';
 import { requireModeratorAccess } from '@/server/auth/admin';
 import { getDb } from '@/server/db/client';
 
@@ -31,29 +22,12 @@ const reviewNoteSchema = z
   })
   .transform((value) => (value.length > 0 ? value : null));
 
-const internalRoutePathSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(512)
-  .refine((value) => value.startsWith('/'), {
-    message: '路径必须是站内路由。',
-  });
-
 const reviewModerationItemInputSchema = z.object({
   module: moderationQueueModuleSchema,
   itemId: z.string().uuid(),
   decision: moderationStatusSchema,
   reviewNote: reviewNoteSchema,
-  nextPath: internalRoutePathSchema,
-});
-
-const saveModerationDecisionInputSchema = z.object({
-  subjectType: moderationSubjectTypeSchema,
-  subjectId: z.string().uuid(),
-  decision: moderationStatusSchema,
-  reviewNote: reviewNoteSchema,
-  returnPath: internalRoutePathSchema,
+  nextPath: internalPathSchema,
 });
 
 async function revalidateGoodsPathForModule(input: {
@@ -103,36 +77,7 @@ async function revalidateGoodsPathForModule(input: {
     return;
   }
 
-  const rows = await db
-    .select({
-      goodsSlug: goods.slug,
-    })
-    .from(exchangeListings)
-    .innerJoin(goods, eq(exchangeListings.goodsId, goods.id))
-    .where(eq(exchangeListings.id, input.itemId))
-    .limit(1);
-
-  if (rows[0]?.goodsSlug) {
-    updateTag(goodsCacheTag(rows[0].goodsSlug));
-    revalidatePath(`/goods/${rows[0].goodsSlug}`);
-  }
-}
-
-function mapSubjectTypeToModule(
-  subjectType: ModerationSubjectType,
-): ModerationQueueModule {
-  switch (subjectType) {
-    case 'catalogSubmission':
-      return 'catalog-submission';
-    case 'photoUpload':
-      return 'photo-upload';
-    case 'comment':
-      return 'comment';
-    case 'exchangeIntent':
-      return 'exchange-intent';
-    default:
-      return 'comment';
-  }
+  return;
 }
 
 async function applyModerationDecision(input: {
@@ -165,11 +110,6 @@ async function applyModerationDecision(input: {
       .update(postImages)
       .set(reviewPatch)
       .where(eq(postImages.id, itemId));
-  } else {
-    await db
-      .update(exchangeListings)
-      .set(reviewPatch)
-      .where(eq(exchangeListings.id, itemId));
   }
 
   revalidatePath('/admin');
@@ -198,38 +138,4 @@ export async function reviewModerationItemAction(formData: FormData) {
     ...parsed.data,
     reviewerId: reviewer.id,
   });
-}
-
-export async function saveModerationDecisionAction(
-  _previousState: SaveModerationDecisionActionState,
-  formData: FormData,
-): Promise<SaveModerationDecisionActionState> {
-  const reviewer = await requireModeratorAccess('/admin/moderation');
-  const parsed = saveModerationDecisionInputSchema.safeParse({
-    subjectType: formData.get('subjectType'),
-    subjectId: formData.get('subjectId'),
-    decision: formData.get('decision'),
-    reviewNote: formData.get('reviewNote'),
-    returnPath: formData.get('returnPath'),
-  });
-
-  if (!parsed.success) {
-    return {
-      status: 'error',
-      message: parsed.error.issues[0]?.message ?? '审核决定请求参数无效。',
-    };
-  }
-
-  await applyModerationDecision({
-    module: mapSubjectTypeToModule(parsed.data.subjectType),
-    itemId: parsed.data.subjectId,
-    decision: parsed.data.decision,
-    reviewNote: parsed.data.reviewNote,
-    nextPath: parsed.data.returnPath,
-    reviewerId: reviewer.id,
-  });
-
-  return {
-    status: 'idle',
-  };
 }

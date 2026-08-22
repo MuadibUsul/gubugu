@@ -13,11 +13,13 @@ type SiteNavLinksProps = {
 };
 
 function isActive(pathname: string, href: string) {
-  if (href === '/') {
+  const [path = href] = href.split('?');
+
+  if (path === '/') {
     return pathname === '/';
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 export function SiteNavLinks({ links }: SiteNavLinksProps) {
@@ -33,8 +35,8 @@ export function SiteNavLinks({ links }: SiteNavLinksProps) {
             aria-current={active ? 'page' : undefined}
             className={
               active
-                ? 'text-foreground relative text-sm font-medium after:absolute after:inset-x-0 after:-bottom-[21px] after:h-[2px] after:bg-[var(--shu)] after:content-[""]'
-                : 'text-muted-foreground hover:text-foreground text-sm'
+                ? 'rounded-full bg-[var(--shu-soft)] px-2.5 py-2 text-[13px] font-semibold whitespace-nowrap text-[var(--shu)] sm:px-4 sm:text-sm'
+                : 'text-muted-foreground hover:text-foreground rounded-full px-2.5 py-2 text-[13px] font-medium whitespace-nowrap hover:bg-[var(--sunken)] sm:px-4 sm:text-sm'
             }
             href={link.href}
             key={link.href}

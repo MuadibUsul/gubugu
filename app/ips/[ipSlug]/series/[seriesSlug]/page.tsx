@@ -5,7 +5,12 @@ import { z } from 'zod';
 
 import { SearchResultCard } from '@/components/search/search-result-card';
 import { formatCatalogDate } from '@/lib/formatters';
-import { getSeriesEncyclopediaPageData } from '@/server/data';
+import { getAuthUser } from '@/server/auth/session';
+import {
+  getGoodsCardViewerStateMap,
+  getSeriesEncyclopediaPageData,
+  type GoodsCardViewerState,
+} from '@/server/data';
 
 const seriesPageParamsSchema = z.object({
   ipSlug: z.string().trim().min(1),
@@ -18,6 +23,11 @@ type SeriesPageProps = {
     seriesSlug: string;
   }>;
 };
+
+const dormantViewerState = {
+  activeStatuses: [],
+  isLit: false,
+} satisfies GoodsCardViewerState;
 
 export async function generateMetadata({
   params,
@@ -32,11 +42,19 @@ export async function generateMetadata({
 
 export default async function SeriesPage({ params }: SeriesPageProps) {
   const { ipSlug, seriesSlug } = seriesPageParamsSchema.parse(await params);
-  const data = await getSeriesEncyclopediaPageData({ ipSlug, seriesSlug });
+  const [data, authUser] = await Promise.all([
+    getSeriesEncyclopediaPageData({ ipSlug, seriesSlug }),
+    getAuthUser(),
+  ]);
 
   if (!data) {
     notFound();
   }
+
+  const viewerStates = await getGoodsCardViewerStateMap({
+    viewerId: authUser?.id,
+    goodsIds: data.goods.map((item) => item.id),
+  });
 
   return (
     <main>
@@ -150,17 +168,20 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
                 系列 SKU 墙
               </h2>
+              <p className="text-muted-foreground text-sm">
+                灰色是尚未点亮；扫码确认实物后，它会在整座谷库恢复颜色。
+              </p>
             </div>
           </div>
 
           {data.goods.length > 0 ? (
-            <div className="grid gap-4 2xl:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
               {data.goods.map((item) => (
                 <SearchResultCard
-                  activeStatuses={[]}
-                  isAuthenticated={false}
+                  isAuthenticated={Boolean(authUser)}
                   item={item}
                   key={item.id}
+                  viewerState={viewerStates[item.id] ?? dormantViewerState}
                 />
               ))}
             </div>

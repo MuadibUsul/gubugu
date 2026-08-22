@@ -1,15 +1,15 @@
 import 'server-only';
 
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { userGoods } from '@/drizzle/schema';
+import { exchanges, userGoods } from '@/drizzle/schema';
 import {
   sortUserGoodsStatuses,
   userGoodsStatusSchema,
   type UserGoodsStatus,
 } from '@/lib/user-goods-status';
-import { getDb } from '@/server/db/client';
+import { getDb, type DatabaseTransaction } from '@/server/db/client';
 
 const userGoodsStateInputSchema = z.object({
   userId: z.string().uuid(),
@@ -27,11 +27,39 @@ const toggleUserGoodsStatusInputSchema = z.object({
   status: userGoodsStatusSchema,
 });
 
+const updateUserGoodsDetailsInputSchema = z
+  .object({
+    userId: z.string().uuid(),
+    goodsId: z.string().uuid(),
+    status: userGoodsStatusSchema,
+    quantity: z.number().int().min(1).max(999),
+    tradableQuantity: z.number().int().min(0).max(999),
+    wishlistPriority: z.enum(['normal', 'super_want']),
+  })
+  .superRefine((value, context) => {
+    if (value.tradableQuantity > value.quantity) {
+      context.addIssue({
+        code: 'custom',
+        message: '可交换数量不能超过总数量。',
+      });
+    }
+    if (value.status !== 'exchange' && value.tradableQuantity !== 0) {
+      context.addIssue({
+        code: 'custom',
+        message: '只有可交换状态可设置可交换数量。',
+      });
+    }
+  });
+
 export type UserGoodsStateSnapshot = {
   goodsId: string;
   statuses: Array<{
     status: UserGoodsStatus;
+    quantity: number;
+    tradableQuantity: number;
+    wishlistPriority: 'normal' | 'super_want';
     note: string | null;
+    litAt: Date | null;
     updatedAt: Date;
   }>;
 };
@@ -46,8 +74,15 @@ export function createEmptyUserGoodsStateSnapshot(
 }
 
 export function getUserGoodsStateFlags(snapshot: UserGoodsStateSnapshot) {
+  const cabinetEntry = snapshot.statuses.find(
+    ({ status }) => status === 'owned',
+  );
+
   return {
-    isOwned: snapshot.statuses.some(({ status }) => status === 'owned'),
+    isInCabinet: Boolean(cabinetEntry),
+    isLit: Boolean(cabinetEntry?.litAt),
+    // 业务上的「拥有」必须经过识别点亮。原始 owned 行只是谷柜收藏记录。
+    isOwned: Boolean(cabinetEntry?.litAt),
     isWanted: snapshot.statuses.some(({ status }) => status === 'wanted'),
     isExchange: snapshot.statuses.some(({ status }) => status === 'exchange'),
     activeStatuses: sortUserGoodsStatuses(
@@ -66,7 +101,11 @@ export async function getUserGoodsStateMap(
     .select({
       goodsId: userGoods.goodsId,
       status: userGoods.status,
+      quantity: userGoods.quantity,
+      tradableQuantity: userGoods.tradableQuantity,
+      wishlistPriority: userGoods.wishlistPriority,
       note: userGoods.note,
+      litAt: userGoods.litAt,
       updatedAt: userGoods.updatedAt,
     })
     .from(userGoods)
@@ -85,7 +124,11 @@ export async function getUserGoodsStateMap(
   for (const row of rows) {
     snapshots[row.goodsId].statuses.push({
       status: row.status,
+      quantity: row.quantity,
+      tradableQuantity: row.tradableQuantity,
+      wishlistPriority: row.wishlistPriority,
       note: row.note,
+      litAt: row.litAt,
       updatedAt: row.updatedAt,
     });
   }
@@ -112,31 +155,77 @@ export async function toggleUserGoodsStatus(
   const { userId, goodsId, status } =
     toggleUserGoodsStatusInputSchema.parse(input);
 
-  const existingRows = await db
-    .select({
-      id: userGoods.id,
-    })
-    .from(userGoods)
-    .where(
-      and(
-        eq(userGoods.userId, userId),
-        eq(userGoods.goodsId, goodsId),
-        eq(userGoods.status, status),
-      ),
-    )
-    .limit(1);
+  await db.transaction(async (tx) => {
+    const existing = (
+      await tx
+        .select({ id: userGoods.id })
+        .from(userGoods)
+        .where(
+          and(
+            eq(userGoods.userId, userId),
+            eq(userGoods.goodsId, goodsId),
+            eq(userGoods.status, status),
+          ),
+        )
+        .limit(1)
+        .for('update')
+    )[0];
 
-  const existing = existingRows[0];
+    if (existing) {
+      if (
+        status === 'exchange' &&
+        (await getReservedExchangeQuantity(tx, userId, goodsId)) > 0
+      ) {
+        throw new Error('RESERVED_TRADE_INVENTORY');
+      }
+      if (status === 'owned') {
+        const activeExchange = await tx
+          .select({ id: userGoods.id })
+          .from(userGoods)
+          .where(
+            and(
+              eq(userGoods.userId, userId),
+              eq(userGoods.goodsId, goodsId),
+              eq(userGoods.status, 'exchange'),
+            ),
+          )
+          .limit(1)
+          .for('update');
 
-  if (existing) {
-    await db.delete(userGoods).where(eq(userGoods.id, existing.id));
-  } else {
-    await db.insert(userGoods).values({
+        if (activeExchange.length > 0) {
+          throw new Error('ACTIVE_EXCHANGE_STATUS');
+        }
+      }
+      await tx.delete(userGoods).where(eq(userGoods.id, existing.id));
+      return;
+    }
+
+    if (status === 'exchange') {
+      const litOwned = await tx
+        .select({ id: userGoods.id })
+        .from(userGoods)
+        .where(
+          and(
+            eq(userGoods.userId, userId),
+            eq(userGoods.goodsId, goodsId),
+            eq(userGoods.status, 'owned'),
+            isNotNull(userGoods.litAt),
+          ),
+        )
+        .limit(1)
+        .for('update');
+
+      if (litOwned.length === 0) {
+        throw new Error('UNLIT_GOODS');
+      }
+    }
+    await tx.insert(userGoods).values({
       userId,
       goodsId,
       status,
+      tradableQuantity: status === 'exchange' ? 1 : 0,
     });
-  }
+  });
 
   return (
     (await getUserGoodsStateForGood({
@@ -144,4 +233,131 @@ export async function toggleUserGoodsStatus(
       goodsId,
     })) ?? createEmptyUserGoodsStateSnapshot(goodsId)
   );
+}
+
+export async function updateUserGoodsDetails(
+  input: z.input<typeof updateUserGoodsDetailsInputSchema>,
+) {
+  const value = updateUserGoodsDetailsInputSchema.parse(input);
+  const db = getDb();
+  const updated = await db.transaction(async (tx) => {
+    const locked = (
+      await tx
+        .select({ id: userGoods.id })
+        .from(userGoods)
+        .where(
+          and(
+            eq(userGoods.userId, value.userId),
+            eq(userGoods.goodsId, value.goodsId),
+            eq(userGoods.status, value.status),
+          ),
+        )
+        .limit(1)
+        .for('update')
+    )[0];
+    if (!locked) return [];
+    if (value.status === 'exchange') {
+      const litOwned = (
+        await tx
+          .select({ quantity: userGoods.quantity })
+          .from(userGoods)
+          .where(
+            and(
+              eq(userGoods.userId, value.userId),
+              eq(userGoods.goodsId, value.goodsId),
+              eq(userGoods.status, 'owned'),
+              isNotNull(userGoods.litAt),
+            ),
+          )
+          .limit(1)
+          .for('update')
+      )[0];
+
+      if (!litOwned) {
+        throw new Error('UNLIT_GOODS');
+      }
+
+      const reserved = await getReservedExchangeQuantity(
+        tx,
+        value.userId,
+        value.goodsId,
+      );
+      if (
+        value.quantity < reserved ||
+        value.tradableQuantity > value.quantity - reserved ||
+        value.quantity > litOwned.quantity
+      ) {
+        throw new Error('RESERVED_TRADE_INVENTORY');
+      }
+    } else if (value.status === 'owned') {
+      const exchangeRow = (
+        await tx
+          .select({ quantity: userGoods.quantity })
+          .from(userGoods)
+          .where(
+            and(
+              eq(userGoods.userId, value.userId),
+              eq(userGoods.goodsId, value.goodsId),
+              eq(userGoods.status, 'exchange'),
+            ),
+          )
+          .limit(1)
+          .for('update')
+      )[0];
+
+      if (exchangeRow && value.quantity < exchangeRow.quantity) {
+        throw new Error('ACTIVE_EXCHANGE_STATUS');
+      }
+    }
+    return tx
+      .update(userGoods)
+      .set({
+        quantity: value.quantity,
+        tradableQuantity: value.tradableQuantity,
+        wishlistPriority: value.wishlistPriority,
+        updatedAt: new Date(),
+      })
+      .where(eq(userGoods.id, locked.id))
+      .returning({ id: userGoods.id });
+  });
+
+  return updated.length > 0;
+}
+
+async function getReservedExchangeQuantity(
+  tx: DatabaseTransaction,
+  userId: string,
+  goodsId: string,
+) {
+  const [offered, requested] = await Promise.all([
+    tx
+      .select({
+        total: sql<number>`coalesce(sum(${exchanges.offeredQuantity}), 0)::int`,
+      })
+      .from(exchanges)
+      .where(
+        and(
+          eq(exchanges.initiatorId, userId),
+          eq(exchanges.offeredGoodsId, goodsId),
+          inArray(exchanges.status, ['accepted', 'shipping', 'received']),
+          isNotNull(exchanges.inventoryReservedAt),
+          isNull(exchanges.inventoryReleasedAt),
+        ),
+      ),
+    tx
+      .select({
+        total: sql<number>`coalesce(sum(${exchanges.requestedQuantity}), 0)::int`,
+      })
+      .from(exchanges)
+      .where(
+        and(
+          eq(exchanges.recipientId, userId),
+          eq(exchanges.requestedGoodsId, goodsId),
+          inArray(exchanges.status, ['accepted', 'shipping', 'received']),
+          isNotNull(exchanges.inventoryReservedAt),
+          isNull(exchanges.inventoryReleasedAt),
+        ),
+      ),
+  ]);
+  return (offered[0]?.total ?? 0) + (requested[0]?.total ?? 0);
 }

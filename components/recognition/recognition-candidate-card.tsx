@@ -1,12 +1,18 @@
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
+import {
+  formatGoodsTypeLabel,
+  formatMaterialLabel,
+} from '@/lib/catalog-labels';
 import type { RecognitionCandidate } from '@/lib/recognition';
 
 type RecognitionCandidateCardProps = {
   candidate: RecognitionCandidate;
   isConfirmed: boolean;
   onConfirm: (candidate: RecognitionCandidate) => void;
+  actionMode: 'light' | 'view';
+  isPending: boolean;
   compact?: boolean;
 };
 
@@ -30,6 +36,8 @@ export function RecognitionCandidateCard({
   candidate,
   isConfirmed,
   onConfirm,
+  actionMode,
+  isPending,
   compact = false,
 }: RecognitionCandidateCardProps) {
   const confidence = Math.round(candidate.score * 100);
@@ -39,8 +47,10 @@ export function RecognitionCandidateCard({
       ? candidate.goods.characterNames.join(' / ')
       : '未关联角色';
   const attributeChips = [
-    candidate.goods.goodsType,
-    candidate.goods.material,
+    formatGoodsTypeLabel(candidate.goods.goodsType),
+    candidate.goods.material
+      ? formatMaterialLabel(candidate.goods.material)
+      : null,
     candidate.goods.sizeLabel,
   ].filter((value): value is string => Boolean(value));
 
@@ -63,6 +73,7 @@ export function RecognitionCandidateCard({
               fill
               sizes="96px"
               src={candidate.goods.primaryImageUrl}
+              unoptimized
             />
           ) : (
             <div className="flex h-full items-center justify-center text-center text-xs leading-5 text-[color:color-mix(in_oklab,var(--foreground)_56%,var(--background))]">
@@ -76,7 +87,7 @@ export function RecognitionCandidateCard({
             <div className="min-w-0 space-y-2">
               <div className="flex flex-wrap gap-2">
                 <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold uppercase">
-                  Top {candidate.rank}
+                  候选 {candidate.rank}
                 </span>
                 <span className="hud-chip text-muted-foreground px-3 py-1 text-xs">
                   {candidate.goods.skuCode}
@@ -142,11 +153,20 @@ export function RecognitionCandidateCard({
 
               <Button
                 className="w-full lg:w-auto"
+                disabled={isPending}
                 onClick={() => onConfirm(candidate)}
                 type="button"
                 variant={isConfirmed ? 'secondary' : 'default'}
               >
-                {isConfirmed ? '已确认' : '是，就是它'}
+                {isPending
+                  ? '正在点亮…'
+                  : isConfirmed
+                    ? actionMode === 'light'
+                      ? '已点亮'
+                      : '已选择'
+                    : actionMode === 'light'
+                      ? '确认并点亮'
+                      : '查看彩色详情'}
               </Button>
             </div>
           ) : (
@@ -156,11 +176,20 @@ export function RecognitionCandidateCard({
               </p>
               <Button
                 className="shrink-0"
+                disabled={isPending}
                 onClick={() => onConfirm(candidate)}
                 type="button"
                 variant={isConfirmed ? 'secondary' : 'outline'}
               >
-                {isConfirmed ? '已确认' : '选择'}
+                {isPending
+                  ? '点亮中…'
+                  : isConfirmed
+                    ? actionMode === 'light'
+                      ? '已点亮'
+                      : '已选择'
+                    : actionMode === 'light'
+                      ? '点亮'
+                      : '查看详情'}
               </Button>
             </div>
           )}

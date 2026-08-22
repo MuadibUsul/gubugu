@@ -5,6 +5,9 @@ import {
   recognitionRequestMetadataSchema,
   recognitionUploadLimits,
 } from '@/lib/recognition';
+import { isAcceptedImageMimeType } from '@/lib/image-upload';
+import { consumeServerWrite } from '@/lib/rate-limit';
+import { getAuthUser } from '@/server/auth/session';
 import { recognizeGoodsImage } from '@/server/recognition/service';
 
 function buildErrorResponse({
@@ -18,6 +21,8 @@ function buildErrorResponse({
     | 'MISSING_IMAGE'
     | 'UNSUPPORTED_IMAGE_TYPE'
     | 'IMAGE_TOO_LARGE'
+    | 'UNAUTHORIZED'
+    | 'RATE_LIMITED'
     | 'INTERNAL_ERROR';
   message: string;
   retryable: boolean;
@@ -40,6 +45,29 @@ function buildErrorResponse({
 }
 
 export async function POST(request: Request) {
+  const user = await getAuthUser();
+  if (!user) {
+    return buildErrorResponse({
+      code: 'UNAUTHORIZED',
+      message: '请登录后使用图片识别。',
+      retryable: false,
+      status: 401,
+    });
+  }
+  if (
+    !consumeServerWrite(`${user.id}:recognition`, {
+      limit: 10,
+      windowMs: 60_000,
+    })
+  ) {
+    return buildErrorResponse({
+      code: 'RATE_LIMITED',
+      message: '识别请求过于频繁，请稍后重试。',
+      retryable: true,
+      status: 429,
+    });
+  }
+
   let formData: FormData;
 
   try {
@@ -86,10 +114,10 @@ export async function POST(request: Request) {
     });
   }
 
-  if (!image.type.startsWith(recognitionUploadLimits.acceptedMimePrefix)) {
+  if (!isAcceptedImageMimeType(image.type)) {
     return buildErrorResponse({
       code: 'UNSUPPORTED_IMAGE_TYPE',
-      message: '识别接口只接受图片文件上传。',
+      message: '识别接口仅接受 JPG、PNG 或 WebP 图片。',
       retryable: false,
       status: 415,
     });
@@ -107,6 +135,7 @@ export async function POST(request: Request) {
   try {
     const response = await recognizeGoodsImage({
       file: image,
+      userId: user.id,
       source: metadata.data.source,
       captureMode: metadata.data.captureMode,
     });

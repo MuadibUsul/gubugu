@@ -76,7 +76,7 @@ export function CharacterSheetFilters({
             collected: controls.collected === 'missing' ? undefined : 'missing',
           })}
         >
-          {controls.collected === 'missing' ? '✓ 只看还没有的' : '只看还没有的'}
+          {controls.collected === 'missing' ? '✓ 只看未点亮' : '只看未点亮'}
         </FilterLink>
         <FilterLink
           active={controls.collected === 'owned'}
@@ -85,7 +85,7 @@ export function CharacterSheetFilters({
             collected: controls.collected === 'owned' ? undefined : 'owned',
           })}
         >
-          {controls.collected === 'owned' ? '✓ 只看已收录' : '只看已收录'}
+          {controls.collected === 'owned' ? '✓ 只看已点亮' : '只看已点亮'}
         </FilterLink>
         <FilterLink
           active={false}
@@ -93,7 +93,6 @@ export function CharacterSheetFilters({
             ipSlug: controls.ipSlug,
             characterSlug: controls.characterSlug,
             view: controls.view,
-            viewer: controls.viewer,
             tagSlugs: [],
           })}
         >

@@ -5,7 +5,6 @@ import { getLocalSampleImageAsset } from './local-sample-images';
 import {
   catalogSubmissions,
   characters,
-  exchangeListings,
   goods,
   goodsCharacters,
   goodsImages,
@@ -40,7 +39,6 @@ type CatalogSubmissionSeed = InferInsertModel<typeof catalogSubmissions>;
 type PostSeed = InferInsertModel<typeof posts>;
 type PostImageSeed = InferInsertModel<typeof postImages>;
 type RatingSeed = InferInsertModel<typeof ratings>;
-type ExchangeListingSeed = InferInsertModel<typeof exchangeListings>;
 
 function resolveSeedImageUrl(sampleIndex: number, fallbackAssetPath: string) {
   return (
@@ -210,8 +208,9 @@ function makeUserGoods(
   goodsId: string,
   status: UserGoodSeed['status'],
   note: string,
+  litAt: Date | null = null,
 ): UserGoodSeed {
-  return { id, userId, goodsId, status, note };
+  return { id, userId, goodsId, status, note, litAt };
 }
 
 function makeRating(
@@ -828,6 +827,7 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsAoiClearCard,
     'owned',
     'Filed into the Aoi binder page.',
+    new Date('2026-08-04T09:00:00.000Z'),
   ),
   makeUserGoods(
     '10000000-0000-4000-8000-000000001302',
@@ -856,6 +856,15 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsYunaKaitoPhotoSet,
     'owned',
     'Stored with large bromides.',
+    new Date('2026-08-05T09:00:00.000Z'),
+  ),
+  makeUserGoods(
+    '10000000-0000-4000-8000-000000001316',
+    demoUserIds.trader,
+    ids.goodsRenKeychain,
+    'owned',
+    '扫描实物后点亮的可换库存。',
+    new Date('2026-08-06T09:00:00.000Z'),
   ),
   makeUserGoods(
     '10000000-0000-4000-8000-000000001306',
@@ -863,6 +872,14 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsRenKeychain,
     'exchange',
     'Duplicate from the venue desk.',
+  ),
+  makeUserGoods(
+    '10000000-0000-4000-8000-000000001317',
+    demoUserIds.trader,
+    ids.goodsSoraBadge,
+    'owned',
+    '扫描实物后点亮的可换库存。',
+    new Date('2026-08-07T09:00:00.000Z'),
   ),
   makeUserGoods(
     '10000000-0000-4000-8000-000000001307',
@@ -877,6 +894,15 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsRioPassHolder,
     'owned',
     'Carried once during the tour.',
+    new Date('2026-08-08T09:00:00.000Z'),
+  ),
+  makeUserGoods(
+    '10000000-0000-4000-8000-000000001318',
+    demoUserIds.trader,
+    ids.goodsKaitoCharm,
+    'owned',
+    '扫描实物后点亮的可换库存。',
+    new Date('2026-08-09T09:00:00.000Z'),
   ),
   makeUserGoods(
     '10000000-0000-4000-8000-000000001309',
@@ -891,6 +917,7 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsRioStand,
     'owned',
     'Clean acrylic edges and good color density.',
+    new Date('2026-08-10T09:00:00.000Z'),
   ),
   makeUserGoods(
     '10000000-0000-4000-8000-000000001311',
@@ -898,6 +925,7 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsSoraTapestry,
     'owned',
     'Mounted in a poster frame.',
+    new Date('2026-08-11T09:00:00.000Z'),
   ),
   makeUserGoods(
     '10000000-0000-4000-8000-000000001312',
@@ -905,6 +933,7 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsYunaArtBoard,
     'owned',
     'One of the best winter paper goods this year.',
+    new Date('2026-08-12T09:00:00.000Z'),
   ),
   makeUserGoods(
     '10000000-0000-4000-8000-000000001313',
@@ -926,6 +955,7 @@ export const expandedUserGoodsSeed: UserGoodSeed[] = [
     ids.goodsAoiClearCard,
     'owned',
     'Good translucency without muddy skin tones.',
+    new Date('2026-08-13T09:00:00.000Z'),
   ),
 ];
 
@@ -1193,68 +1223,6 @@ export const expandedPostImageSeed: PostImageSeed[] = [
     ),
     altText: 'User desk photo of the Yuna art board beside archive books.',
     sortOrder: 0,
-    moderationStatus: 'approved',
-  },
-];
-
-export const expandedExchangeListingSeed: ExchangeListingSeed[] = [
-  {
-    id: ids.exchangeNeonCard,
-    goodsId: ids.goodsRenKeychain,
-    wantedGoodsId: ids.goodsAoiClearCard,
-    userId: demoUserIds.trader,
-    status: 'open',
-    description:
-      'Looking to swap a duplicate Ren keychain for the Aoi clear card from the same event line.',
-    conditionNote: 'Unused and still bagged.',
-    locationHint: 'Shanghai',
-    allowMulti: false,
-    allowCash: false,
-    fulfillmentMethod: 'either',
-    moderationStatus: 'approved',
-  },
-  {
-    id: ids.exchangeRioStand,
-    goodsId: ids.goodsRioPassHolder,
-    wantedGoodsId: ids.goodsRioStand,
-    userId: demoUserIds.trader,
-    status: 'open',
-    description: 'Can add cash for the Rio stand if needed.',
-    conditionNote: 'Pass holder used once during the tour stop.',
-    locationHint: 'Suzhou',
-    allowMulti: false,
-    allowCash: true,
-    fulfillmentMethod: 'shipping',
-    moderationStatus: 'approved',
-  },
-  {
-    id: ids.exchangeYunaBlock,
-    goodsId: ids.goodsYunaBlock,
-    wantedGoodsId: ids.goodsKaitoCharm,
-    userId: demoUserIds.collector,
-    status: 'paused',
-    description:
-      'Paused because the block is currently on display, but still interested in a Kaito charm swap later.',
-    conditionNote: 'Displayed with protective film removed.',
-    locationHint: 'Hangzhou',
-    allowMulti: false,
-    allowCash: false,
-    fulfillmentMethod: 'meetup',
-    moderationStatus: 'approved',
-  },
-  {
-    id: ids.exchangeKaitoCharm,
-    goodsId: ids.goodsKaitoCharm,
-    wantedGoodsId: baseIds.goodsAoiStand,
-    userId: demoUserIds.trader,
-    status: 'open',
-    description:
-      'Testing cross-IP interest for the acrylic charm against a premium acrylic stand.',
-    conditionNote: 'Pulled but never used.',
-    locationHint: 'Nanjing',
-    allowMulti: true,
-    allowCash: true,
-    fulfillmentMethod: 'either',
     moderationStatus: 'approved',
   },
 ];

@@ -2,12 +2,6 @@ import Link from 'next/link';
 
 import { formatGoodsTypeLabel } from '@/components/search/search-query';
 
-/**
- * 索引 —— 按类型的入口。
- *
- * 排成密排的文字索引，不是一行胶囊按钮。索引是书末那几页：一列列词条，靠
- * 密度和字号分层，不靠每个词条都套一个框。
- */
 const goodsTypes = [
   'acrylic-stand',
   'can-badge',
@@ -20,55 +14,83 @@ const goodsTypes = [
 ] as const;
 
 const entries = [
-  { label: '拍照识别', href: '/recognition', note: '有实物，不知道名字' },
-  { label: '我的收藏', href: '/me/collection', note: '看自己的补全度' },
-  { label: '全部条目', href: '/search', note: '从头翻起' },
+  {
+    label: '公共谷库',
+    href: '/search',
+    note: '浏览全部谷子与点亮缺口',
+    mark: '藏',
+    tone: 'bg-[var(--kin-soft)] text-[var(--ink)]',
+  },
+  {
+    label: '扫描点亮',
+    href: '/recognition',
+    note: '识别手中的实物并点亮',
+    mark: '◎',
+    tone: 'bg-[var(--sky-soft)] text-[var(--sky)]',
+  },
+  {
+    label: '我的谷柜',
+    href: '/me/collection',
+    note: '看收藏和补全进度',
+    mark: '♡',
+    tone: 'bg-[var(--shu-soft)] text-[var(--shu)]',
+  },
+  {
+    label: '换谷匹配',
+    href: '/matches',
+    note: '看看谁与你双向合拍',
+    mark: '⇄',
+    tone: 'bg-[var(--violet-soft)] text-[var(--violet)]',
+  },
 ];
 
 export function HomeIndexSection() {
   return (
-    <section className="spread py-16">
-      <div>
-        <p className="lbl">索引</p>
-        <div className="rail-jp">索引</div>
-      </div>
-
+    <section className="py-16">
       <div className="min-w-0">
-        <h2 className="text-[26px]">按类型查阅</h2>
-        <div className="rule-kin mt-3" />
+        <p className="section-kicker">快速入口</p>
+        <h2 className="mt-3 text-[clamp(28px,3.4vw,40px)]">按类型逛谷</h2>
 
-        <div className="mt-6 columns-2 gap-x-10 sm:columns-3">
-          {goodsTypes.map((type) => (
+        <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          {goodsTypes.map((type, index) => (
             <Link
-              className="border-border mb-0 flex break-inside-avoid items-baseline justify-between gap-3 border-b py-2.5 text-[14px] hover:text-[var(--shu)]"
+              className="panel-float group flex min-h-[104px] flex-col justify-between rounded-[18px] border border-[var(--rule)] bg-[var(--surface)] p-4 text-[14px]"
               href={`/search?goodsType=${encodeURIComponent(type)}`}
               key={type}
             >
-              <span>{formatGoodsTypeLabel(type)}</span>
-              <span className="num shrink-0">{type}</span>
+              <span className="font-mono text-[11px] text-[var(--shu)]">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="font-semibold transition-colors group-hover:text-[var(--shu)]">
+                {formatGoodsTypeLabel(type)}
+              </span>
             </Link>
           ))}
         </div>
 
-        <div className="mt-12">
-          <h3 className="text-[18px]">其他入口</h3>
-          <div className="mt-3">
+        <div className="mt-14">
+          <h3 className="text-[22px]">接下来想做什么？</h3>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             {entries.map((entry) => (
               <Link
-                className="border-border group flex items-baseline gap-4 border-b py-4 last:border-b-0"
+                className="panel-float group flex items-center gap-4 rounded-[20px] border border-[var(--rule)] bg-[var(--surface)] p-5"
                 href={entry.href}
                 key={entry.href}
               >
-                <span className="font-heading text-[17px] font-semibold transition-colors group-hover:text-[var(--shu)]">
-                  {entry.label}
-                </span>
                 <span
-                  aria-hidden="true"
-                  className="border-border mx-1 hidden min-w-6 flex-1 translate-y-[-4px] border-b border-dotted sm:block"
-                />
-                <span className="text-muted-foreground shrink-0 text-[13px]">
-                  {entry.note}
+                  className={`grid size-12 shrink-0 place-items-center rounded-[15px] text-xl font-bold ${entry.tone}`}
+                >
+                  {entry.mark}
                 </span>
+                <span className="min-w-0">
+                  <span className="font-heading block text-[16px] font-bold transition-colors group-hover:text-[var(--shu)]">
+                    {entry.label}
+                  </span>
+                  <span className="text-muted-foreground mt-1 block text-[12px]">
+                    {entry.note}
+                  </span>
+                </span>
+                <span className="ml-auto text-[var(--shu)]">→</span>
               </Link>
             ))}
           </div>

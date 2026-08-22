@@ -1,94 +1,182 @@
 'use server';
 
+import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { isLocalDemoViewerKey } from '@/lib/auth/local-demo';
+import { localAuthAccounts, profiles } from '@/drizzle/schema';
+import { hashPassword, verifyPassword } from '@/lib/auth/password';
+import { normalizeInternalPath } from '@/lib/internal-path';
+import { consumeServerWrite } from '@/lib/rate-limit';
 import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import type { AuthActionState } from '@/server/auth/action-state';
 import {
-  clearLocalDemoAuthSession,
-  setLocalDemoAuthSession,
+  clearLocalAuthSession,
+  setLocalAuthSession,
 } from '@/server/auth/local-session';
-import type { SignInActionState } from '@/server/auth/action-state';
+import { getDb } from '@/server/db/client';
+import { ensureAuthProfile } from '@/server/auth/profile';
 
-const localDemoSignInInputSchema = z.object({
-  demoViewerKey: z.string().trim().min(1),
+const signInInputSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(320),
+  password: z.string().min(8).max(128),
   next: z.string().trim().optional(),
 });
 
-function normalizeNextPath(nextPath?: string) {
-  if (!nextPath || !nextPath.startsWith('/')) {
-    return '/';
-  }
+const registerInputSchema = signInInputSchema.extend({
+  displayName: z.string().trim().min(1).max(120),
+  handle: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2)
+    .max(64)
+    .regex(/^[a-z0-9][a-z0-9._-]*[a-z0-9]$/),
+});
 
-  return nextPath;
+const DUMMY_PASSWORD_HASH =
+  'scrypt:gubugu-local-auth-dummy-salt:c78ce8db667741f6edd14f6f36267def95b88c5b7f6fe7d89f2ab019bded543533037e3333c9a3743cd3b225a98acfff6c94a77a8ad4342d0a22b993695cd151';
+
+function authError(message: string): AuthActionState {
+  return { status: 'error', message };
+}
+
+function isUniqueViolation(error: unknown) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === '23505'
+  );
 }
 
 export async function signInAction(
-  _previousState: SignInActionState,
+  _previousState: AuthActionState,
   formData: FormData,
-): Promise<SignInActionState> {
-  const signInInputSchema = z.object({
-    email: z.string().trim().email(),
-    password: z.string().min(6),
-    next: z.string().trim().optional(),
-  });
-
-  if (!getSupabaseAuthConfig()) {
-    const parsed = localDemoSignInInputSchema.safeParse({
-      demoViewerKey: formData.get('demoViewerKey'),
-      next: formData.get('next'),
-    });
-
-    if (!parsed.success || !isLocalDemoViewerKey(parsed.data.demoViewerKey)) {
-      return {
-        status: 'error',
-        message: '请选择一个收藏档案后再继续。',
-      };
-    }
-
-    await setLocalDemoAuthSession(parsed.data.demoViewerKey);
-    redirect(normalizeNextPath(parsed.data.next));
-  }
-
+): Promise<AuthActionState> {
   const parsed = signInInputSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
     next: formData.get('next'),
   });
+  if (!parsed.success) return authError('请输入有效邮箱和 8–128 位密码。');
 
-  if (!parsed.success) {
-    return {
-      status: 'error',
-      message: '请输入有效邮箱和不少于 6 位的密码。',
-    };
+  const { email, password, next } = parsed.data;
+  if (
+    !consumeServerWrite(`auth-login:${email}`, {
+      limit: 8,
+      windowMs: 60_000,
+    })
+  ) {
+    return authError('尝试次数过多，请一分钟后再试。');
+  }
+
+  if (!getSupabaseAuthConfig()) {
+    const account = (
+      await getDb()
+        .select({
+          userId: localAuthAccounts.userId,
+          passwordHash: localAuthAccounts.passwordHash,
+        })
+        .from(localAuthAccounts)
+        .where(eq(localAuthAccounts.email, email))
+        .limit(1)
+    )[0];
+
+    const passwordMatches = await verifyPassword(
+      password,
+      account?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
+    if (!account || !passwordMatches) {
+      return authError('邮箱或密码不正确。');
+    }
+
+    await setLocalAuthSession(account.userId);
+    redirect(normalizeInternalPath(next));
   }
 
   const supabase = await createServerSupabaseClient();
-  const { email, password, next } = parsed.data;
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
-
-  if (error) {
-    return {
-      status: 'error',
-      message: '登录失败，请检查邮箱、密码以及当前账户配置。',
-    };
+  if (error) return authError('登录失败，请检查邮箱和密码。');
+  if (data.user) {
+    await ensureAuthProfile({
+      id: data.user.id,
+      email: data.user.email,
+      displayName:
+        typeof data.user.user_metadata?.display_name === 'string'
+          ? data.user.user_metadata.display_name
+          : null,
+    });
   }
 
-  redirect(normalizeNextPath(next));
+  redirect(normalizeInternalPath(next));
+}
+
+export async function registerAction(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  if (getSupabaseAuthConfig()) {
+    return authError('当前环境请通过 Supabase 创建账号。');
+  }
+
+  const parsed = registerInputSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password'),
+    displayName: formData.get('displayName'),
+    handle: formData.get('handle'),
+    next: formData.get('next'),
+  });
+  if (!parsed.success) {
+    return authError('请填写展示名、合法的英文用户名、邮箱和至少 8 位密码。');
+  }
+
+  const input = parsed.data;
+  if (
+    !consumeServerWrite(`auth-register:${input.email}`, {
+      limit: 4,
+      windowMs: 60_000,
+    })
+  ) {
+    return authError('尝试次数过多，请一分钟后再试。');
+  }
+
+  const userId = crypto.randomUUID();
+  const passwordHash = await hashPassword(input.password);
+  try {
+    await getDb().transaction(async (tx) => {
+      await tx.insert(profiles).values({
+        id: userId,
+        handle: input.handle,
+        displayName: input.displayName,
+      });
+      await tx.insert(localAuthAccounts).values({
+        userId,
+        email: input.email,
+        passwordHash,
+      });
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return authError('该邮箱或用户名已被使用。');
+    }
+    throw error;
+  }
+
+  await setLocalAuthSession(userId);
+  redirect(normalizeInternalPath(input.next));
 }
 
 export async function signOutAction() {
   if (getSupabaseAuthConfig()) {
     const supabase = await createServerSupabaseClient();
-
     await supabase.auth.signOut();
   } else {
-    await clearLocalDemoAuthSession();
+    await clearLocalAuthSession();
   }
 
   redirect('/');

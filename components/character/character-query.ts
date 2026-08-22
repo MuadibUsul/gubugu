@@ -6,7 +6,6 @@ export type CharacterPageControls = {
   seriesSlug?: string;
   tagSlugs: string[];
   collected?: 'owned' | 'missing';
-  viewer: string;
 };
 
 export function buildCharacterEncyclopediaHref({
@@ -17,7 +16,6 @@ export function buildCharacterEncyclopediaHref({
   seriesSlug,
   tagSlugs,
   collected,
-  viewer,
 }: CharacterPageControls) {
   const params = new URLSearchParams();
 
@@ -39,10 +37,6 @@ export function buildCharacterEncyclopediaHref({
 
   if (collected) {
     params.set('collected', collected);
-  }
-
-  if (viewer) {
-    params.set('viewer', viewer);
   }
 
   const queryString = params.toString();

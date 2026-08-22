@@ -1,59 +1,65 @@
 @import 'tailwindcss';
 
-/* ============================================================================
-   金銀朱 — 漆器与和装书的配色。
-   两个强调色有明确分工，不是两种装饰：
-     朱 (--shu)  行为：主操作、当前项、入藏印（印泥本来就是朱）
-     金 (--kin)  拥有：已收录的格子、已拥有条目的装裱内衬、收藏记录的达成印
-   「拥有」因此在视觉上本身就是贵重的，不靠额外装饰去暗示。
-   分隔靠细线与留白，不靠阴影、辉光或毛玻璃。
-   ========================================================================= */
+/* 櫻色收藏册：米白底色让商品图保持主角，樱粉、菫色和薄荷色负责导航与状态。 */
 
 :root {
   /* light-dark() 让每个 token 只声明一次，随 color-scheme 取值；
      [data-theme] 只需翻转 color-scheme，不必重复整份调色板。 */
   color-scheme: light dark;
 
-  /* 和紙 / 漆黒 */
-  --paper: light-dark(oklch(0.972 0.009 84), oklch(0.152 0.008 48));
-  --surface: light-dark(oklch(0.995 0.005 86), oklch(0.196 0.009 48));
-  --sunken: light-dark(oklch(0.945 0.01 84), oklch(0.128 0.007 48));
+  --paper: light-dark(oklch(0.982 0.012 315), oklch(0.16 0.018 292));
+  --surface: light-dark(oklch(0.998 0.004 310), oklch(0.205 0.021 292));
+  --sunken: light-dark(oklch(0.958 0.022 310), oklch(0.135 0.02 292));
 
   /* 墨 */
-  --ink: light-dark(oklch(0.19 0.012 55), oklch(0.955 0.006 80));
-  --ink-2: light-dark(oklch(0.44 0.012 55), oklch(0.715 0.008 70));
-  --ink-3: light-dark(oklch(0.615 0.01 60), oklch(0.545 0.008 65));
+  --ink: light-dark(oklch(0.235 0.035 292), oklch(0.95 0.012 310));
+  --ink-2: light-dark(oklch(0.47 0.035 292), oklch(0.73 0.022 305));
+  --ink-3: light-dark(oklch(0.52 0.03 292), oklch(0.68 0.02 305));
 
   /* 线 */
-  --rule: light-dark(oklch(0.878 0.011 78), oklch(0.295 0.009 55));
-  --rule-2: light-dark(oklch(0.775 0.014 74), oklch(0.405 0.011 60));
+  --rule: light-dark(oklch(0.895 0.025 310), oklch(0.31 0.03 292));
+  --rule-2: light-dark(oklch(0.82 0.04 310), oklch(0.43 0.045 292));
+  --control-border: light-dark(oklch(0.68 0.045 310), oklch(0.52 0.045 292));
 
-  /* 朱 */
-  --shu: light-dark(oklch(0.52 0.198 30), oklch(0.665 0.182 32));
-  --shu-ink: light-dark(oklch(1 0 0), oklch(0.145 0.02 30));
-  --shu-soft: light-dark(oklch(0.955 0.034 32), oklch(0.255 0.055 30));
+  /* 樱粉：主操作与当前状态 */
+  --shu: light-dark(oklch(0.58 0.19 8), oklch(0.72 0.17 8));
+  --shu-ink: light-dark(oklch(1 0 0), oklch(0.16 0.025 8));
+  --shu-soft: light-dark(oklch(0.955 0.045 5), oklch(0.27 0.065 5));
 
-  /* 金 —— 古銅，不是亮黄 */
-  --kin: light-dark(oklch(0.66 0.096 82), oklch(0.775 0.105 84));
-  --kin-2: light-dark(oklch(0.78 0.07 84), oklch(0.66 0.085 82));
-  --kin-soft: light-dark(oklch(0.955 0.033 85), oklch(0.26 0.045 84));
+  --kin: light-dark(oklch(0.76 0.12 80), oklch(0.79 0.12 80));
+  --kin-2: light-dark(oklch(0.69 0.13 72), oklch(0.72 0.11 80));
+  --kin-soft: light-dark(oklch(0.96 0.045 84), oklch(0.27 0.05 80));
+
+  --violet: light-dark(oklch(0.61 0.16 300), oklch(0.75 0.14 300));
+  --violet-soft: light-dark(oklch(0.95 0.04 300), oklch(0.27 0.06 300));
+  --sky: light-dark(oklch(0.68 0.105 230), oklch(0.76 0.1 230));
+  --sky-soft: light-dark(oklch(0.95 0.035 230), oklch(0.27 0.05 230));
+
+  /* 收藏语义色。色彩只负责状态识别，商品图仍是页面的视觉主角。 */
+  --want: light-dark(oklch(0.48 0.105 264), oklch(0.72 0.105 264));
+  --want-soft: light-dark(oklch(0.955 0.025 264), oklch(0.24 0.04 264));
+  --exchange: light-dark(oklch(0.47 0.09 163), oklch(0.72 0.09 163));
+  --exchange-soft: light-dark(oklch(0.955 0.025 163), oklch(0.24 0.04 163));
 
   --destructive: light-dark(oklch(0.52 0.2 25), oklch(0.68 0.17 25));
 
   --font-heading-family:
-    'Hiragino Mincho ProN', 'Yu Mincho', 'Songti SC', 'SimSun',
-    'Iowan Old Style', Georgia, serif;
+    'Avenir Next', 'Segoe UI Variable Display', 'PingFang SC',
+    'Microsoft YaHei UI', system-ui, sans-serif;
   --font-body-family:
     'Inter', 'Segoe UI Variable Text', 'PingFang SC', 'Microsoft YaHei UI',
     system-ui, sans-serif;
   --font-mono-family:
     ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
 
-  /* 圆角克制到近乎直角，卡片读起来像印刷品而不是 UI 方块 */
-  --radius: 2px;
+  --radius: 14px;
 
-  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
   --duration: 180ms;
+  --shadow-card: 0 18px 45px -34px
+    color-mix(in oklab, var(--ink) 38%, transparent);
+  --shadow-float: 0 22px 55px -32px
+    color-mix(in oklab, var(--violet) 32%, transparent);
 }
 
 /* 语义别名。
@@ -107,14 +113,14 @@
   --color-accent-foreground: var(--shu-ink);
   --color-destructive: var(--destructive);
   --color-border: var(--rule);
-  --color-input: var(--rule-2);
+  --color-input: var(--control-border);
   --color-ring: var(--shu);
   --color-kin: var(--kin);
 
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 3px;
-  --radius-xl: 3px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 
   --font-sans: var(--font-body-family);
   --font-heading: var(--font-heading-family);
@@ -134,31 +140,37 @@
     @apply bg-background text-foreground min-h-screen;
     font-family: var(--font-body-family);
     font-size: 15px;
-    line-height: 1.78;
+    line-height: 1.68;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-wrap: anywhere;
   }
 
-  /* 和紙的纤维感。强度极低，只在大面积留白上隐约可辨；这是"有材质"与
-     "没有颜色"的区别，不是装饰图层。 */
+  /* 大面积留白只给极淡的樱粉、菫色与天空色环境光。它们负责形成二次元
+     收藏册的氛围，不和商品图争抢注意力。 */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 1;
     background-image:
-      repeating-linear-gradient(
-        90deg,
-        color-mix(in oklab, var(--ink) 2.5%, transparent) 0 1px,
-        transparent 1px 3px
+      radial-gradient(
+        circle at 8% 8%,
+        color-mix(in oklab, var(--shu) 9%, transparent),
+        transparent 25rem
       ),
-      repeating-linear-gradient(
-        0deg,
-        color-mix(in oklab, var(--ink) 1.5%, transparent) 0 1px,
-        transparent 1px 4px
+      radial-gradient(
+        circle at 92% 4%,
+        color-mix(in oklab, var(--violet) 9%, transparent),
+        transparent 28rem
+      ),
+      radial-gradient(
+        circle at 78% 76%,
+        color-mix(in oklab, var(--sky) 6%, transparent),
+        transparent 30rem
       );
   }
 
@@ -179,8 +191,8 @@
   h3,
   h4 {
     font-family: var(--font-heading-family);
-    font-weight: 600;
-    letter-spacing: -0.014em;
+    font-weight: 720;
+    letter-spacing: -0.028em;
   }
 
   a {
@@ -195,9 +207,19 @@
 
   button {
     transition:
+      transform 150ms var(--ease),
       border-color var(--duration) var(--ease),
       color var(--duration) var(--ease),
       background-color var(--duration) var(--ease);
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+
+  :where(a, button, summary):focus-visible {
+    outline: 2px solid var(--shu);
+    outline-offset: 3px;
   }
 
   /* 汉字不做 uppercase（对中文是空操作），也不拉字距 —— 旧设计对中文用了
@@ -214,7 +236,7 @@
     textarea,
     select
   ) {
-    border: 1px solid var(--rule-2);
+    border: 1px solid var(--control-border);
     border-radius: var(--radius);
     background: var(--surface);
     color: var(--ink);
@@ -232,7 +254,7 @@
   ):focus-visible {
     outline: none;
     border-color: var(--shu);
-    box-shadow: 0 0 0 1px var(--shu);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--shu) 18%, transparent);
   }
 
   :where(select) {
@@ -271,56 +293,42 @@
 }
 
 @layer utilities {
+  .ui-field {
+    display: block;
+    width: 100%;
+  }
+
+  .ui-input {
+    display: block;
+    width: 100%;
+  }
+
   .text-balance {
     text-wrap: balance;
   }
 
-  /* 旧的环境层（光球、点阵、网格线、内框）已全部撤除。保留空规则是为了让仍
-     引用这些类名的标记不会残留尺寸或边框。 */
-  .site-atmosphere,
-  .site-orb,
-  .site-frame {
-    display: none !important;
-  }
-
   /* ---------- 版式骨架 ---------- */
 
-  /* 画册的开页：左窄栏放标记，右主栏放内容 */
+  /* 旧版的竖排窄栏浪费了首屏宽度。保留类名以兼容所有页面，但统一收束为
+     单栏内容区；章节身份由标题上方的彩色标签表达。 */
   .spread {
     display: grid;
-    grid-template-columns: 124px minmax(0, 1fr);
-    gap: 38px;
-  }
-
-  @media (max-width: 900px) {
-    .spread {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 
   .rail-jp {
-    writing-mode: vertical-rl;
-    font-family: var(--font-heading-family);
-    font-size: 13px;
-    color: var(--ink-3);
-    letter-spacing: 0.3em;
-    margin-top: 12px;
+    display: none;
   }
 
-  @media (max-width: 900px) {
-    .rail-jp {
-      display: none;
-    }
-  }
-
-  /* 章节起首的一道金线 */
+  /* 章节分隔延续樱粉到菫色的主色关系。 */
   .rule-kin {
-    height: 1px;
+    height: 2px;
+    border-radius: 999px;
     background: linear-gradient(
       90deg,
-      var(--kin),
-      color-mix(in oklab, var(--kin) 22%, transparent) 62%,
+      var(--shu),
+      color-mix(in oklab, var(--violet) 58%, var(--shu)) 42%,
       transparent
     );
   }
@@ -330,12 +338,25 @@
   .eyebrow-label,
   .meta-label,
   .lbl {
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.5;
+    font-size: 11.5px;
+    font-weight: 650;
+    line-height: 1.4;
     color: var(--ink-3);
     text-transform: none;
     letter-spacing: normal;
+  }
+
+  .section-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border-radius: 999px;
+    background: var(--shu-soft);
+    padding: 0.3rem 0.68rem;
+    font-size: 11.5px;
+    font-weight: 750;
+    line-height: 1.4;
+    color: var(--shu);
   }
 
   .num,
@@ -366,18 +387,17 @@
 
   .collection-panel,
   .panel {
-    position: relative;
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: var(--radius);
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
   }
 
   .panel-float {
-    transition: border-color var(--duration) var(--ease);
-  }
-
-  .panel-float:hover {
-    border-color: var(--rule-2);
+    transition:
+      transform var(--duration) var(--ease),
+      border-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease);
   }
 
   /* ---------- 芯片 ---------- */
@@ -387,8 +407,8 @@
     display: inline-flex;
     align-items: center;
     border: 1px solid var(--rule);
-    border-radius: var(--radius);
-    background: var(--surface);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--surface) 74%, var(--violet-soft));
     color: var(--ink-2);
     font-size: 13px;
     line-height: 1.5;
@@ -402,56 +422,56 @@
 
   .hud-chip--lit,
   .chip--on {
-    background: var(--shu);
-    border-color: var(--shu);
-    color: var(--shu-ink);
+    background: var(--shu-soft);
+    border-color: color-mix(in oklab, var(--shu) 34%, var(--rule));
+    color: var(--shu);
   }
 
   .hud-card {
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: var(--radius);
+    border-radius: 18px;
+    box-shadow: var(--shadow-card);
   }
 
   /* ---------- 商品卡：装裱 ----------
      外细线 + 内衬留白 + 图。已拥有的内衬转金 —— 同一个结构，材质不同。 */
 
   .goods-card {
-    position: relative;
     isolation: isolate;
     display: flex;
     flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: var(--radius);
-    padding: 7px;
+    border-radius: 20px;
+    padding: 8px;
+    box-shadow: var(--shadow-card);
     transition:
-      border-color 200ms var(--ease),
-      background-color 520ms var(--ease);
-  }
-
-  .goods-card:hover {
-    border-color: var(--rule-2);
+      transform var(--duration) var(--ease),
+      border-color 180ms var(--ease),
+      background-color 180ms var(--ease),
+      box-shadow var(--duration) var(--ease);
   }
 
   .goods-card__art {
     position: relative;
     overflow: hidden;
+    border-radius: 14px;
     background: var(--sunken);
     outline: 1px solid var(--rule);
     outline-offset: 0;
-    transition: outline-color 520ms var(--ease);
+    transition: outline-color 180ms var(--ease);
   }
 
-  /* 已拥有：装裱内衬转金，右上角落一枚朱印。
-     朱印是整套设计里最有力的「拥有」标记，此前只出现在详情页一处 —— 卡片
+  /* 已点亮：装裱内衬转金，右上角落一枚朱印。
+     朱印是整套设计里最有力的「点亮」标记，此前只出现在详情页一处 —— 卡片
      上一个都没有，等于把最强的信号留在了最少被看到的地方。 */
   .goods-card--lit .goods-card__art {
     outline-color: color-mix(in oklab, var(--kin) 62%, var(--rule));
   }
 
   .goods-card--lit .goods-card__art::after {
-    content: '藏';
+    content: '亮';
     position: absolute;
     right: 9px;
     top: 9px;
@@ -481,25 +501,25 @@
     object-fit: cover;
     object-position: center;
     transition:
-      transform 640ms var(--ease),
-      filter 720ms var(--ease);
+      transform 220ms var(--ease),
+      filter 220ms var(--ease),
+      opacity 220ms var(--ease);
   }
 
-  .goods-card:hover .goods-card__art-image {
-    transform: scale(1.035);
-  }
-
-  /* 未收录：图片退成背景，整卡沉进 sunken 底 —— 读起来是收藏册上的空格 */
+  /* 未点亮：保留足够细节供辨认，但不能靠 hover 提前看到彩色。 */
   .goods-card--dormant {
     background: var(--sunken);
   }
 
   .goods-card--dormant .goods-card__art-image {
-    filter: grayscale(1) opacity(0.3);
+    filter: grayscale(1) saturate(0) contrast(0.9) brightness(0.96);
+    opacity: 0.68;
   }
 
-  .goods-card--dormant:hover .goods-card__art-image {
-    filter: grayscale(0.2) opacity(0.78);
+  /* 已收进谷柜但尚未扫描：仍保持灰图，只用菫色细线区分归档状态。 */
+  .goods-card--cabinet {
+    border-color: color-mix(in oklab, var(--violet) 28%, var(--rule));
+    background: color-mix(in oklab, var(--violet-soft) 36%, var(--sunken));
   }
 
   .goods-card__art-content {
@@ -521,7 +541,13 @@
     padding: 4px 8px;
     border-right: 1px solid var(--rule);
     border-bottom: 1px solid var(--rule);
-    transition: all 420ms var(--ease);
+    border-bottom-right-radius: 10px;
+    transition:
+      color 180ms var(--ease),
+      background-color 180ms var(--ease),
+      border-color 180ms var(--ease),
+      font-size 180ms var(--ease),
+      padding 180ms var(--ease);
   }
 
   /* 未收录卡片上编号提到最显眼的位置 */
@@ -567,7 +593,7 @@
 
   @keyframes seal-stamp {
     0% {
-      transform: scale(2) rotate(-12deg);
+      transform: scale(1.14) rotate(-8deg);
       opacity: 0;
     }
     60% {
@@ -581,7 +607,7 @@
   }
 
   .seal--stamp {
-    animation: seal-stamp 420ms var(--ease);
+    animation: seal-stamp 260ms var(--ease);
   }
 
   /* 印泥扩散的一圈 */
@@ -606,7 +632,7 @@
   }
 
   .seal--stamp::after {
-    animation: ink-spread 580ms var(--ease) 100ms;
+    animation: ink-spread 280ms var(--ease) 60ms;
   }
 
   /* ---------- 收藏日 ---------- */
@@ -641,12 +667,12 @@
     width: 15px;
     height: 19px;
     border: 1px solid var(--rule-2);
-    border-radius: 1px;
+    border-radius: 4px;
     background: transparent;
     transition:
-      background-color 460ms var(--ease),
-      border-color 460ms var(--ease),
-      box-shadow 460ms var(--ease);
+      background-color 220ms var(--ease),
+      border-color 220ms var(--ease),
+      box-shadow 220ms var(--ease);
   }
 
   .slot--filled {
@@ -666,7 +692,7 @@
   }
 
   .slot--just {
-    animation: slot-ink-fill 460ms var(--ease);
+    animation: slot-ink-fill 240ms var(--ease);
   }
 
   /* ---------- 状态与进度 ---------- */
@@ -685,6 +711,14 @@
 
   .state--off {
     color: var(--ink-3);
+  }
+
+  .state--wanted {
+    color: var(--want);
+  }
+
+  .state--exchange {
+    color: var(--exchange);
   }
 
   .meter-value {
@@ -716,7 +750,8 @@
   }
 
   .bar {
-    height: 2px;
+    height: 6px;
+    border-radius: 999px;
     background: var(--rule);
     position: relative;
     overflow: hidden;
@@ -725,7 +760,8 @@
   .bar > span {
     display: block;
     height: 100%;
-    background: var(--kin);
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--shu), var(--violet));
   }
 
   /* 系列进度行 */
@@ -838,7 +874,7 @@
   }
 
   .ledger tr.is-just {
-    animation: row-gild 1800ms var(--ease);
+    animation: row-gild 280ms var(--ease);
   }
 
   /* 记录纸条 */
@@ -883,8 +919,9 @@
   .goods-plate {
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: var(--radius);
+    border-radius: 20px;
     padding: 11px;
+    box-shadow: var(--shadow-card);
   }
 
   .goods-plate .goods-card__art {
@@ -923,7 +960,7 @@
     text-align: center;
     color: var(--ink-2);
     font-size: 14px;
-    border-radius: var(--radius);
+    border-radius: 18px;
   }
 
   .empty-state strong {
@@ -939,7 +976,9 @@
 
   .callout {
     background: var(--shu-soft);
-    border-left: 2px solid var(--shu);
+    border: 1px solid color-mix(in oklab, var(--shu) 28%, var(--rule));
+    border-left: 3px solid var(--shu);
+    border-radius: 14px;
     padding: 14px 18px;
     font-size: 13.5px;
     color: var(--ink);
@@ -965,6 +1004,31 @@
   .recognition-scan-line::after {
     content: none;
   }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel-float:hover {
+    transform: translateY(-2px);
+    border-color: var(--rule-2);
+    box-shadow: var(--shadow-float);
+  }
+
+  .goods-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--shu) 28%, var(--rule));
+    box-shadow: var(--shadow-float);
+  }
+
+  .goods-card:hover .goods-card__art-image {
+    transform: scale(1.035);
+  }
+}
+
+.goods-card:focus-within {
+  border-color: color-mix(in oklab, var(--shu) 54%, var(--rule));
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--shu) 14%, transparent),
+    var(--shadow-float);
 }
 
 @media (prefers-reduced-motion: reduce) {

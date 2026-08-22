@@ -10,7 +10,6 @@ export const moderationQueueModuleValues = [
   'catalog-submission',
   'photo-upload',
   'comment',
-  'exchange-intent',
 ] as const;
 
 export const moderationStatusSchema = z.enum(moderationStatusValues);
@@ -44,42 +43,6 @@ export const moderationStatusMeta: Record<
     description: '在重新提交前不会公开显示。',
     toneClassName:
       'border-[color:color-mix(in_oklab,var(--destructive)_34%,var(--border))] bg-[color:color-mix(in_oklab,var(--destructive)_10%,white)] text-foreground',
-  },
-};
-
-export const moderationSubjectTypeValues = [
-  'catalogSubmission',
-  'photoUpload',
-  'comment',
-  'exchangeIntent',
-] as const;
-
-export const moderationSubjectTypeSchema = z.enum(moderationSubjectTypeValues);
-
-export type ModerationSubjectType = z.infer<typeof moderationSubjectTypeSchema>;
-
-export const moderationSubjectTypeMeta: Record<
-  ModerationSubjectType,
-  {
-    label: string;
-    description: string;
-  }
-> = {
-  catalogSubmission: {
-    label: '图鉴投稿',
-    description: '针对 IP、角色、系列或商品的结构化提报。',
-  },
-  photoUpload: {
-    label: '图片上传',
-    description: '挂在商品帖子下的藏家晒单图片。',
-  },
-  comment: {
-    label: '评论',
-    description: '藏家笔记，需要通过审核后才会公开。',
-  },
-  exchangeIntent: {
-    label: '交换意向',
-    description: '仅表达换物意向的轻量 have/want 记录。',
   },
 };
 

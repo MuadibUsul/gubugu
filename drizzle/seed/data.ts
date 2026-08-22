@@ -6,7 +6,6 @@ import { getLocalSampleImageAsset } from './local-sample-images';
 import {
   catalogSubmissions,
   characters,
-  exchangeListings,
   goods,
   goodsCharacters,
   goodsImages,
@@ -33,7 +32,6 @@ type CatalogSubmissionSeed = InferInsertModel<typeof catalogSubmissions>;
 type PostSeed = InferInsertModel<typeof posts>;
 type PostImageSeed = InferInsertModel<typeof postImages>;
 type RatingSeed = InferInsertModel<typeof ratings>;
-type ExchangeListingSeed = InferInsertModel<typeof exchangeListings>;
 
 function resolveSeedImageUrl(sampleIndex: number, fallbackAssetPath: string) {
   return (
@@ -355,6 +353,7 @@ export const userGoodsSeed: UserGoodSeed[] = [
     userId: demoUserIds.collector,
     goodsId: ids.goodsAoiStand,
     status: 'owned',
+    litAt: new Date('2026-08-01T09:00:00.000Z'),
     note: 'Main desk display copy.',
   },
   {
@@ -383,6 +382,7 @@ export const userGoodsSeed: UserGoodSeed[] = [
     userId: demoUserIds.trader,
     goodsId: ids.goodsRenBadge,
     status: 'owned',
+    litAt: new Date('2026-08-02T09:00:00.000Z'),
     note: 'Pulled a duplicate from blind packs.',
   },
   {
@@ -397,6 +397,7 @@ export const userGoodsSeed: UserGoodSeed[] = [
     userId: demoUserIds.reviewer,
     goodsId: ids.goodsDuoShikishi,
     status: 'owned',
+    litAt: new Date('2026-08-03T09:00:00.000Z'),
     note: 'Stored in a mini shikishi binder.',
   },
 ];
@@ -578,39 +579,6 @@ export const postImageSeed: PostImageSeed[] = [
   },
 ];
 
-export const exchangeListingSeed: ExchangeListingSeed[] = [
-  {
-    id: ids.exchangeRenOpen,
-    goodsId: ids.goodsRenBadge,
-    wantedGoodsId: ids.goodsAoiStand,
-    userId: demoUserIds.trader,
-    status: 'open',
-    description:
-      'Trading one unopened duplicate and prioritizing the Aoi acrylic stand first.',
-    conditionNote: 'Unopened blind-pack pull kept in a sleeve.',
-    locationHint: 'Shanghai',
-    allowMulti: false,
-    allowCash: false,
-    fulfillmentMethod: 'either',
-    moderationStatus: 'approved',
-  },
-  {
-    id: ids.exchangeAoiPaused,
-    goodsId: ids.goodsAoiStand,
-    wantedGoodsId: ids.goodsDuoShikishi,
-    userId: demoUserIds.collector,
-    status: 'paused',
-    description:
-      'Paused for now, but this copy is still earmarked for a duo shikishi swap.',
-    conditionNote: 'Displayed briefly, no visible scratches.',
-    locationHint: 'Hangzhou',
-    allowMulti: false,
-    allowCash: true,
-    fulfillmentMethod: 'meetup',
-    moderationStatus: 'approved',
-  },
-];
-
 export const demoSeedSummary = {
   ips: ipSeed.length,
   characters: characterSeed.length,
@@ -625,5 +593,4 @@ export const demoSeedSummary = {
   catalogSubmissions: catalogSubmissionSeed.length,
   posts: postSeed.length,
   postImages: postImageSeed.length,
-  exchangeListings: exchangeListingSeed.length,
 } as const;

@@ -31,7 +31,10 @@ loadEnv({ path: '.env', override: false });
 const force = process.argv.includes('--force');
 
 async function fetchImageBlob(imageUrl: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const appUrl =
+    process.env.APP_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    'http://localhost:3000';
   // Same-origin paths are what the seed writes; resolve them against the app.
   const absolute = imageUrl.startsWith('/')
     ? new URL(imageUrl, appUrl).toString()

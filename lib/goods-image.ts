@@ -12,9 +12,85 @@ const defaultAppUrl = 'http://127.0.0.1:3000';
 
 function getAppUrl() {
   const configured =
-    process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? defaultAppUrl;
+    process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? defaultAppUrl;
 
   return configured.replace(/\/+$/, '');
+}
+
+const trustedAppImagePrefixes = [
+  '/local-sample-images/',
+  '/demo-assets/',
+  '/catalog-assets/',
+];
+
+function hasTrustedPath(url: URL, prefixes: string[]) {
+  let pathname = url.pathname;
+
+  try {
+    // Decode repeatedly before normalising so encoded dot/slash segments cannot
+    // turn an allowed static prefix into an internal application request.
+    while (pathname.includes('%')) {
+      const decoded = decodeURIComponent(pathname);
+      if (decoded === pathname) break;
+      pathname = decoded;
+    }
+
+    pathname = new URL(pathname, url.origin).pathname;
+  } catch {
+    return false;
+  }
+
+  return prefixes.some((prefix) => pathname.startsWith(prefix));
+}
+
+/**
+ * Resolves only image locations the server may fetch while generating a share
+ * card. Unlike next/image, ImageResponse performs the fetch inside our process,
+ * so hostname-only checks are not enough: protocol, port and public-storage
+ * path must all match the configured origins.
+ */
+export function toSafeShareImageUrl(url: string | null | undefined) {
+  if (!url) return null;
+
+  const trimmed = url.trim();
+
+  if (!trimmed || trimmed.startsWith('//')) return null;
+
+  let candidate: URL;
+  let appOrigin: string;
+
+  try {
+    const appUrl = new URL(getAppUrl());
+    appOrigin = appUrl.origin;
+    candidate = new URL(trimmed, appUrl);
+  } catch {
+    return null;
+  }
+
+  if (candidate.username || candidate.password) return null;
+
+  if (
+    candidate.origin === appOrigin &&
+    hasTrustedPath(candidate, trustedAppImagePrefixes)
+  ) {
+    return candidate.toString();
+  }
+
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+
+  if (!supabaseUrl) return null;
+
+  try {
+    const supabaseOrigin = new URL(supabaseUrl).origin;
+
+    return candidate.origin === supabaseOrigin &&
+      hasTrustedPath(candidate, ['/storage/v1/object/public/'])
+      ? candidate.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

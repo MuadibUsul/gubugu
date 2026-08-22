@@ -58,10 +58,10 @@ export function UserPhotoStrip({ items }: UserPhotoStripProps) {
                       className="goods-plate relative aspect-square"
                       key={image.id}
                     >
-                      <div className="goods-card__art absolute inset-[9px]">
+                      <div className="absolute inset-[9px] overflow-hidden rounded-[14px] bg-[var(--sunken)]">
                         <RemoteImage
                           alt={image.altText ?? '用户上传的收藏图片'}
-                          className="goods-card__art-image"
+                          className="size-full object-cover object-center"
                           sizes="(max-width: 639px) 33vw, 16vw"
                           src={image.imageUrl}
                         />

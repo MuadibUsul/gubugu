@@ -14,7 +14,7 @@ type UserCollectionSheetProps = {
 };
 
 const statusMeta = {
-  owned: { label: '已收录', empty: '还没有收录任何一件。' },
+  owned: { label: '谷柜', empty: '谷柜里还没有收藏。' },
   wanted: { label: '想要', empty: '还没有标记想要的条目。' },
   exchange: { label: '可交换', empty: '还没有放出可交换的条目。' },
 } as const satisfies Record<
@@ -25,15 +25,20 @@ const statusMeta = {
 function SheetEntry({
   item,
   index,
-  owned,
+  status,
+  isInCabinet,
 }: {
   item: UserProfileGoodsCard;
   index: number;
-  owned: boolean;
+  status: CollectionStatusFilter;
+  isInCabinet: boolean;
 }) {
+  const lit = Boolean(item.litAt);
+
   return (
     <Link
-      className={`goods-card group ${owned ? 'goods-card--lit' : ''}`}
+      aria-label={`${item.name}，${lit ? '已点亮' : isInCabinet ? '已入柜，待点亮' : '未点亮'}`}
+      className={`goods-card group min-w-0 ${lit ? 'goods-card--lit' : `goods-card--dormant ${isInCabinet ? 'goods-card--cabinet' : ''}`}`}
       href={`/goods/${item.slug}`}
     >
       <GoodsCardArt
@@ -48,7 +53,7 @@ function SheetEntry({
       </GoodsCardArt>
 
       <div className="flex flex-1 flex-col gap-1.5 px-1 pt-3 pb-1">
-        <h3 className="text-[14.5px] leading-snug transition-colors group-hover:text-[var(--shu)]">
+        <h3 className="line-clamp-2 text-[13px] leading-5 transition-colors group-hover:text-[var(--shu)] sm:text-[14.5px]">
           {item.name}
         </h3>
         <span className="sku-code">{item.skuCode}</span>
@@ -57,12 +62,20 @@ function SheetEntry({
         </span>
 
         <div className="mt-auto pt-2">
-          {owned ? (
-            <span className="acquired">
-              {formatCatalogDate(item.updatedAt)}
-            </span>
+          {status === 'owned' ? (
+            lit ? (
+              <span className="acquired">
+                已点亮 · {formatCatalogDate(item.litAt!)}
+              </span>
+            ) : (
+              <span className="state state--off">已入柜 · 待扫描</span>
+            )
           ) : (
-            <span className="state state--off">{statusMeta.wanted.label}</span>
+            <span
+              className={`state ${status === 'wanted' ? 'state--wanted' : 'state--exchange'}`}
+            >
+              {statusMeta[status].label}
+            </span>
           )}
         </div>
       </div>
@@ -83,15 +96,19 @@ export function UserCollectionSheet({
   basePath,
 }: UserCollectionSheetProps) {
   const items = data.goods[status];
+  const cabinetGoodsIds = new Set(data.goods.owned.map((item) => item.id));
   const counts = {
-    owned: data.summary.ownedCount,
+    owned: data.summary.cabinetCount,
     wanted: data.summary.wantedCount,
     exchange: data.summary.exchangeCount,
   } as const;
 
   return (
     <div>
-      <div className="border-border mb-8 flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b pb-3">
+      <nav
+        aria-label="收藏状态"
+        className="border-border mb-8 flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b pb-3"
+      >
         {(Object.keys(statusMeta) as CollectionStatusFilter[]).map((key) => (
           <Link
             className={
@@ -100,13 +117,14 @@ export function UserCollectionSheet({
                 : 'text-muted-foreground hover:text-foreground text-[15px]'
             }
             href={key === 'owned' ? basePath : `${basePath}?status=${key}`}
+            aria-current={key === status ? 'page' : undefined}
             key={key}
           >
             {statusMeta[key].label}
             <span className="num ml-1.5">{counts[key]}</span>
           </Link>
         ))}
-      </div>
+      </nav>
 
       {items.length === 0 ? (
         <div className="empty-state">
@@ -114,13 +132,14 @@ export function UserCollectionSheet({
           从图鉴里找到想要的条目，标一下状态，它就会出现在这里。
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
           {items.map((item, index) => (
             <SheetEntry
               index={index}
+              isInCabinet={cabinetGoodsIds.has(item.id)}
               item={item}
               key={item.id}
-              owned={status === 'owned'}
+              status={status}
             />
           ))}
         </div>

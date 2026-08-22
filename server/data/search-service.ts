@@ -94,15 +94,63 @@ export type GoodsSearchFilterOptions = {
 export type GoodsSearchPageData = {
   results: GoodsSearchResult;
   filterOptions: GoodsSearchFilterOptions;
-  /**
-   * 当前用户对本页结果的收藏状态，按 goodsId 索引。
-   *
-   * 缺了它会出数据事故而不只是体验问题：搜索卡的收藏按钮会一律显示未选中，
-   * 而 toggleUserGoodsStatus 是按数据库真实状态切换的 —— 对一件已拥有的条目
-   * 点「我有这件」，服务端找到已存在的行并删除，收藏就这么没了。
-   */
-  viewerStatuses: Record<string, UserGoodsStatus[]>;
+  /** 当前用户对本页 SKU 的入柜与点亮状态，按 goodsId 索引。 */
+  viewerStates: Record<string, GoodsCardViewerState>;
 };
+
+export type GoodsCardViewerState = {
+  activeStatuses: UserGoodsStatus[];
+  isLit: boolean;
+};
+
+const emptyGoodsCardViewerState = {
+  activeStatuses: [],
+  isLit: false,
+} satisfies GoodsCardViewerState;
+
+/**
+ * 公共图鉴所有入口共用的用户态投影。服务端直接输出 dormant / lit，避免首屏
+ * 先露出彩色，再由客户端补状态。
+ */
+export async function getGoodsCardViewerStateMap({
+  viewerId,
+  goodsIds,
+}: {
+  viewerId?: string;
+  goodsIds: string[];
+}) {
+  const uniqueGoodsIds = Array.from(new Set(goodsIds));
+  const states = Object.fromEntries(
+    uniqueGoodsIds.map((goodsId) => [
+      goodsId,
+      { ...emptyGoodsCardViewerState },
+    ]),
+  ) as Record<string, GoodsCardViewerState>;
+
+  if (!viewerId || uniqueGoodsIds.length === 0) {
+    return states;
+  }
+
+  const stateMap = await getUserGoodsStateMap({
+    userId: viewerId,
+    goodsIds: uniqueGoodsIds,
+  });
+
+  for (const goodsId of uniqueGoodsIds) {
+    const snapshot = stateMap[goodsId];
+
+    if (!snapshot) continue;
+
+    const flags = getUserGoodsStateFlags(snapshot);
+
+    states[goodsId] = {
+      activeStatuses: flags.activeStatuses,
+      isLit: flags.isLit,
+    };
+  }
+
+  return states;
+}
 
 const goodsSearchFilterOptionsInputSchema = z.object({
   selectedIpSlug: z.string().trim().min(1).optional(),
@@ -581,31 +629,15 @@ export async function getGoodsSearchPageData(
     }),
   ]);
 
-  // 只查本页结果的状态，不是整个收藏。
-  const viewerStatuses: Record<string, UserGoodsStatus[]> = {};
-
-  if (viewerId && results.items.length > 0) {
-    const stateMap = await getUserGoodsStateMap({
-      userId: viewerId,
-      goodsIds: results.items.map((item) => item.id),
-    });
-
-    for (const item of results.items) {
-      const snapshot = stateMap[item.id];
-
-      if (snapshot) {
-        const { activeStatuses } = getUserGoodsStateFlags(snapshot);
-
-        if (activeStatuses.length > 0) {
-          viewerStatuses[item.id] = activeStatuses;
-        }
-      }
-    }
-  }
+  // 只查本页结果的状态，不是整个谷柜。
+  const viewerStates = await getGoodsCardViewerStateMap({
+    viewerId,
+    goodsIds: results.items.map((item) => item.id),
+  });
 
   return {
     results,
     filterOptions,
-    viewerStatuses,
+    viewerStates,
   } satisfies GoodsSearchPageData;
 }

@@ -24,6 +24,7 @@ type AdminGoodsEditorFormProps = {
   initialGoods: AdminGoodsEditableRecord | null;
   seriesOptions: AdminGoodsSeriesOption[];
   tagLibrary: AdminGoodsTagLibraryItem[];
+  crawlerDraftId?: string;
 };
 
 type TagDraft = {
@@ -103,9 +104,11 @@ function formatMetadataValue(value: Record<string, unknown> | null) {
 function SaveButton({
   disabled,
   editorMode,
+  isCrawlerDraft,
 }: {
   disabled: boolean;
   editorMode: 'create' | 'edit';
+  isCrawlerDraft: boolean;
 }) {
   const { pending } = useFormStatus();
 
@@ -113,11 +116,15 @@ function SaveButton({
     <Button disabled={disabled || pending} type="submit">
       {pending
         ? editorMode === 'create'
-          ? '正在保存新商品...'
+          ? isCrawlerDraft
+            ? '正在发布到谷库...'
+            : '正在保存新商品...'
           : '正在保存修改...'
-        : editorMode === 'create'
-          ? '创建商品记录'
-          : '保存商品修改'}
+        : isCrawlerDraft
+          ? '审核通过并发布到谷库'
+          : editorMode === 'create'
+            ? '创建商品记录'
+            : '保存商品修改'}
     </Button>
   );
 }
@@ -128,6 +135,7 @@ export function AdminGoodsEditorForm({
   initialGoods,
   seriesOptions,
   tagLibrary,
+  crawlerDraftId,
 }: AdminGoodsEditorFormProps) {
   const [state, formAction] = useActionState(
     saveAdminGoodsAction,
@@ -234,6 +242,9 @@ export function AdminGoodsEditorForm({
   return (
     <form action={formAction} className="space-y-6">
       <input name="goodsId" type="hidden" value={initialGoods?.id ?? ''} />
+      {crawlerDraftId ? (
+        <input name="crawlerDraftId" type="hidden" value={crawlerDraftId} />
+      ) : null}
       <input name="returnQuery" type="hidden" value={filters.query ?? ''} />
       <input name="returnStatus" type="hidden" value={filters.status ?? ''} />
       <input
@@ -291,14 +302,22 @@ export function AdminGoodsEditorForm({
                 <select
                   className={inputClassName}
                   defaultValue={
-                    initialGoods?.seriesId ??
-                    filters.seriesId ??
-                    seriesOptions[0]?.id ??
-                    ''
+                    crawlerDraftId
+                      ? ''
+                      : (initialGoods?.seriesId ??
+                        filters.seriesId ??
+                        seriesOptions[0]?.id ??
+                        '')
                   }
                   id="admin-goods-series"
                   name="seriesId"
+                  required
                 >
+                  {crawlerDraftId ? (
+                    <option disabled value="">
+                      请先确认归属 IP / 系列
+                    </option>
+                  ) : null}
                   {seriesOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.ip.name} / {option.name} / {option.status}
@@ -495,6 +514,82 @@ export function AdminGoodsEditorForm({
                   placeholder="CNY"
                   type="text"
                 />
+              </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-4">
+              <div className="space-y-3">
+                <label
+                  className={labelClassName}
+                  htmlFor="admin-goods-manufacturer"
+                >
+                  制造 / 发行方
+                </label>
+                <input
+                  className={inputClassName}
+                  defaultValue={initialGoods?.manufacturer ?? ''}
+                  id="admin-goods-manufacturer"
+                  name="manufacturer"
+                  placeholder="如：Aniplex"
+                  type="text"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className={labelClassName} htmlFor="admin-goods-region">
+                  发行地区
+                </label>
+                <input
+                  className={inputClassName}
+                  defaultValue={initialGoods?.region ?? ''}
+                  id="admin-goods-region"
+                  name="region"
+                  placeholder="如：JP / CN"
+                  type="text"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label
+                  className={labelClassName}
+                  htmlFor="admin-goods-official-type"
+                >
+                  官方性质
+                </label>
+                <select
+                  className={inputClassName}
+                  defaultValue={initialGoods?.officialType ?? 'unknown'}
+                  id="admin-goods-official-type"
+                  name="officialType"
+                >
+                  <option value="unknown">待核验</option>
+                  <option value="official">官方</option>
+                  <option value="official_bonus">官方特典</option>
+                  <option value="official_limited">官方限定</option>
+                  <option value="licensed">授权商品</option>
+                  <option value="doujin">同人制品</option>
+                  <option value="self_made">自制</option>
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <label
+                  className={labelClassName}
+                  htmlFor="admin-goods-verification"
+                >
+                  资料核验
+                </label>
+                <select
+                  className={inputClassName}
+                  defaultValue={
+                    initialGoods?.verificationStatus ?? 'unverified'
+                  }
+                  id="admin-goods-verification"
+                  name="verificationStatus"
+                >
+                  <option value="unverified">未核验</option>
+                  <option value="verified">已核验</option>
+                </select>
               </div>
             </div>
 
@@ -813,7 +908,11 @@ export function AdminGoodsEditorForm({
             空的标签行或图片行会被自动忽略。如果没有显式指定主图，
             第一张有效图片会自动成为主图。
           </p>
-          <SaveButton disabled={isLocked} editorMode={editorMode} />
+          <SaveButton
+            disabled={isLocked}
+            editorMode={editorMode}
+            isCrawlerDraft={Boolean(crawlerDraftId)}
+          />
         </div>
       </fieldset>
     </form>

@@ -1,8 +1,8 @@
-export type SignInActionState = {
+export type AuthActionState = {
   status: 'idle' | 'error';
   message?: string;
 };
 
-export const initialSignInActionState = {
+export const initialAuthActionState = {
   status: 'idle',
-} satisfies SignInActionState;
+} satisfies AuthActionState;

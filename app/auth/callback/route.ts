@@ -1,21 +1,15 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { normalizeInternalPath } from '@/lib/internal-path';
 import { getSupabaseAuthConfig } from '@/lib/supabase/config';
-
-function normalizeNextPath(nextPath: string | null) {
-  if (!nextPath || !nextPath.startsWith('/')) {
-    return '/';
-  }
-
-  return nextPath;
-}
+import { ensureAuthProfile } from '@/server/auth/profile';
 
 export async function GET(request: NextRequest) {
   const config = getSupabaseAuthConfig();
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const nextPath = normalizeNextPath(requestUrl.searchParams.get('next'));
+  const nextPath = normalizeInternalPath(requestUrl.searchParams.get('next'));
 
   if (!config) {
     return NextResponse.redirect(
@@ -41,12 +35,22 @@ export async function GET(request: NextRequest) {
   });
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
       return NextResponse.redirect(
         new URL('/login?error=登录回调失败', request.url),
       );
+    }
+    if (data.user) {
+      await ensureAuthProfile({
+        id: data.user.id,
+        email: data.user.email,
+        displayName:
+          typeof data.user.user_metadata?.display_name === 'string'
+            ? data.user.user_metadata.display_name
+            : null,
+      });
     }
   }
 

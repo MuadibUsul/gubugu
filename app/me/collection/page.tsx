@@ -7,7 +7,6 @@ import {
   UserCollectionSheet,
   type CollectionStatusFilter,
 } from '@/components/user/user-collection-sheet';
-import { UserExchangeListings } from '@/components/user/user-exchange-listings';
 import { UserPhotoStrip } from '@/components/user/user-photo-strip';
 import { getSingleSearchParamValue } from '@/lib/search-params';
 import { requireAuthUser } from '@/server/auth/session';
@@ -43,11 +42,8 @@ export default async function MyCollectionPage({
     listAchievementLedger(user.id),
   ]);
 
-  const exchangeEntryGoods =
-    data.goods.exchange.length > 0 ? data.goods.exchange : data.goods.owned;
-
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
+    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
       <UserCollectionHeader
         data={data}
         displayName={user.displayLabel}
@@ -56,12 +52,12 @@ export default async function MyCollectionPage({
         railLabel="我的收藏"
       />
 
-      <section className="spread py-14">
-        <div>
-          <p className="lbl">一览</p>
-          <div className="rail-jp">目录</div>
-        </div>
+      <section className="py-14">
         <div className="min-w-0">
+          <p className="section-kicker">收藏一览</p>
+          <h2 className="mt-3 mb-7 text-[clamp(28px,3.4vw,40px)]">
+            我的收藏清单
+          </h2>
           <UserCollectionSheet
             basePath="/me/collection"
             data={data}
@@ -72,25 +68,8 @@ export default async function MyCollectionPage({
 
       <UserAchievementLedger
         entries={ledger}
-        ownedTotal={data.summary.ownedCount}
+        ownedTotal={data.summary.litCount}
       />
-
-      <section className="spread border-border border-t py-14">
-        <div>
-          <p className="lbl">交换</p>
-          <div className="rail-jp">交换</div>
-        </div>
-        <div className="min-w-0">
-          <UserExchangeListings
-            entryGoods={exchangeEntryGoods.map((item) => ({
-              id: item.id,
-              slug: item.slug,
-              name: item.name,
-            }))}
-            items={data.exchangeListings}
-          />
-        </div>
-      </section>
 
       <UserPhotoStrip items={data.recentPhotoEntries} />
     </main>

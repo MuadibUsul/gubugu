@@ -4,7 +4,12 @@ import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
 import { SearchResultCard } from '@/components/search/search-result-card';
-import { getIpEncyclopediaPageData } from '@/server/data';
+import { getAuthUser } from '@/server/auth/session';
+import {
+  getGoodsCardViewerStateMap,
+  getIpEncyclopediaPageData,
+  type GoodsCardViewerState,
+} from '@/server/data';
 
 const ipPageParamsSchema = z.object({
   ipSlug: z.string().trim().min(1),
@@ -15,6 +20,11 @@ type IpPageProps = {
     ipSlug: string;
   }>;
 };
+
+const dormantViewerState = {
+  activeStatuses: [],
+  isLit: false,
+} satisfies GoodsCardViewerState;
 
 export async function generateMetadata({
   params,
@@ -29,11 +39,19 @@ export async function generateMetadata({
 
 export default async function IpPage({ params }: IpPageProps) {
   const { ipSlug } = ipPageParamsSchema.parse(await params);
-  const data = await getIpEncyclopediaPageData({ ipSlug });
+  const [data, authUser] = await Promise.all([
+    getIpEncyclopediaPageData({ ipSlug }),
+    getAuthUser(),
+  ]);
 
   if (!data) {
     notFound();
   }
+
+  const viewerStates = await getGoodsCardViewerStateMap({
+    viewerId: authUser?.id,
+    goodsIds: data.goods.map((item) => item.id),
+  });
 
   return (
     <main>
@@ -202,17 +220,20 @@ export default async function IpPage({ params }: IpPageProps) {
               <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
                 最新 SKU 条目
               </h2>
+              <p className="text-muted-foreground text-sm">
+                未点亮的缩略图保持灰色；打开详情可查看完整彩色原图。
+              </p>
             </div>
           </div>
 
           {data.goods.length > 0 ? (
-            <div className="grid gap-4 2xl:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
               {data.goods.map((item) => (
                 <SearchResultCard
-                  activeStatuses={[]}
-                  isAuthenticated={false}
+                  isAuthenticated={Boolean(authUser)}
                   item={item}
                   key={item.id}
+                  viewerState={viewerStates[item.id] ?? dormantViewerState}
                 />
               ))}
             </div>

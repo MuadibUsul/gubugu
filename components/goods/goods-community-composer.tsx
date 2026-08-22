@@ -5,6 +5,7 @@ import { useActionState, useMemo, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { Button } from '@/components/ui/button';
+import { acceptedImageInputValue } from '@/lib/image-upload';
 import { initialCreateGoodsPostActionState } from '@/server/community/action-state';
 import { createGoodsPostAction } from '@/server/community/actions';
 
@@ -20,13 +21,9 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
-      disabled={pending}
-      type="submit"
-    >
+    <Button disabled={pending} type="submit">
       {pending ? '提交中...' : '提交'}
-    </button>
+    </Button>
   );
 }
 
@@ -52,7 +49,7 @@ export function GoodsCommunityComposer({
             <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               评论
             </p>
-            <h2 className="font-heading text-foreground text-4xl leading-none">
+            <h2 className="font-heading text-foreground text-[28px] leading-tight">
               登录后发布
             </h2>
           </div>
@@ -70,8 +67,12 @@ export function GoodsCommunityComposer({
   }
 
   return (
-    <div className="collection-panel p-5 sm:p-6">
-      <div className="space-y-5">
+    <details className="collection-panel" open={state.status === 'error'}>
+      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+        <span className="font-medium">写收藏笔记或晒图</span>
+        <span className="num">提交后审核</span>
+      </summary>
+      <div className="border-border space-y-5 border-t p-5 sm:p-6">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
@@ -81,7 +82,7 @@ export function GoodsCommunityComposer({
               {userLabel ?? '已登录'}
             </span>
           </div>
-          <h2 className="font-heading text-foreground text-4xl leading-none">
+          <h2 className="font-heading text-foreground text-[28px] leading-tight">
             留言与晒图
           </h2>
         </div>
@@ -104,7 +105,7 @@ export function GoodsCommunityComposer({
               内容
             </label>
             <textarea
-              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-32 w-full rounded-[var(--radius)] border px-4 py-4 text-sm leading-7 transition outline-none focus-visible:ring-2"
+              className="border-border/70 bg-background/82 text-foreground focus-visible:border-ring focus-visible:ring-ring/35 min-h-32 w-full rounded-[var(--radius)] border px-4 py-4 text-sm leading-7 transition-[border-color,box-shadow] outline-none focus-visible:ring-2"
               id="goods-community-body"
               maxLength={1200}
               name="body"
@@ -121,7 +122,7 @@ export function GoodsCommunityComposer({
               图片
             </label>
             <input
-              accept="image/*"
+              accept={acceptedImageInputValue}
               className="border-border/70 bg-background/82 file:bg-secondary file:text-secondary-foreground file:hover:bg-secondary/90 text-muted-foreground block w-full rounded-[var(--radius)] border px-4 py-3 text-sm file:mr-4 file:rounded-full file:border-0 file:px-4 file:py-2 file:text-sm file:font-semibold"
               id="goods-community-images"
               multiple
@@ -153,7 +154,11 @@ export function GoodsCommunityComposer({
           </div>
 
           {state.status === 'error' && state.message ? (
-            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
+            <div
+              aria-live="polite"
+              className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7"
+              role="alert"
+            >
               {state.message}
             </div>
           ) : null}
@@ -166,6 +171,6 @@ export function GoodsCommunityComposer({
           </div>
         </form>
       </div>
-    </div>
+    </details>
   );
 }

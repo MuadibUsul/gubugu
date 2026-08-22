@@ -8,6 +8,8 @@ export type SearchPageControls = {
   page: number;
 };
 
+export { formatGoodsTypeLabel } from '@/lib/catalog-labels';
+
 export function buildSearchHref({
   query,
   tagSlugs,
@@ -50,22 +52,4 @@ export function buildSearchHref({
   const queryString = params.toString();
 
   return queryString ? `/search?${queryString}` : '/search';
-}
-
-export function formatGoodsTypeLabel(goodsType: string) {
-  const goodsTypeLabelMap: Record<string, string> = {
-    'acrylic-stand': '亚克力立牌',
-    'can-badge': '徽章',
-    'mini-shikishi': '迷你色纸',
-    'clear-card': '透卡',
-    keychain: '挂件',
-    poster: '海报',
-    paper: '纸制品',
-    plush: '玩偶',
-  };
-
-  return (
-    goodsTypeLabelMap[goodsType] ??
-    goodsType.split(/[-_]/g).filter(Boolean).join(' / ')
-  );
 }

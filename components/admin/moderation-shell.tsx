@@ -1,421 +1,209 @@
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { AdminModerationDecisionForm } from '@/components/admin/admin-moderation-decision-form';
 import { formatCatalogDate } from '@/lib/formatters';
-import { moderationStatusMeta, moderationStatusValues } from '@/lib/moderation';
-import { cn } from '@/lib/utils';
+import type { ModerationStatus } from '@/lib/moderation';
+import { reviewModerationItemAction } from '@/server/admin/moderation/actions';
+import { resolveReportAction } from '@/server/admin/reports/actions';
 import type { ModerationQueueData } from '@/server/data';
 
-type ModerationShellProps = {
-  data: ModerationQueueData;
-};
-
-function StatusPill({
-  status,
-  className,
+function DecisionForm({
+  itemId,
+  module,
 }: {
-  status: (typeof moderationStatusValues)[number];
-  className?: string;
+  itemId: string;
+  module: 'catalog-submission' | 'photo-upload' | 'comment';
 }) {
   return (
-    <span
-      className={cn(
-        'rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase',
-        moderationStatusMeta[status].toneClassName,
-        className,
-      )}
+    <form
+      action={reviewModerationItemAction}
+      className="mt-3 flex flex-wrap gap-2"
     >
-      {moderationStatusMeta[status].label}
-    </span>
+      <input name="itemId" type="hidden" value={itemId} />
+      <input name="module" type="hidden" value={module} />
+      <input name="nextPath" type="hidden" value="/admin/moderation" />
+      <input
+        className="border-input bg-background rounded border px-2 py-1 text-xs"
+        maxLength={500}
+        name="reviewNote"
+        placeholder="审核备注"
+      />
+      <button
+        className="rounded border px-2 py-1 text-xs"
+        name="decision"
+        value="approved"
+      >
+        通过
+      </button>
+      <button
+        className="rounded border px-2 py-1 text-xs"
+        name="decision"
+        value="rejected"
+      >
+        拒绝
+      </button>
+    </form>
   );
 }
 
-function getModuleNote(key: ModerationQueueData['modules'][number]['key']) {
-  switch (key) {
-    case 'catalog-submissions':
-      return '用于整理新增条目、信息修订与图鉴勘误提案。';
-    case 'photo-uploads':
-      return '用于单独审核晒单图片，不影响正文内容。';
-    case 'comments':
-      return '用于控制评论在公开页面中的可见状态。';
-    case 'exchange-intents':
-      return '用于审核交换意向是否进入公开展示。';
-    default:
-      return '';
-  }
+function Queue({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <section className="collection-panel p-5 sm:p-6">
+      <h2 className="text-2xl">{title}</h2>
+      <div className="mt-4 space-y-3">{children}</div>
+    </section>
+  );
 }
 
-function QueueSection({
-  eyebrow,
-  title,
-  description,
-  note,
-  emptyLabel,
-  children,
+function Meta({
+  createdAt,
+  status,
 }: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  note: string;
-  emptyLabel: string;
-  children: ReactNode[];
+  createdAt: Date;
+  status: ModerationStatus;
 }) {
   return (
-    <article className="collection-panel p-5 sm:p-6">
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <p className="text-muted-foreground text-[0.68rem] uppercase">
-            {eyebrow}
-          </p>
-          <h2 className="font-heading text-foreground text-4xl leading-none">
-            {title}
-          </h2>
-          <p className="text-muted-foreground text-sm leading-7">
-            {description}
-          </p>
-        </div>
-
-        {children.length > 0 ? (
-          <div className="space-y-3">{children}</div>
-        ) : (
-          <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-4 text-sm leading-7">
-            {emptyLabel}
-          </div>
-        )}
-
-        <p className="text-muted-foreground text-sm leading-7">{note}</p>
-      </div>
-    </article>
+    <p className="text-muted-foreground mt-2 text-xs">
+      {status} · {formatCatalogDate(createdAt)}
+    </p>
   );
 }
 
-export function ModerationShell({ data }: ModerationShellProps) {
-  const isLive = data.mode === 'live';
-
+export function ModerationShell({ data }: { data: ModerationQueueData }) {
   return (
-    <main className="relative isolate overflow-hidden">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1180px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
-        <section className="collection-panel relative overflow-hidden px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-          <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-            <div className="space-y-5">
-              <div className="flex flex-wrap gap-2">
-                <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm uppercase">
-                  审核中心
-                </span>
-                <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm">
-                  {formatCatalogDate(data.generatedAt)}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  审核流程
-                </p>
-                <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
-                  让藏家内容在进入公开页面前先完成人工审核
-                </h1>
-                <p className="max-w-3xl text-base leading-8 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))] sm:text-lg">
-                  评论、图片和交换意向都已经会写入数据库。这里负责人工决策，把它们从待审核推进到通过或拒绝状态。
-                </p>
-              </div>
-
-              <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border px-5 py-4 text-sm leading-7">
-                {data.mode === 'live'
-                  ? '审核结果会同步影响公开页面中的评论、图片、交换意向和图鉴提案展示。'
-                  : '当前审核数据暂时不可用，页面已切换为简版队列概览。'}
-              </div>
-            </div>
-
-            <aside className="grid gap-3">
-              {moderationStatusValues.map((status) => (
-                <div
-                  className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5"
-                  key={status}
-                >
-                  <StatusPill status={status} />
-                  <p className="text-foreground mt-4 text-lg font-semibold">
-                    {moderationStatusMeta[status].description}
-                  </p>
-                </div>
-              ))}
-            </aside>
-          </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-4">
+    <main className="mx-auto w-full max-w-[1100px] px-5 py-14 md:px-10">
+      <section className="border-border border-b pb-10">
+        <p className="lbl">安全</p>
+        <h1 className="mt-3 text-[clamp(28px,3.8vw,44px)]">审核与举报</h1>
+        <div className="mt-5 flex flex-wrap gap-2 text-sm">
           {data.modules.map((module) => (
-            <article className="collection-panel p-5 sm:p-6" key={module.key}>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-muted-foreground text-[0.68rem] uppercase">
-                    队列模块
-                  </p>
-                  <h2 className="font-heading text-foreground text-3xl leading-none">
-                    {module.label}
-                  </h2>
-                  <p className="text-muted-foreground text-sm leading-7">
-                    {module.description}
-                  </p>
-                </div>
-
-                <div className="grid gap-2">
-                  {moderationStatusValues.map((status) => (
-                    <div
-                      className="border-border/70 bg-background/76 flex items-center justify-between rounded-[var(--radius)] border px-4 py-3"
-                      key={status}
-                    >
-                      <StatusPill className="text-[0.6rem]" status={status} />
-                      <span className="font-heading text-foreground text-3xl leading-none">
-                        {module.counts[status]}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <p className="text-muted-foreground text-sm leading-7">
-                  {getModuleNote(module.key)}
-                </p>
-              </div>
-            </article>
+            <span className="chip px-3 py-1" key={module.key}>
+              {module.label} · {module.counts.pending}
+            </span>
           ))}
-        </section>
+        </div>
+      </section>
 
-        <section className="grid gap-6 xl:grid-cols-2">
-          <QueueSection
-            description="结构化图鉴投稿可以在这里通过或拒绝。通过只会改变审核状态，不会自动把内容合并进 IP、角色、系列或商品记录。"
-            emptyLabel="当前没有等待处理的图鉴投稿。"
-            eyebrow="用户投稿"
-            note="图鉴提案会在审核后进入后续整理流程。"
-            title="图鉴提案"
-          >
-            {data.catalogSubmissions.items.map((item) => (
-              <article
-                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
-                key={item.id}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill
-                    className="text-[0.58rem]"
-                    status={item.moderationStatus}
-                  />
-                  <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {item.submissionType}
-                  </span>
-                  <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {item.targetEntityType}
-                  </span>
-                  <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {item.submitterLabel}
-                  </span>
-                </div>
-
-                <h3 className="text-foreground mt-4 text-lg font-semibold">
-                  {item.title}
-                </h3>
-                <p className="text-foreground mt-2 text-sm leading-7">
-                  {item.body}
+      <div className="grid gap-5 py-10 lg:grid-cols-2">
+        <Queue title="图鉴投稿">
+          {data.catalogSubmissions.length ? (
+            data.catalogSubmissions.map((item) => (
+              <article className="panel p-4" key={item.id}>
+                <p className="text-sm">
+                  {item.submissionType} · {item.targetType}
                 </p>
-                <p className="text-muted-foreground mt-3 text-sm">
-                  {formatCatalogDate(item.createdAt)}
-                </p>
-
-                {item.reviewNote ? (
-                  <div className="border-border/70 bg-card/74 mt-4 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
-                    {item.reviewNote}
-                  </div>
-                ) : null}
-
-                {isLive ? (
-                  <div className="border-border/60 mt-4 border-t pt-4">
-                    <AdminModerationDecisionForm
-                      reviewNote={item.reviewNote}
-                      subjectId={item.id}
-                      subjectType="catalogSubmission"
-                    />
-                  </div>
+                <Meta
+                  createdAt={item.createdAt}
+                  status={item.moderationStatus}
+                />
+                {item.moderationStatus === 'pending' ? (
+                  <DecisionForm itemId={item.id} module="catalog-submission" />
                 ) : null}
               </article>
-            ))}
-          </QueueSection>
+            ))
+          ) : (
+            <p className="text-muted-foreground text-sm">暂无投稿。</p>
+          )}
+        </Queue>
 
-          <QueueSection
-            description="图片会和所属帖子分开审核，这样图库可以保留正文，同时只拒绝存在问题的单张图片。"
-            emptyLabel="当前没有等待处理的图片上传。"
-            eyebrow="图片投稿"
-            note="图片可以单独审核，不会影响对应正文内容。"
-            title="晒单图片审核"
-          >
-            {data.photoUploads.items.map((item) => (
-              <article
-                className="border-border/70 bg-background/78 overflow-hidden rounded-[var(--radius)] border"
-                key={item.id}
-              >
-                <div className="grid gap-4 p-4 md:grid-cols-[120px_minmax(0,1fr)]">
-                  <div
-                    className="border-border/70 rounded-[var(--radius)] border bg-cover bg-center"
-                    style={{
-                      backgroundImage: `url(${item.imageUrl})`,
-                      minHeight: '120px',
-                    }}
-                  />
-
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusPill
-                        className="text-[0.58rem]"
-                        status={item.moderationStatus}
-                      />
-                      <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                        {item.submitterLabel}
-                      </span>
-                      <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                        {formatCatalogDate(item.createdAt)}
-                      </span>
-                    </div>
-
-                    <Link
-                      className="text-foreground hover:text-primary inline-flex text-lg font-semibold transition"
-                      href={`/goods/${item.goodsSlug}`}
-                    >
-                      {item.goodsName}
-                    </Link>
-                    <p className="text-foreground text-sm leading-7">
-                      {item.noteExcerpt}
-                    </p>
-
-                    {item.reviewNote ? (
-                      <div className="border-border/70 bg-card/74 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
-                        {item.reviewNote}
-                      </div>
-                    ) : null}
-
-                    {isLive ? (
-                      <div className="border-border/60 border-t pt-4">
-                        <AdminModerationDecisionForm
-                          reviewNote={item.reviewNote}
-                          subjectId={item.id}
-                          subjectType="photoUpload"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
+        <Queue title="图片">
+          {data.photoUploads.length ? (
+            data.photoUploads.map((item) => (
+              <article className="panel p-4" key={item.id}>
+                <p className="truncate text-sm">{item.imageUrl}</p>
+                <Meta
+                  createdAt={item.createdAt}
+                  status={item.moderationStatus}
+                />
+                {item.moderationStatus === 'pending' ? (
+                  <DecisionForm itemId={item.id} module="photo-upload" />
+                ) : null}
               </article>
-            ))}
-          </QueueSection>
+            ))
+          ) : (
+            <p className="text-muted-foreground text-sm">暂无图片。</p>
+          )}
+        </Queue>
 
-          <QueueSection
-            description="评论通过后，会在重新校验后出现在商品详情页和公开收藏页中。"
-            emptyLabel="当前没有等待处理的评论。"
-            eyebrow="评论"
-            note="评论审核通过后，会显示在对应商品页和公开收藏页中。"
-            title="SKU 留言审核"
-          >
-            {data.comments.items.map((item) => (
-              <article
-                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
-                key={item.id}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill
-                    className="text-[0.58rem]"
-                    status={item.moderationStatus}
-                  />
-                  <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {item.submitterLabel}
-                  </span>
-                  <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {formatCatalogDate(item.createdAt)}
-                  </span>
-                </div>
+        <Queue title="评论">
+          {data.comments.length ? (
+            data.comments.map((item) => (
+              <article className="panel p-4" key={item.id}>
+                <p className="text-sm leading-6">{item.body}</p>
+                <Meta
+                  createdAt={item.createdAt}
+                  status={item.moderationStatus}
+                />
+                {item.moderationStatus === 'pending' ? (
+                  <DecisionForm itemId={item.id} module="comment" />
+                ) : null}
+              </article>
+            ))
+          ) : (
+            <p className="text-muted-foreground text-sm">暂无评论。</p>
+          )}
+        </Queue>
 
-                <Link
-                  className="text-foreground hover:text-primary mt-4 inline-flex text-lg font-semibold transition"
-                  href={`/goods/${item.goodsSlug}`}
-                >
-                  {item.goodsName}
-                </Link>
-                <p className="text-foreground mt-2 text-sm leading-7">
-                  {item.body}
+        <Queue title="举报">
+          {data.reports.length ? (
+            data.reports.map((item) => (
+              <article className="panel p-4" key={item.id}>
+                <p className="text-sm">
+                  {item.targetType} · {item.reason}
                 </p>
-
-                {item.reviewNote ? (
-                  <div className="border-border/70 bg-card/74 mt-4 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
-                    {item.reviewNote}
-                  </div>
-                ) : null}
-
-                {isLive ? (
-                  <div className="border-border/60 mt-4 border-t pt-4">
-                    <AdminModerationDecisionForm
-                      reviewNote={item.reviewNote}
-                      subjectId={item.id}
-                      subjectType="comment"
-                    />
-                  </div>
-                ) : null}
-              </article>
-            ))}
-          </QueueSection>
-
-          <QueueSection
-            description="交换记录依然只停留在意向层。通过与否只会影响它是否出现在商品详情页和收藏页的交换板中。"
-            emptyLabel="当前没有等待处理的交换意向。"
-            eyebrow="交换意向"
-            note="交换记录只保留意向信息，不包含付款、托管或仲裁。"
-            title="Have / Want 审核"
-          >
-            {data.exchangeIntents.items.map((item) => (
-              <article
-                className="border-border/70 bg-background/78 rounded-[var(--radius)] border p-4"
-                key={item.id}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill
-                    className="text-[0.58rem]"
-                    status={item.moderationStatus}
-                  />
-                  <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {item.submitterLabel}
-                  </span>
-                  <span className="border-border/70 bg-card/76 text-muted-foreground rounded-full border px-3 py-1 text-xs">
-                    {formatCatalogDate(item.createdAt)}
-                  </span>
-                </div>
-
-                <Link
-                  className="text-foreground hover:text-primary mt-4 inline-flex text-lg font-semibold transition"
-                  href={`/goods/${item.goodsSlug}`}
-                >
-                  {item.goodsName}
-                </Link>
                 <p className="text-muted-foreground mt-2 text-sm">
-                  想换：{item.wantedGoodsName ?? '未关联目标 SKU'}
+                  {item.details ?? '无补充说明'}
                 </p>
-                <p className="text-foreground mt-2 text-sm leading-7">
-                  {item.description}
-                </p>
-
-                {item.reviewNote ? (
-                  <div className="border-border/70 bg-card/74 mt-4 rounded-[var(--radius)] border px-4 py-3 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_78%,var(--background))]">
-                    {item.reviewNote}
+                {item.targetType === 'message' ? (
+                  <div className="mt-3 rounded-[12px] bg-[var(--sunken)] p-3 text-xs">
+                    <p className="font-semibold">被举报私信原文</p>
+                    <p className="mt-2 leading-6 break-words whitespace-pre-wrap">
+                      {item.targetExcerpt ?? '消息已不存在或已隐藏'}
+                    </p>
+                    {item.targetActorId ? (
+                      <p className="text-muted-foreground mt-2">
+                        发送者 {item.targetActorId} ·{' '}
+                        {item.targetCreatedAt
+                          ? formatCatalogDate(item.targetCreatedAt)
+                          : '时间未知'}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
-
-                {isLive ? (
-                  <div className="border-border/60 mt-4 border-t pt-4">
-                    <AdminModerationDecisionForm
-                      reviewNote={item.reviewNote}
-                      subjectId={item.id}
-                      subjectType="exchangeIntent"
+                <p className="mt-2 text-xs">{item.status}</p>
+                {item.status === 'pending' ? (
+                  <form
+                    action={resolveReportAction}
+                    className="mt-3 flex flex-wrap gap-2"
+                  >
+                    <input name="reportId" type="hidden" value={item.id} />
+                    <input
+                      className="border-input bg-background rounded border px-2 py-1 text-xs"
+                      maxLength={500}
+                      name="note"
+                      placeholder="处理备注"
                     />
-                  </div>
+                    <button
+                      className="rounded border px-2 py-1 text-xs"
+                      name="decision"
+                      value="resolved"
+                    >
+                      已处理
+                    </button>
+                    <button
+                      className="rounded border px-2 py-1 text-xs"
+                      name="decision"
+                      value="rejected"
+                    >
+                      驳回
+                    </button>
+                  </form>
                 ) : null}
               </article>
-            ))}
-          </QueueSection>
-        </section>
+            ))
+          ) : (
+            <p className="text-muted-foreground text-sm">暂无举报。</p>
+          )}
+        </Queue>
       </div>
     </main>
   );

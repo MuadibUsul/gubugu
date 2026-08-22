@@ -9,12 +9,6 @@ type UserCollectionHeaderProps = {
   railLabel: string;
 };
 
-/**
- * 表紙 —— 这份收藏的封面。
- *
- * 旧页面在这里叠了三层：个人卡、收藏陈列、进度总览，三者说的是同一批数字。
- * 合成一处：谁的收藏、有多少、点亮到什么程度。
- */
 export function UserCollectionHeader({
   data,
   displayName,
@@ -23,56 +17,60 @@ export function UserCollectionHeader({
   railLabel,
 }: UserCollectionHeaderProps) {
   const { summary } = data;
+  const metrics = [
+    {
+      label: '谷柜收藏',
+      value: summary.cabinetCount,
+      tone: 'text-[var(--violet)]',
+    },
+    { label: '已点亮', value: summary.litCount, tone: 'text-[var(--shu)]' },
+    { label: '想要', value: summary.wantedCount, tone: 'text-[var(--want)]' },
+    {
+      label: '可交换',
+      value: summary.exchangeCount,
+      tone: 'text-[var(--exchange)]',
+    },
+  ] as const;
 
   return (
-    <section className="spread border-border border-b pb-14">
-      <div>
-        <p className="lbl">{eyebrow}</p>
-        <div className="rail-jp">{railLabel}</div>
-      </div>
-
-      <div className="min-w-0">
-        {handle ? <p className="accession">{handle}</p> : null}
-
-        <h1 className="mt-2 text-[clamp(30px,4vw,46px)] leading-[1.14]">
+    <section className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_74%,var(--surface)))] p-5 shadow-[var(--shadow-card)] sm:p-8 lg:p-10">
+      <span className="absolute -top-24 right-[8%] size-64 rounded-full bg-[color-mix(in_oklab,var(--violet)_9%,transparent)] blur-3xl" />
+      <div className="relative min-w-0">
+        <p className="section-kicker">
+          {eyebrow} · {railLabel}
+        </p>
+        <h1 className="mt-4 text-[clamp(32px,4vw,48px)] leading-[1.12]">
           {displayName}
         </h1>
-        <div className="rule-kin mt-4" />
+        {handle ? <p className="accession mt-2">{handle}</p> : null}
 
-        <div className="mt-7 flex flex-wrap items-end gap-x-14 gap-y-6">
-          <div>
-            <span className="meter-value">
-              <em>{summary.ownedCount}</em>
-            </span>
-            <p className="lbl mt-2">已收录</p>
-          </div>
-          <div>
-            <span className="meter-value">{summary.wantedCount}</span>
-            <p className="lbl mt-2">想要</p>
-          </div>
-          <div>
-            <span className="meter-value">{summary.exchangeCount}</span>
-            <p className="lbl mt-2">可交换</p>
-          </div>
-          <div>
-            <span className="meter-value">
-              {summary.litProgressPercentage}%
-            </span>
-            <p className="lbl mt-2">点亮度</p>
-          </div>
+        <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {metrics.map((metric) => (
+            <div
+              className="rounded-[18px] border border-[var(--rule)] bg-[var(--surface)]/76 p-4"
+              key={metric.label}
+            >
+              <span
+                className={`text-[30px] leading-none font-extrabold ${metric.tone}`}
+              >
+                {metric.value}
+              </span>
+              <p className="text-muted-foreground mt-2 text-[12px] font-semibold">
+                {metric.label}
+              </p>
+            </div>
+          ))}
         </div>
 
-        {/* 收集条而不是进度条。这一页原本只有一根百分比长条 —— 而「看得见
-            的缺口」正是整套设计的论点，最需要它的地方反而没用上。 */}
-        <div className="mt-8">
+        <div className="mt-6 rounded-[18px] bg-[var(--surface)]/62 p-4 sm:p-5">
           <SlotStrip
-            label={`追踪 ${summary.trackedGoodsCount} 件，已收录 ${summary.ownedCount} 件`}
-            owned={summary.ownedCount}
-            total={summary.trackedGoodsCount}
+            label={`谷柜 ${summary.cabinetCount} 件，已点亮 ${summary.litCount} 件`}
+            owned={summary.litCount}
+            total={summary.cabinetCount}
           />
-          {summary.trackedGoodsCount > 0 && summary.trackedGoodsCount <= 120 ? (
-            <p className="lbl mt-2">
-              实心为已收录。空格是标记过、但还没到手的那些。
+          {summary.cabinetCount > 0 && summary.cabinetCount <= 120 ? (
+            <p className="text-muted-foreground mt-2 text-[12px]">
+              实心为已通过实物识别点亮；空格是已收藏、等待扫描的谷子。
             </p>
           ) : (
             // 数量太多时一格一件会糊成一片，退回长条。
@@ -82,9 +80,10 @@ export function UserCollectionHeader({
           )}
         </div>
 
-        <p className="text-muted-foreground mt-5 text-sm">
-          共追踪 {summary.trackedGoodsCount} 件 · {summary.visiblePhotoCount}{' '}
-          张图片 · {summary.ratingCount} 条评分
+        <p className="text-muted-foreground mt-4 text-[12px]">
+          点亮度 {summary.litProgressPercentage}% · 共追踪{' '}
+          {summary.trackedGoodsCount} 件 · {summary.visiblePhotoCount} 张图片 ·{' '}
+          {summary.ratingCount} 条评分
         </p>
       </div>
     </section>

@@ -93,6 +93,17 @@ export type AdminGoodsEditableRecord = {
   releaseDate: Date | null;
   msrpAmount: string | null;
   currencyCode: string | null;
+  manufacturer: string | null;
+  region: string | null;
+  officialType:
+    | 'official'
+    | 'official_bonus'
+    | 'official_limited'
+    | 'licensed'
+    | 'doujin'
+    | 'self_made'
+    | 'unknown';
+  verificationStatus: 'verified' | 'unverified';
   metadata: Record<string, unknown> | null;
   status: AdminGoodsPublicationStatus;
   series: {
@@ -484,6 +495,10 @@ async function getAdminGoodsEditableRecord(goodsId: string) {
       releaseDate: goods.releaseDate,
       msrpAmount: goods.msrpAmount,
       currencyCode: goods.currencyCode,
+      manufacturer: goods.manufacturer,
+      region: goods.region,
+      officialType: goods.officialType,
+      verificationStatus: goods.verificationStatus,
       metadata: goods.metadata,
       status: goods.status,
       seriesName: series.name,
@@ -543,6 +558,10 @@ async function getAdminGoodsEditableRecord(goodsId: string) {
     releaseDate: detail.releaseDate,
     msrpAmount: detail.msrpAmount,
     currencyCode: detail.currencyCode,
+    manufacturer: detail.manufacturer,
+    region: detail.region,
+    officialType: detail.officialType,
+    verificationStatus: detail.verificationStatus,
     metadata: detail.metadata ?? null,
     status: detail.status,
     series: {

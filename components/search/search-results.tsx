@@ -1,7 +1,9 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { formatTagLabel } from '@/lib/catalog-labels';
 import type {
+  GoodsCardViewerState,
   GoodsSearchFilterOptions,
   GoodsSearchResult,
 } from '@/server/data';
@@ -12,8 +14,6 @@ import {
   type SearchPageControls,
 } from './search-query';
 import { SearchPanelState } from './search-panel-state';
-import type { UserGoodsStatus } from '@/lib/user-goods-status';
-
 import { SearchResultCard } from './search-result-card';
 
 type SearchResultsProps = {
@@ -22,9 +22,14 @@ type SearchResultsProps = {
   filterOptions?: GoodsSearchFilterOptions;
   state?: 'ready' | 'error';
   isAuthenticated: boolean;
-  /** 当前用户对本页结果的收藏状态，按 goodsId 索引。 */
-  viewerStatuses?: Record<string, UserGoodsStatus[]>;
+  /** 当前用户对本页结果的入柜与点亮状态，按 goodsId 索引。 */
+  viewerStates?: Record<string, GoodsCardViewerState>;
 };
+
+const dormantViewerState = {
+  activeStatuses: [],
+  isLit: false,
+} satisfies GoodsCardViewerState;
 
 function resolveFacetLabel({
   slug,
@@ -46,7 +51,7 @@ export function SearchResults({
   filterOptions,
   state = 'ready',
   isAuthenticated,
-  viewerStatuses = {},
+  viewerStates = {},
 }: SearchResultsProps) {
   if (state === 'error' || !result) {
     return (
@@ -77,7 +82,7 @@ export function SearchResults({
   const selectedTagLabels = result.filters.tagSlugs.map((slug) => {
     const matchedTag = filterOptions?.tags.find((tag) => tag.slug === slug);
 
-    return matchedTag?.name ?? slug;
+    return formatTagLabel(slug, matchedTag?.name ?? slug);
   });
   const activeFilterLabels = [
     result.query ? `关键词：${result.query}` : null,
@@ -103,68 +108,44 @@ export function SearchResults({
     );
   }
 
-  const [bestMatch, ...otherItems] = result.items;
-
   return (
     <section className="space-y-5">
-      <div className="collection-panel p-6 sm:p-7">
+      <header className="flex flex-col gap-4 pb-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-              Results
-            </p>
-            <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
+            <p className="section-kicker">检索结果</p>
+            <h2 className="font-heading text-foreground text-[clamp(28px,3.2vw,38px)] leading-tight">
               {result.query ? `“${result.query}”` : '全部商品'}
             </h2>
           </div>
 
-          <div className="hud-chip text-muted-foreground px-4 py-2 text-sm">
+          <div className="chip self-start px-3 py-1.5 text-sm">
             {result.total} 件
           </div>
         </div>
 
         {activeFilterLabels.length > 0 ? (
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 sm:basis-full">
             {activeFilterLabels.map((label) => (
-              <span className="hud-chip px-3 py-1.5 text-sm" key={label}>
+              <span className="chip px-3 py-1.5 text-[12px]" key={label}>
                 {label}
               </span>
             ))}
           </div>
         ) : null}
-      </div>
+      </header>
 
-      {bestMatch ? (
-        <div className="space-y-3">
-          <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-            最佳匹配
-          </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+        {result.items.map((item, index) => (
           <SearchResultCard
-            activeStatuses={viewerStatuses[bestMatch.id] ?? []}
             isAuthenticated={isAuthenticated}
-            isBestMatch
-            item={bestMatch}
+            isBestMatch={index === 0 && Boolean(result.query)}
+            item={item}
+            key={item.id}
+            viewerState={viewerStates[item.id] ?? dormantViewerState}
           />
-        </div>
-      ) : null}
-
-      {otherItems.length > 0 ? (
-        <div className="space-y-3">
-          <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-            其他结果
-          </p>
-          <div className="grid gap-4 2xl:grid-cols-2">
-            {otherItems.map((item) => (
-              <SearchResultCard
-                activeStatuses={viewerStatuses[item.id] ?? []}
-                isAuthenticated={isAuthenticated}
-                item={item}
-                key={item.id}
-              />
-            ))}
-          </div>
-        </div>
-      ) : null}
+        ))}
+      </div>
 
       {totalPages > 1 ? (
         <div className="collection-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">

@@ -29,8 +29,16 @@ export default function RootLayout({
   return (
     <html className="scroll-smooth" lang="zh-CN">
       <body className="bg-background text-foreground min-h-screen font-sans antialiased">
+        <a
+          className="fixed top-3 left-3 z-[100] -translate-y-20 rounded-[12px] bg-[var(--shu)] px-4 py-2 text-sm font-bold text-white focus:translate-y-0"
+          href="#main-content"
+        >
+          跳到主要内容
+        </a>
         <SiteNavigation />
-        {children}
+        <div id="main-content" tabIndex={-1}>
+          {children}
+        </div>
       </body>
     </html>
   );

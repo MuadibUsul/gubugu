@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
@@ -6,11 +7,6 @@ import { CharacterSheet } from '@/components/character/character-sheet';
 import { CharacterSheetFilters } from '@/components/character/character-sheet-filters';
 import { CharacterSheetHeader } from '@/components/character/character-sheet-header';
 import type { CharacterPageControls } from '@/components/character/character-query';
-import {
-  defaultDemoViewerKey,
-  demoViewers,
-  type DemoViewerKey,
-} from '@/lib/config/demo-viewers';
 import {
   getMultiSearchParamValues,
   getSingleSearchParamValue,
@@ -37,7 +33,6 @@ const characterPageSearchSchema = z.object({
   seriesSlug: z.string().trim().min(1).optional(),
   tagSlugs: z.array(z.string().trim().min(1)).max(12).default([]),
   collected: z.enum(['owned', 'missing']).optional(),
-  viewer: z.string().trim().min(1).default(defaultDemoViewerKey),
 });
 
 type CharacterPageProps = {
@@ -48,32 +43,10 @@ type CharacterPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function resolveDemoViewer(input?: string): {
-  key: DemoViewerKey;
-  label: string;
-  userId: string;
-} {
-  if (input && input in demoViewers) {
-    const key = input as DemoViewerKey;
-
-    return {
-      key,
-      ...demoViewers[key],
-    };
-  }
-
-  return {
-    key: defaultDemoViewerKey,
-    ...demoViewers[defaultDemoViewerKey],
-  };
-}
-
 function buildCharacterPageControls({
   searchParams,
-  viewerKey,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
-  viewerKey: string;
 }) {
   return characterPageSearchSchema.parse({
     view: getSingleSearchParamValue(searchParams.view),
@@ -85,7 +58,6 @@ function buildCharacterPageControls({
       ),
     ).filter(Boolean),
     collected: getSingleSearchParamValue(searchParams.collected),
-    viewer: viewerKey,
   }) satisfies Omit<CharacterPageControls, 'ipSlug' | 'characterSlug'>;
 }
 
@@ -134,19 +106,11 @@ export default async function CharacterPage({
   const routeParams = characterPageParamsSchema.parse(await params);
   const resolvedSearchParams = (await searchParams) ?? {};
   const authUser = await getAuthUser();
-  const demoViewer = resolveDemoViewer(
-    getSingleSearchParamValue(resolvedSearchParams.viewer),
-  );
-  const activeViewer = authUser
-    ? {
-        key: 'auth',
-        label: `${authUser.displayLabel} · 已登录`,
-        userId: authUser.id,
-      }
-    : demoViewer;
+  const viewerLabel = authUser
+    ? `${authUser.displayLabel} · 已登录`
+    : '访客 · 登录后查看自己的点亮进度';
   const filters = buildCharacterPageControls({
     searchParams: resolvedSearchParams,
-    viewerKey: activeViewer.key,
   });
   const controls = {
     ipSlug: routeParams.ipSlug,
@@ -156,7 +120,7 @@ export default async function CharacterPage({
   const data = await getCharacterEncyclopediaViewData({
     ipSlug: routeParams.ipSlug,
     characterSlug: routeParams.characterSlug,
-    userId: activeViewer.userId,
+    userId: authUser?.id,
   });
 
   if (!data) {
@@ -170,7 +134,15 @@ export default async function CharacterPage({
 
   return (
     <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
-      <CharacterSheetHeader data={data} viewerLabel={activeViewer.label} />
+      <CharacterSheetHeader data={data} viewerLabel={viewerLabel} />
+      <div className="mt-5">
+        <Link
+          className="text-sm text-[var(--shu)] hover:underline"
+          href={`/ips/${routeParams.ipSlug}/characters/${routeParams.characterSlug}/circle`}
+        >
+          查看角色收藏圈 →
+        </Link>
+      </div>
 
       <section className="spread py-14">
         <div>

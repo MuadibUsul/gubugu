@@ -1,12 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { isOptimizableImageUrl } from './goods-image';
+import { isOptimizableImageUrl, toSafeShareImageUrl } from './goods-image';
 
 let previousSupabaseUrl: string | undefined;
+let previousAppUrl: string | undefined;
+let previousLegacyAppUrl: string | undefined;
 
 beforeEach(() => {
   previousSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  previousAppUrl = process.env.APP_URL;
+  previousLegacyAppUrl = process.env.NEXT_PUBLIC_APP_URL;
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co';
+  process.env.APP_URL = 'https://gubugu.example';
+  delete process.env.NEXT_PUBLIC_APP_URL;
 });
 
 afterEach(() => {
@@ -15,6 +21,60 @@ afterEach(() => {
   } else {
     process.env.NEXT_PUBLIC_SUPABASE_URL = previousSupabaseUrl;
   }
+
+  if (previousAppUrl === undefined) {
+    delete process.env.APP_URL;
+  } else {
+    process.env.APP_URL = previousAppUrl;
+  }
+
+  if (previousLegacyAppUrl === undefined) {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+  } else {
+    process.env.NEXT_PUBLIC_APP_URL = previousLegacyAppUrl;
+  }
+});
+
+describe('toSafeShareImageUrl', () => {
+  it('allows same-origin paths and the exact configured app origin', () => {
+    expect(toSafeShareImageUrl('/local-sample-images/a.jpg')).toBe(
+      'https://gubugu.example/local-sample-images/a.jpg',
+    );
+    expect(
+      toSafeShareImageUrl(
+        'https://gubugu.example/demo-assets/goods/example.svg',
+      ),
+    ).toBe('https://gubugu.example/demo-assets/goods/example.svg');
+  });
+
+  it('allows only the public object path on the exact Supabase origin', () => {
+    expect(
+      toSafeShareImageUrl(
+        'https://project.supabase.co/storage/v1/object/public/goods/a.png',
+      ),
+    ).toBe('https://project.supabase.co/storage/v1/object/public/goods/a.png');
+    expect(
+      toSafeShareImageUrl(
+        'https://project.supabase.co/rest/v1/private-table?select=*',
+      ),
+    ).toBeNull();
+  });
+
+  it.each([
+    'http://project.supabase.co/storage/v1/object/public/goods/a.png',
+    'https://project.supabase.co:444/storage/v1/object/public/goods/a.png',
+    'https://user:secret@project.supabase.co/storage/v1/object/public/a.png',
+    'https://cdn.example.com/a.png',
+    'https://gubugu.example/api/v1/collection',
+    '/api/v1/collection',
+    '/local-sample-images/%2e%2e/api/v1/collection',
+    '/local-sample-images/%252e%252e/api/v1/collection',
+    'https://project.supabase.co/storage/v1/object/public/%2e%2e/%2e%2e/rest/v1/private-table',
+    '//project.supabase.co/storage/v1/object/public/a.png',
+    'http://[bad',
+  ])('rejects untrusted server fetch target %s', (url) => {
+    expect(toSafeShareImageUrl(url)).toBeNull();
+  });
 });
 
 describe('isOptimizableImageUrl', () => {

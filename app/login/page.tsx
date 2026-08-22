@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { LoginForm } from '@/components/auth/login-form';
+import { normalizeInternalPath } from '@/lib/internal-path';
 import { getSingleSearchParamValue } from '@/lib/search-params';
 import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 import { getAuthUser } from '@/server/auth/session';
@@ -15,18 +16,10 @@ type LoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function normalizeNextPath(nextPath?: string) {
-  if (!nextPath || !nextPath.startsWith('/')) {
-    return '/';
-  }
-
-  return nextPath;
-}
-
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const user = await getAuthUser();
   const resolvedSearchParams = (await searchParams) ?? {};
-  const nextPath = normalizeNextPath(
+  const nextPath = normalizeInternalPath(
     getSingleSearchParamValue(resolvedSearchParams.next),
   );
 
@@ -35,49 +28,67 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   const routeError = getSingleSearchParamValue(resolvedSearchParams.error);
-  const authMode = getSupabaseAuthConfig() ? 'supabase' : 'local-demo';
+  const authMode = getSupabaseAuthConfig() ? 'supabase' : 'local';
   const heroTitle =
-    authMode === 'supabase' ? '登录后继续。' : '选择一个收藏档案。';
-  const panelTitle = authMode === 'supabase' ? '登录' : '选择档案';
-  const extensionChips =
+    authMode === 'supabase' ? '登录后继续。' : '进入你的收藏档案。';
+  const panelTitle = authMode === 'supabase' ? '登录' : '本地账号';
+  const benefits =
     authMode === 'supabase'
-      ? ['收藏同步', '评分评论', '交换记录']
-      : ['收藏墙', '交换板', '评分记录'];
+      ? [
+          '收藏状态在设备间同步',
+          '留下评分、评论与实物照片',
+          '保存换谷提案和履约记录',
+        ]
+      : [
+          '注册后立即进入自己的谷柜',
+          '账号与收藏保存在本地数据库',
+          '适合当前本地测试与验收',
+        ];
 
   return (
     <main>
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10 px-5 py-14 md:px-10">
-        <section className="grid w-full gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
-          <article className="collection-panel relative overflow-hidden px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-            <div className="relative space-y-6">
-              <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  账户入口
-                </p>
-                <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
+      <div className="mx-auto w-full max-w-[1060px] px-4 py-8 sm:px-6 md:px-8 md:py-12">
+        <section className="grid w-full overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow-float)] lg:grid-cols-[minmax(0,1fr)_440px]">
+          <article className="relative overflow-hidden bg-[linear-gradient(145deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_76%,var(--surface)))] px-6 py-10 sm:px-10 lg:min-h-[620px] lg:px-12 lg:py-14">
+            <span className="absolute -top-20 -right-16 size-64 rounded-full bg-[color-mix(in_oklab,var(--violet)_10%,transparent)] blur-3xl" />
+            <span className="absolute -bottom-16 -left-16 size-56 rounded-full bg-[color-mix(in_oklab,var(--shu)_10%,transparent)] blur-3xl" />
+            <div className="relative flex h-full flex-col">
+              <div>
+                <p className="section-kicker">欢迎回来</p>
+                <h1 className="font-heading text-foreground mt-5 max-w-[520px] text-[clamp(38px,5vw,58px)] leading-[1.08] text-balance">
                   {heroTitle}
                 </h1>
+                <p className="text-muted-foreground mt-5 max-w-[46ch]">
+                  喜欢、想要、可换，每一个收藏决定都留在你自己的谷柜里。
+                </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {extensionChips.map((item) => (
-                  <span className="hud-chip px-3 py-1 text-xs" key={item}>
+              <div className="mt-10 space-y-3 lg:mt-auto">
+                {benefits.map((item, index) => (
+                  <div
+                    className="flex items-center gap-3 rounded-[16px] bg-[var(--surface)]/72 px-4 py-3 text-sm"
+                    key={item}
+                  >
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--shu)] text-[11px] font-bold text-white">
+                      {index + 1}
+                    </span>
                     {item}
-                  </span>
+                  </div>
                 ))}
               </div>
             </div>
           </article>
 
-          <aside className="collection-panel p-6 sm:p-8">
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  登录
-                </p>
-                <h2 className="font-heading text-foreground text-4xl leading-none">
+          <aside className="order-first p-6 sm:p-9 lg:order-none lg:px-10 lg:py-12">
+            <div className="space-y-7">
+              <div>
+                <p className="section-kicker">账户入口</p>
+                <h2 className="font-heading text-foreground mt-4 text-[32px] leading-tight">
                   {panelTitle}
                 </h2>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  使用邮箱和密码登录。
+                </p>
               </div>
 
               <LoginForm

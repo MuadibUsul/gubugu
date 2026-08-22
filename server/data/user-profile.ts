@@ -5,10 +5,6 @@ import { z } from 'zod';
 
 import { goods, postImages, posts, ratings, userGoods } from '@/drizzle/schema';
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
-import {
-  listUserExchangeListings,
-  type ExchangeListingViewItem,
-} from '@/server/data/exchange';
 import { getDb, isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 const userProfilePageInputSchema = z.object({
@@ -24,6 +20,7 @@ export type UserProfileGoodsCard = Awaited<
 >[number] & {
   status: UserGoodsStatus;
   note: string | null;
+  litAt: Date | null;
   updatedAt: Date;
 };
 
@@ -45,7 +42,8 @@ export type UserPhotoEntry = {
 export type UserProfilePageData = {
   summary: {
     trackedGoodsCount: number;
-    ownedCount: number;
+    cabinetCount: number;
+    litCount: number;
     wantedCount: number;
     exchangeCount: number;
     litProgressPercentage: number;
@@ -58,7 +56,6 @@ export type UserProfilePageData = {
     wanted: UserProfileGoodsCard[];
     exchange: UserProfileGoodsCard[];
   };
-  exchangeListings: ExchangeListingViewItem[];
   recentPhotoEntries: UserPhotoEntry[];
   privacy: {
     currentMode: 'public-demo' | 'self';
@@ -72,7 +69,8 @@ function createFallbackUserProfilePageData(
   return {
     summary: {
       trackedGoodsCount: 0,
-      ownedCount: 0,
+      cabinetCount: 0,
+      litCount: 0,
       wantedCount: 0,
       exchangeCount: 0,
       litProgressPercentage: 0,
@@ -85,7 +83,6 @@ function createFallbackUserProfilePageData(
       wanted: [],
       exchange: [],
     },
-    exchangeListings: [],
     recentPhotoEntries: [],
     privacy: {
       currentMode: viewerMode === 'self' ? 'self' : 'public-demo',
@@ -103,17 +100,20 @@ function mapGoodsCardsById(
 function buildStatusCards({
   rows,
   cardsByGoodsId,
+  litAtByGoodsId,
 }: {
   rows: Array<{
     goodsId: string;
     status: UserGoodsStatus;
     note: string | null;
+    litAt: Date | null;
     updatedAt: Date;
   }>;
   cardsByGoodsId: Map<
     string,
     Awaited<ReturnType<typeof getPublishedGoodsCardsByIds>>[number]
   >;
+  litAtByGoodsId: Map<string, Date>;
 }) {
   return rows
     .map((row) => {
@@ -127,6 +127,7 @@ function buildStatusCards({
         ...card,
         status: row.status,
         note: row.note,
+        litAt: litAtByGoodsId.get(row.goodsId) ?? null,
         updatedAt: row.updatedAt,
       } satisfies UserProfileGoodsCard;
     })
@@ -148,6 +149,7 @@ export async function getUserProfilePageData(
             goodsId: userGoods.goodsId,
             status: userGoods.status,
             note: userGoods.note,
+            litAt: userGoods.litAt,
             updatedAt: userGoods.updatedAt,
           })
           .from(userGoods)
@@ -220,18 +222,17 @@ export async function getUserProfilePageData(
       ]);
 
     const goodsIds = Array.from(new Set(statusRows.map((row) => row.goodsId)));
-    const [goodsCards, exchangeListingsData] = await Promise.all([
-      getPublishedGoodsCardsByIds(goodsIds),
-      listUserExchangeListings({
-        userId,
-        limit: 8,
-      }),
-    ]);
+    const goodsCards = await getPublishedGoodsCardsByIds(goodsIds);
     const cardsByGoodsId = mapGoodsCardsById(goodsCards);
 
     const ownedRows = statusRows.filter((row) => row.status === 'owned');
     const wantedRows = statusRows.filter((row) => row.status === 'wanted');
     const exchangeRows = statusRows.filter((row) => row.status === 'exchange');
+    const litAtByGoodsId = new Map(
+      ownedRows.flatMap((row) =>
+        row.litAt ? ([[row.goodsId, row.litAt]] as const) : [],
+      ),
+    );
 
     const visiblePostIds = postRows.map((row) => row.postId);
     const photoRows =
@@ -270,20 +271,20 @@ export async function getUserProfilePageData(
       imagesByPostId.set(row.postId, existing);
     }
 
-    const ownedCount = ownedRows.length;
+    const cabinetCount = ownedRows.length;
+    const litCount = litAtByGoodsId.size;
     const wantedCount = wantedRows.length;
     const exchangeCount = exchangeRows.length;
 
     return {
       summary: {
         trackedGoodsCount: goodsIds.length,
-        ownedCount,
+        cabinetCount,
+        litCount,
         wantedCount,
         exchangeCount,
         litProgressPercentage:
-          goodsIds.length > 0
-            ? Math.round((ownedCount / goodsIds.length) * 100)
-            : 0,
+          cabinetCount > 0 ? Math.round((litCount / cabinetCount) * 100) : 0,
         visiblePostCount: postCountRows.length,
         visiblePhotoCount: photoCountRows.length,
         ratingCount: ratingRows.length,
@@ -292,17 +293,19 @@ export async function getUserProfilePageData(
         owned: buildStatusCards({
           rows: ownedRows,
           cardsByGoodsId,
+          litAtByGoodsId,
         }),
         wanted: buildStatusCards({
           rows: wantedRows,
           cardsByGoodsId,
+          litAtByGoodsId,
         }),
         exchange: buildStatusCards({
           rows: exchangeRows,
           cardsByGoodsId,
+          litAtByGoodsId,
         }),
       },
-      exchangeListings: exchangeListingsData,
       recentPhotoEntries: postRows.map((row) => ({
         postId: row.postId,
         goodsId: row.goodsId,

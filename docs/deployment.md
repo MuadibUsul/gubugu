@@ -10,7 +10,7 @@
 
 部署方案为自建服务器，因此模型可以直接活在主应用进程里，142 秒只在服务启动时付一次，不需要把识别接口拆出去。**这也是不能用 serverless 的原因** —— 那种形态下每次冷启动都要重新付这个代价。
 
-启动后建议主动预热，避免第一个真实请求等待模型加载：`server/recognition/embedding.ts` 导出了 `warmEmbeddingPipeline()`。
+长驻服务器可设置 `RECOGNITION_WARMUP=1`。启动会等待模型完成加载，避免第一个真实请求承担冷启动；本地开发默认关闭。
 
 上线前必须运行 `pnpm db:embed` 给图鉴图片建索引。没有索引时识别会降级到占位结果，界面会明确标注为「占位结果 · 非真实识别」，不会伪装成真实匹配。
 
@@ -18,7 +18,7 @@
 
 `server/env.ts` 由 `instrumentation.ts` 在服务启动时加载。当 `NODE_ENV=production` 时，缺少 `DATABASE_URL` 或 Supabase 配置会直接抛错，服务起不来。
 
-这是有意为之。没有这道拦截，登录会回退到 `lib/config/demo-viewers.ts` 里的演示账号 —— 不校验任何凭证，且 `collector` 直接拥有管理员权限。
+这是有意为之。本地可使用 PostgreSQL 账号表、scrypt 密码哈希和签名 HttpOnly Cookie；生产仍强制 Supabase Auth，以便使用邮箱验证、密码找回和集中会话管理。
 
 ### 数据库连接池
 
@@ -35,7 +35,11 @@
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 是           | 同上                                                       |
 | `SUPABASE_SERVICE_ROLE_KEY`     | 否           | 预留，当前没有任何代码读取                                 |
 | `NEXT_PUBLIC_APP_NAME`          | 否           | 站点名                                                     |
-| `NEXT_PUBLIC_APP_URL`           | 否           | 仅 `lib/demo-assets.ts` 读取，有兜底                       |
+| `APP_URL`                       | 是           | canonical、社交分享卡和同源图片；必须是纯公开 HTTPS origin |
+| `LOCAL_AUTH_SECRET`             | 本地认证时   | 至少 32 位，用于签名本地会话 Cookie                        |
+| `RECOGNITION_WARMUP`            | 否           | 长驻服务器设为 `1` 时在启动阶段预热识别模型                |
+| `CATALOG_CRAWLER_SCHEDULER`     | 否           | 长驻进程默认 `1`，北京时间 10:00 / 22:00 自动采集          |
+| `CATALOG_ASSET_DIR`             | 否           | 采集标准图目录，默认 `.data/catalog-assets`，生产需持久化  |
 | `ADMIN_USER_EMAILS`             | **实际必需** | 见下方说明                                                 |
 | `ADMIN_USER_IDS`                | 否           | 与上一项二选一即可                                         |
 | `MODERATOR_USER_EMAILS`         | 否           | 审核员允许名单                                             |
@@ -52,6 +56,10 @@
 `next.config.ts` 的 `buildRemoteImagePatterns()` 在**构建期**读取这个变量来生成 `images.remotePatterns`。构建时缺失会生成空白名单，运行时再补环境变量也没用 —— `next/image` 会拒绝所有 Supabase Storage 上的远程图片。
 
 在托管平台上要确保该变量对 **Build 阶段**可见，不能只配 Runtime。改这个变量后必须重新构建，仅重启无效。
+
+### `APP_URL` 必须是公开 HTTPS origin
+
+SKU 分享卡、canonical 和 Open Graph 图片都使用该 server-only origin。生产环境缺失、使用 HTTP，或包含账号、路径、查询参数、片段时都会拒绝启动。不要改成 `NEXT_PUBLIC_APP_URL`：Next.js 会在构建时内联 `NEXT_PUBLIC_*`，可能把 localhost 永久写进生产产物。本地开发无需配置，默认使用 `http://127.0.0.1:3000`。只有本机执行 `pnpm start` 冒烟测试时，可同时设置 `APP_URL=http://127.0.0.1:3000` 与 `ALLOW_INSECURE_LOCAL_APP_URL=1`；该开关只接受 loopback，部署环境禁止启用。
 
 ## 3. Supabase 项目准备
 
@@ -97,6 +105,7 @@ RLS 策略已经启用，但**当前不在请求路径上**。应用通过 `DATA
 - 模型权重首次会从 `huggingface.co` 下载并缓存。服务器若通过代理出网，Node 的 fetch 默认不读代理变量，需要 `NODE_USE_ENV_PROXY=1`。**离线服务器需要预先把模型缓存目录一起部署上去。**
 - 内存要留够 ONNX 运行时和模型常驻的量。
 - `DATABASE_URL` 直连即可，不需要 Vercel 那种 serverless 的 pooler 考量。连接池由 `server/db/client.ts` 在进程内复用。
+- 采集器默认随长驻进程调度。`.data/catalog-assets` 必须挂载持久磁盘；多实例需使用共享磁盘或对象存储。完整说明见 `docs/catalog-crawler.md`。
 
 > 注：本文档早前版本按 Vercel 编写。改为自建后，原先「把识别拆成独立服务」的要求不再需要。
 
@@ -122,27 +131,29 @@ Supabase：
 
 环境变量：
 
-- [ ] `DATABASE_URL`、`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY` 均已配置
+- [ ] `DATABASE_URL`、`APP_URL`、`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY` 均已配置
 - [ ] `NEXT_PUBLIC_SUPABASE_URL` 在 Build 阶段可见
 - [ ] `ADMIN_USER_EMAILS` 或 `ADMIN_USER_IDS` 已配置，否则无人能进后台
 
 上线后验证：
 
 - [ ] 首页、搜索、SKU 详情页能正常渲染出数据（不是空图鉴）
-- [ ] 登录走的是真实 Supabase，而不是演示账号
+- [ ] 生产登录走真实 Supabase，本地登录走 PostgreSQL 账号表
 - [ ] 商品图片正常显示（验证 `remotePatterns` 生效）
 - [ ] 社区上传能成功并返回可访问的图片地址
 - [ ] `/admin` 对允许名单内的账号可访问，对普通账号返回 403
 - [ ] 观察数据库连接数是否稳定，不随请求量单调上涨
+- [ ] `/admin/crawler` 可添加白名单、手动扫描并生成待审核草稿
+- [ ] `CATALOG_ASSET_DIR` 在重启或重新部署后仍保留标准化图片
+- [ ] 10:00 / 22:00 调度由长驻进程或外部平台任务二选一负责，未重复启用
 
 识别：
 
 - [ ] 已运行 `pnpm db:embed` 建立图鉴图像索引
-- [ ] 服务启动后调用了 `warmEmbeddingPipeline()` 预热
+- [ ] 长驻服务已按需要设置 `RECOGNITION_WARMUP=1`
 - [ ] 抽查识别结果的来源标签是「图像特征匹配」而非「占位结果」
 - [ ] 服务器能访问 `huggingface.co`，或已预置模型缓存目录
 
 已知未解决：
 
 - [ ] 仓库缺 `Dockerfile` 与 `next.config.ts` 的 `output: 'standalone'`，容器化前需补
-- [ ] 启动时的预热调用尚未接进 `instrumentation.ts`，目前需要自行调用

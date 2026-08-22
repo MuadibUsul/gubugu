@@ -1,7 +1,9 @@
 import 'server-only';
 
+import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { goodsWatches } from '@/drizzle/schema';
 import {
   getGoodsDetailPageData,
   type GoodsDetailPageData,
@@ -12,17 +14,12 @@ import {
   type GoodsRatingSummary,
 } from '@/server/data/community';
 import {
-  listExchangeGoodsOptions,
-  listGoodsExchangeListings,
-  type ExchangeGoodsOption,
-  type ExchangeListingViewItem,
-} from '@/server/data/exchange';
-import {
   createEmptyUserGoodsStateSnapshot,
   getUserGoodsStateFlags,
   getUserGoodsStateForGood,
   type UserGoodsStateSnapshot,
 } from '@/server/data/user-goods';
+import { getDb } from '@/server/db/client';
 
 const goodsDetailViewInputSchema = z.object({
   goodsSlug: z.string().trim().min(1),
@@ -34,10 +31,13 @@ export type GoodsDetailViewData = {
   viewer: {
     userId: string | null;
     state: UserGoodsStateSnapshot;
+    isInCabinet: boolean;
+    isLit: boolean;
     isOwned: boolean;
     isWanted: boolean;
     isExchange: boolean;
     activeStatuses: Array<'owned' | 'wanted' | 'exchange'>;
+    isWatching: boolean;
   };
   community: {
     ratingSummary: GoodsRatingSummary;
@@ -47,10 +47,6 @@ export type GoodsDetailViewData = {
       page: number;
       pageSize: number;
     };
-  };
-  exchange: {
-    listings: ExchangeListingViewItem[];
-    wantedGoodsOptions: ExchangeGoodsOption[];
   };
 };
 
@@ -66,29 +62,32 @@ export async function getGoodsDetailViewData(
     return null;
   }
 
-  const [viewerState, community, exchangeListings, wantedGoodsOptions] =
-    await Promise.all([
-      userId
-        ? getUserGoodsStateForGood({
-            userId,
-            goodsId: goods.id,
-          })
-        : Promise.resolve(null),
-      getGoodsCommunityData({
-        goodsId: goods.id,
-        userId,
-        page: 1,
-        pageSize: 12,
-      }),
-      listGoodsExchangeListings({
-        goodsId: goods.id,
-        limit: 6,
-      }),
-      listExchangeGoodsOptions({
-        excludeGoodsId: goods.id,
-        limit: 18,
-      }),
-    ]);
+  const [viewerState, watchRows, community] = await Promise.all([
+    userId
+      ? getUserGoodsStateForGood({
+          userId,
+          goodsId: goods.id,
+        })
+      : Promise.resolve(null),
+    userId
+      ? getDb()
+          .select({ userId: goodsWatches.userId })
+          .from(goodsWatches)
+          .where(
+            and(
+              eq(goodsWatches.userId, userId),
+              eq(goodsWatches.goodsId, goods.id),
+            ),
+          )
+          .limit(1)
+      : Promise.resolve([]),
+    getGoodsCommunityData({
+      goodsId: goods.id,
+      userId,
+      page: 1,
+      pageSize: 12,
+    }),
+  ]);
 
   const resolvedState =
     viewerState ?? createEmptyUserGoodsStateSnapshot(goods.id);
@@ -99,15 +98,14 @@ export async function getGoodsDetailViewData(
     viewer: {
       userId: userId ?? null,
       state: resolvedState,
+      isInCabinet: flags.isInCabinet,
+      isLit: flags.isLit,
       isOwned: flags.isOwned,
       isWanted: flags.isWanted,
       isExchange: flags.isExchange,
       activeStatuses: flags.activeStatuses,
+      isWatching: watchRows.length > 0,
     },
     community,
-    exchange: {
-      listings: exchangeListings,
-      wantedGoodsOptions,
-    },
   } satisfies GoodsDetailViewData;
 }

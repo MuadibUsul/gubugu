@@ -14,6 +14,9 @@ type RecognitionCandidatesPanelProps = {
   candidates: RecognitionCandidate[];
   warnings: string[];
   confirmedCandidateId: string | null;
+  confirmingCandidateId: string | null;
+  canLight: boolean;
+  confirmationError: string | null;
   onConfirmCandidate: (candidate: RecognitionCandidate) => void;
   onRetake: () => void;
 };
@@ -60,6 +63,9 @@ export function RecognitionCandidatesPanel({
   candidates,
   warnings,
   confirmedCandidateId,
+  confirmingCandidateId,
+  canLight,
+  confirmationError,
   onConfirmCandidate,
   onRetake,
 }: RecognitionCandidatesPanelProps) {
@@ -80,7 +86,7 @@ export function RecognitionCandidatesPanel({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-2">
             <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
-              Candidates
+              候选结果
             </p>
             <h2 className="font-heading text-foreground text-4xl leading-none">
               识别结果
@@ -133,6 +139,31 @@ export function RecognitionCandidatesPanel({
 
         {resultState === 'ready' ? (
           <div className="space-y-4">
+            <div
+              className={
+                canLight
+                  ? 'rounded-[16px] border border-[var(--kin)]/45 bg-[var(--kin-soft)] px-4 py-3 text-sm'
+                  : 'rounded-[16px] border border-[var(--violet)]/25 bg-[var(--violet-soft)] px-4 py-3 text-sm'
+              }
+            >
+              <strong>
+                {canLight ? '这次扫描可以点亮' : '这次结果仅供查找'}
+              </strong>
+              <p className="text-muted-foreground mt-1 leading-6">
+                {canLight
+                  ? '确认真实候选后，它会进入谷柜并恢复彩色。'
+                  : '上传图片或占位候选不能点亮；仍可打开 SKU 彩色详情核对。'}
+              </p>
+            </div>
+
+            {confirmationError ? (
+              <p
+                className="rounded-[14px] border border-[var(--destructive)]/30 bg-[var(--destructive)]/8 px-4 py-3 text-sm text-[var(--destructive)]"
+                role="alert"
+              >
+                {confirmationError}
+              </p>
+            ) : null}
             <div className={resultTone.toneClass}>
               <p className="text-[0.68rem] font-semibold uppercase">
                 {resultTone.eyebrow}
@@ -149,8 +180,10 @@ export function RecognitionCandidatesPanel({
                   首选
                 </p>
                 <RecognitionCandidateCard
+                  actionMode={canLight ? 'light' : 'view'}
                   candidate={topCandidate}
                   isConfirmed={topCandidate.id === confirmedCandidateId}
+                  isPending={topCandidate.id === confirmingCandidateId}
                   onConfirm={onConfirmCandidate}
                 />
               </div>
@@ -168,9 +201,11 @@ export function RecognitionCandidatesPanel({
                 <div className="space-y-3">
                   {otherCandidates.map((candidate) => (
                     <RecognitionCandidateCard
+                      actionMode={canLight ? 'light' : 'view'}
                       candidate={candidate}
                       compact
                       isConfirmed={candidate.id === confirmedCandidateId}
+                      isPending={candidate.id === confirmingCandidateId}
                       key={candidate.id}
                       onConfirm={onConfirmCandidate}
                     />

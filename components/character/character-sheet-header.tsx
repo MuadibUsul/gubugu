@@ -57,11 +57,13 @@ export function CharacterSheetHeader({
 
         <div className="mt-5">
           <SlotStrip
-            label={`已收录 ${character.ownedGoods} 件，共 ${character.totalGoods} 件`}
+            label={`已点亮 ${character.ownedGoods} 件，共 ${character.totalGoods} 件`}
             owned={character.ownedGoods}
             total={character.totalGoods}
           />
-          <p className="lbl mt-2">实心为已收录。空格是还没找到的那几件。</p>
+          <p className="lbl mt-2">
+            实心为扫描实物后点亮。灰色条目仍可打开查看彩色高清详情。
+          </p>
         </div>
 
         {series.length > 0 ? (

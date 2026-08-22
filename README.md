@@ -109,13 +109,15 @@ Current note:
 Copy `.env.example` to `.env.local` and configure:
 
 - `NEXT_PUBLIC_APP_NAME`
-- `NEXT_PUBLIC_APP_URL`
+- `APP_URL`（生产公开 HTTPS origin，本地可不配置）
 - `DATABASE_URL`
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ADMIN_USER_EMAILS` / `ADMIN_USER_IDS`
 - `MODERATOR_USER_EMAILS` / `MODERATOR_USER_IDS`
+- `CATALOG_CRAWLER_SCHEDULER`（长驻服务默认开启，北京时间 10:00 / 22:00）
+- `CATALOG_ASSET_DIR`（采集标准图的持久化目录）
 
 ## Documentation Map
 
@@ -123,6 +125,7 @@ Copy `.env.example` to `.env.local` and configure:
 - `docs/schema.md`: domain model summary centered on SKU
 - `docs/ui-guidelines.md`: visual and interaction direction for the encyclopedia experience
 - `docs/architecture.md`: current technical foundation and next initialization steps
+- `docs/catalog-crawler.md`: 白名单采集、图片标准化、审核发布与定时运行说明
 
 ## Current Status
 

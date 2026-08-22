@@ -7,10 +7,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RecognitionCandidatesPanel } from '@/components/recognition/recognition-candidates-panel';
 import { Button } from '@/components/ui/button';
 import {
+  isRecognitionAttemptEligible,
   type RecognitionCandidate,
   recognitionResponseSchema,
   type RecognitionSuccessResponse,
 } from '@/lib/recognition';
+import { acceptedImageInputValue } from '@/lib/image-upload';
+import { confirmRecognitionCandidateAction } from '@/server/recognition/actions';
 
 type CameraState =
   | 'idle'
@@ -23,29 +26,6 @@ type CameraState =
 type ResultState = 'idle' | 'processing' | 'ready' | 'error';
 type PreviewSource = 'camera' | 'upload' | null;
 type CaptureMode = 'manual' | 'auto' | null;
-
-const pipelineSteps = [
-  {
-    key: 'capture',
-    label: '取景拍摄',
-    description: '把物品放进取景框内，生成一张静态图片。',
-  },
-  {
-    key: 'upload',
-    label: '上传识别',
-    description: '把图片发送到识别服务。',
-  },
-  {
-    key: 'match',
-    label: '候选匹配',
-    description: '返回候选结果。',
-  },
-  {
-    key: 'confirm',
-    label: '确认',
-    description: '确认目标 SKU。',
-  },
-] as const;
 
 // Placeholder results must not be presented as real matches. The warning text
 // says so too, but the header label is what a user reads first.
@@ -89,7 +69,7 @@ function getCameraStatusCopy(state: CameraState, errorMessage: string | null) {
     case 'requesting':
       return '正在请求相机权限。';
     case 'live':
-      return '相机已启动。你可以手动拍摄，或启用自动拍摄。';
+      return '相机已启动。你可以立即拍摄，或设置 3 秒倒计时。';
     case 'preview':
       return '预览已生成。';
     case 'unsupported':
@@ -100,19 +80,6 @@ function getCameraStatusCopy(state: CameraState, errorMessage: string | null) {
       return errorMessage ?? '相机启动失败，请改用上传方式。';
     default:
       return '启动相机或上传一张图片后继续。';
-  }
-}
-
-function getResultHeadline(state: ResultState) {
-  switch (state) {
-    case 'processing':
-      return '候选匹配中';
-    case 'ready':
-      return '结果已返回';
-    case 'error':
-      return '候选请求失败';
-    default:
-      return '等待输入';
   }
 }
 
@@ -156,10 +123,21 @@ export function RecognitionShell() {
   const [confirmedCandidateId, setConfirmedCandidateId] = useState<
     string | null
   >(null);
+  const [confirmingCandidateId, setConfirmingCandidateId] = useState<
+    string | null
+  >(null);
+  const [confirmationError, setConfirmationError] = useState<string | null>(
+    null,
+  );
 
   const statusCopy = getCameraStatusCopy(cameraState, errorMessage);
-  const resultHeadline = getResultHeadline(resultState);
   const candidateItems = recognitionResponse?.candidates ?? [];
+  const canLight = recognitionResponse
+    ? isRecognitionAttemptEligible({
+        source: recognitionResponse.image.source,
+        provider: recognitionResponse.pipeline.provider,
+      })
+    : false;
 
   const captureModeLabel = useMemo(() => {
     if (previewSource === 'upload') {
@@ -199,6 +177,8 @@ export function RecognitionShell() {
     setResultState('idle');
     setRecognitionResponse(null);
     setConfirmedCandidateId(null);
+    setConfirmingCandidateId(null);
+    setConfirmationError(null);
   }
 
   function stopCamera() {
@@ -465,7 +445,9 @@ export function RecognitionShell() {
       }
 
       setRecognitionResponse(parsed.data);
-      setConfirmedCandidateId(parsed.data.candidates[0]?.id ?? null);
+      setConfirmedCandidateId(null);
+      setConfirmingCandidateId(null);
+      setConfirmationError(null);
       setResultState('ready');
     } catch (error) {
       setResultState('error');
@@ -476,30 +458,41 @@ export function RecognitionShell() {
   }
 
   const handleConfirmCandidate = useCallback(
-    (candidate: RecognitionCandidate) => {
-      setConfirmedCandidateId(candidate.id);
-
+    async (candidate: RecognitionCandidate) => {
       if (!recognitionResponse) {
         return;
       }
 
-      const params = new URLSearchParams({
-        recognized: '1',
-        recognitionRequestId: recognitionResponse.requestId,
-        recognitionSource: recognitionResponse.image.source,
-        recognitionCandidateId: candidate.id,
-      });
-
-      if (recognitionResponse.image.captureMode) {
-        params.set(
-          'recognitionCaptureMode',
-          recognitionResponse.image.captureMode,
-        );
+      if (!canLight) {
+        setConfirmedCandidateId(candidate.id);
+        router.push(`/goods/${candidate.goods.slug}`);
+        return;
       }
 
-      router.push(`/goods/${candidate.goods.slug}?${params.toString()}`);
+      setConfirmingCandidateId(candidate.id);
+      setConfirmationError(null);
+
+      try {
+        const result = await confirmRecognitionCandidateAction({
+          requestId: recognitionResponse.requestId,
+          candidateId: candidate.id,
+        });
+
+        if (!result.success) {
+          setConfirmationError(result.message);
+          return;
+        }
+
+        setConfirmedCandidateId(candidate.id);
+        const lightingState = result.alreadyConfirmed ? 'already' : 'success';
+        router.push(`/goods/${result.goodsSlug}?lighting=${lightingState}`);
+      } catch {
+        setConfirmationError('点亮失败，请重新扫描后再试。');
+      } finally {
+        setConfirmingCandidateId(null);
+      }
     },
-    [recognitionResponse, router],
+    [canLight, recognitionResponse, router],
   );
 
   return (
@@ -511,8 +504,8 @@ export function RecognitionShell() {
               <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
                 拍摄阶段
               </p>
-              <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-                识别取景台
+              <h2 className="font-heading text-foreground text-3xl leading-none sm:text-4xl">
+                拍照或上传
               </h2>
             </div>
 
@@ -533,7 +526,7 @@ export function RecognitionShell() {
           </div>
 
           <div className="grid gap-5 lg:grid-cols-[minmax(0,0.96fr)_minmax(280px,0.84fr)]">
-            <div className="space-y-4">
+            <div className="order-2 space-y-4 lg:order-1">
               <div className="border-border/70 bg-background/78 relative overflow-hidden rounded-[var(--radius)] border p-3">
                 <div className="recognition-grid border-border/60 relative aspect-[4/5] overflow-hidden rounded-[var(--radius)] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_90%,white),color-mix(in_oklab,var(--card)_86%,var(--background)))]">
                   {previewUrl ? (
@@ -625,8 +618,8 @@ export function RecognitionShell() {
               </div>
             </div>
 
-            <aside className="space-y-4">
-              <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border p-5">
+            <aside className="contents lg:order-2 lg:block lg:space-y-4">
+              <div className="border-border/70 bg-background/76 order-1 rounded-[var(--radius)] border p-5">
                 <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
                   输入控制
                 </p>
@@ -640,34 +633,36 @@ export function RecognitionShell() {
                     启动相机
                   </Button>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Button
-                      disabled={cameraState !== 'live' || countdown !== null}
-                      onClick={() => captureFrame('camera', 'manual')}
-                      type="button"
-                      variant="secondary"
-                    >
-                      立即拍摄
-                    </Button>
-                    {countdown === null ? (
+                  {cameraState === 'live' || countdown !== null ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <Button
-                        disabled={cameraState !== 'live'}
-                        onClick={handleArmAutoCapture}
+                        disabled={cameraState !== 'live' || countdown !== null}
+                        onClick={() => captureFrame('camera', 'manual')}
                         type="button"
-                        variant="outline"
+                        variant="secondary"
                       >
-                        自动拍摄
+                        立即拍摄
                       </Button>
-                    ) : (
-                      <Button
-                        onClick={handleCancelCountdown}
-                        type="button"
-                        variant="outline"
-                      >
-                        取消倒计时
-                      </Button>
-                    )}
-                  </div>
+                      {countdown === null ? (
+                        <Button
+                          disabled={cameraState !== 'live'}
+                          onClick={handleArmAutoCapture}
+                          type="button"
+                          variant="outline"
+                        >
+                          3 秒后拍摄
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleCancelCountdown}
+                          type="button"
+                          variant="outline"
+                        >
+                          取消倒计时
+                        </Button>
+                      )}
+                    </div>
+                  ) : null}
 
                   <Button
                     onClick={handleOpenUpload}
@@ -678,8 +673,7 @@ export function RecognitionShell() {
                   </Button>
 
                   <input
-                    accept="image/*"
-                    capture="environment"
+                    accept={acceptedImageInputValue}
                     className="hidden"
                     onChange={handleFileChange}
                     ref={fileInputRef}
@@ -688,99 +682,41 @@ export function RecognitionShell() {
                 </div>
               </div>
 
-              <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border p-5">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
-                  预览
-                </p>
-                <div className="mt-4 grid gap-3">
-                  <Button
-                    disabled={!previewUrl || resultState === 'processing'}
-                    onClick={handleConfirmPreview}
-                    type="button"
-                  >
-                    确认预览并请求候选
-                  </Button>
-                  <Button
-                    disabled={!previewUrl}
-                    onClick={handleRetake}
-                    type="button"
-                    variant="secondary"
-                  >
-                    {previewSource === 'upload' ? '清空预览' : '重新拍摄'}
-                  </Button>
+              {previewUrl ? (
+                <div className="border-border/70 bg-background/76 order-3 rounded-[var(--radius)] border p-5">
+                  <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
+                    预览
+                  </p>
+                  <div className="mt-4 grid gap-3">
+                    <Button
+                      disabled={resultState === 'processing'}
+                      onClick={handleConfirmPreview}
+                      type="button"
+                    >
+                      确认预览并请求候选
+                    </Button>
+                    <Button
+                      onClick={handleRetake}
+                      type="button"
+                      variant="secondary"
+                    >
+                      {previewSource === 'upload' ? '清空预览' : '重新拍摄'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="border-border/70 bg-background/76 rounded-[var(--radius)] border border-dashed p-5">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
-                  上传入口
-                </p>
-                <p className="text-muted-foreground mt-3 text-sm">
-                  相机不可用时可直接上传。
-                </p>
-              </div>
+              ) : null}
             </aside>
           </div>
         </div>
       </div>
 
       <aside className="space-y-6">
-        <section className="collection-panel p-5 sm:p-6">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="space-y-2">
-                <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
-                  进度
-                </p>
-                <h2 className="font-heading text-foreground text-4xl leading-none">
-                  {resultHeadline}
-                </h2>
-              </div>
-              <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-4 py-2 text-sm">
-                {recognitionResponse ? '候选识别' : '等待识别'}
-              </span>
-            </div>
-
-            <div className="grid gap-3">
-              {pipelineSteps.map((step, index) => {
-                const isActive =
-                  (index === 0 && previewUrl) ||
-                  (index === 1 && previewUrl) ||
-                  (index === 2 && resultState !== 'idle') ||
-                  (index === 3 && resultState === 'ready');
-
-                return (
-                  <div
-                    className={
-                      isActive
-                        ? 'rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color:color-mix(in_oklab,var(--accent)_10%,white)] px-4 py-4'
-                        : 'border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4'
-                    }
-                    key={step.key}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-foreground text-sm font-semibold">
-                          {step.label}
-                        </p>
-                        <p className="text-muted-foreground mt-2 text-sm leading-6">
-                          {step.description}
-                        </p>
-                      </div>
-                      <span className="border-border/70 bg-card/78 text-muted-foreground inline-flex size-9 items-center justify-center rounded-full border text-xs font-semibold">
-                        {index + 1}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
         <RecognitionCandidatesPanel
           candidates={candidateItems}
+          canLight={canLight}
+          confirmationError={confirmationError}
           confirmedCandidateId={confirmedCandidateId}
+          confirmingCandidateId={confirmingCandidateId}
           errorMessage={errorMessage}
           onConfirmCandidate={handleConfirmCandidate}
           onRetake={handleRetake}

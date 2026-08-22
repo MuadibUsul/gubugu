@@ -2,16 +2,20 @@ import 'server-only';
 
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
+import { eq } from 'drizzle-orm';
 
+import { profiles } from '@/drizzle/schema';
 import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { getLocalDemoAuthUser } from '@/server/auth/local-session';
+import { getLocalAuthUser } from '@/server/auth/local-session';
+import { ensureAuthProfile } from '@/server/auth/profile';
+import { getDb } from '@/server/db/client';
 
 import type { AuthUser } from './types';
 
 export const getAuthUser = cache(async () => {
   if (!getSupabaseAuthConfig()) {
-    return getLocalDemoAuthUser();
+    return getLocalAuthUser();
   }
 
   const supabase = await createServerSupabaseClient();
@@ -24,12 +28,30 @@ export const getAuthUser = cache(async () => {
     return null;
   }
 
+  let profile = (
+    await getDb()
+      .select({ handle: profiles.handle, displayName: profiles.displayName })
+      .from(profiles)
+      .where(eq(profiles.id, user.id))
+      .limit(1)
+  )[0];
+  if (!profile) {
+    profile = await ensureAuthProfile({
+      id: user.id,
+      email: user.email,
+      displayName:
+        typeof user.user_metadata?.display_name === 'string'
+          ? user.user_metadata.display_name
+          : null,
+    });
+  }
+
   return {
     id: user.id,
     email: user.email ?? null,
     phone: user.phone ?? null,
-    handle: null,
-    displayLabel: user.email ?? user.phone ?? 'Authenticated User',
+    handle: profile.handle,
+    displayLabel: profile.displayName,
     provider: 'supabase',
   } satisfies AuthUser;
 });

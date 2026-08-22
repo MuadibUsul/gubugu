@@ -8,6 +8,8 @@ import { z } from 'zod';
 
 import { goods, postImages, posts, ratings } from '@/drizzle/schema';
 import { goodsCacheTag } from '@/lib/cache-tags';
+import { internalPathSchema } from '@/lib/internal-path';
+import { isAcceptedImageMimeType } from '@/lib/image-upload';
 import {
   calculateGoodsRatingScore,
   goodsRatingValueSchema,
@@ -25,19 +27,13 @@ import type {
   CreateGoodsPostActionState,
   SaveGoodsRatingActionState,
 } from '@/server/community/action-state';
+import { consumeServerWrite } from '@/lib/rate-limit';
 
 type PostImageInsert = InferInsertModel<typeof postImages>;
 
 const createGoodsPostInputSchema = z.object({
   goodsId: z.string().uuid(),
-  nextPath: z
-    .string()
-    .trim()
-    .min(1)
-    .max(512)
-    .refine((value) => value.startsWith('/'), {
-      message: 'nextPath 必须是站内路由。',
-    }),
+  nextPath: internalPathSchema,
   body: z
     .string()
     .trim()
@@ -51,14 +47,7 @@ const worthBuyingFormValueSchema = z
 
 const saveGoodsRatingInputSchema = z.object({
   goodsId: z.string().uuid(),
-  nextPath: z
-    .string()
-    .trim()
-    .min(1)
-    .max(512)
-    .refine((value) => value.startsWith('/'), {
-      message: 'nextPath must be an internal route.',
-    }),
+  nextPath: internalPathSchema,
   artworkScore: goodsRatingValueSchema.shape.artworkScore,
   craftsmanshipScore: goodsRatingValueSchema.shape.craftsmanshipScore,
   valueScore: goodsRatingValueSchema.shape.valueScore,
@@ -80,8 +69,8 @@ function validateImageFiles(files: File[]) {
   }
 
   for (const file of files) {
-    if (!file.type.startsWith('image/')) {
-      return '这里仅支持上传图片文件。';
+    if (!isAcceptedImageMimeType(file.type)) {
+      return '仅支持 JPG、PNG 或 WebP 图片。';
     }
 
     if (file.size > goodsCommunityUploadLimits.maxFileSizeBytes) {
@@ -265,6 +254,14 @@ export async function createGoodsPostAction(
 
   const { goodsId, nextPath, body } = parsed.data;
   const user = await requireAuthUser(nextPath);
+  if (
+    !consumeServerWrite(`${user.id}:community-post`, {
+      limit: 5,
+      windowMs: 60_000,
+    })
+  ) {
+    return { status: 'error', message: '发布过于频繁，请稍后再试。' };
+  }
   const db = getDb();
   const targetGoods = await requirePublishedGoods(goodsId);
 

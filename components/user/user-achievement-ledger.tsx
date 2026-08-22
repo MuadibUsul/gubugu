@@ -70,9 +70,9 @@ export function UserAchievementLedger({
             <table className="ledger">
               <thead>
                 <tr>
-                  <th />
+                  <th>编号</th>
                   <th>项目</th>
-                  <th />
+                  <th>条件</th>
                   <th className="text-right">达成</th>
                 </tr>
               </thead>

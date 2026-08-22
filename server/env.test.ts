@@ -5,13 +5,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const ENV_KEYS = [
   'NODE_ENV',
   'NEXT_PUBLIC_APP_NAME',
+  'APP_URL',
   'NEXT_PUBLIC_APP_URL',
+  'ALLOW_INSECURE_LOCAL_APP_URL',
   'DATABASE_URL',
+  'LOCAL_AUTH_SECRET',
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  'RECOGNITION_WARMUP',
+  'CATALOG_CRAWLER_SCHEDULER',
+  'CATALOG_ASSET_DIR',
 ] as const;
 
 let saved: Record<string, string | undefined>;
@@ -33,6 +39,7 @@ async function loadEnv(values: Record<string, string | undefined>) {
 }
 
 const DB = 'postgresql://postgres:postgres@127.0.0.1:5432/gubugu';
+const APP_URL = 'https://gubugu.example';
 const SUPABASE = {
   NEXT_PUBLIC_SUPABASE_URL: 'https://project.supabase.co',
   NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-key',
@@ -55,7 +62,7 @@ afterEach(() => {
 });
 
 describe('development', () => {
-  it('boots with nothing configured, so local demo mode keeps working', async () => {
+  it('boots with nothing configured; local auth validates its secret on use', async () => {
     await expect(loadEnv({ NODE_ENV: 'development' })).resolves.toBeDefined();
   });
 
@@ -111,13 +118,21 @@ describe('development', () => {
 describe('production', () => {
   it('refuses to boot without DATABASE_URL', async () => {
     await expect(
-      loadEnv({ NODE_ENV: 'production', ...SUPABASE }),
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL,
+        ...SUPABASE,
+      }),
     ).rejects.toThrow(/DATABASE_URL/);
   });
 
   it('refuses to boot without Supabase auth, which would open the admin panel', async () => {
     await expect(
-      loadEnv({ NODE_ENV: 'production', DATABASE_URL: DB }),
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL,
+        DATABASE_URL: DB,
+      }),
     ).rejects.toThrow(/SUPABASE_URL/);
   });
 
@@ -132,12 +147,66 @@ describe('production', () => {
     }
 
     expect(message).toMatch(/DATABASE_URL/);
+    expect(message).toMatch(/APP_URL/);
     expect(message).toMatch(/SUPABASE_URL/);
+  });
+
+  it('refuses to boot without the public app URL used by share cards', async () => {
+    await expect(
+      loadEnv({ NODE_ENV: 'production', DATABASE_URL: DB, ...SUPABASE }),
+    ).rejects.toThrow(/APP_URL/);
+  });
+
+  it('requires HTTPS for a public production app URL', async () => {
+    await expect(
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL: 'http://gubugu.example',
+        DATABASE_URL: DB,
+        ...SUPABASE,
+      }),
+    ).rejects.toThrow(/HTTPS/);
+
+    await expect(
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL: 'http://127.0.0.1:3000',
+        DATABASE_URL: DB,
+        ...SUPABASE,
+      }),
+    ).rejects.toThrow(/HTTPS/);
+
+    await expect(
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL: 'http://127.0.0.1:3000',
+        ALLOW_INSECURE_LOCAL_APP_URL: '1',
+        DATABASE_URL: DB,
+        ...SUPABASE,
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it.each([
+    'https://user:secret@gubugu.example',
+    'https://gubugu.example/app',
+    'https://gubugu.example?from=env',
+    'https://gubugu.example#share',
+  ])('requires the public app URL to be a pure origin: %s', async (appUrl) => {
+    await expect(
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL: appUrl,
+        DATABASE_URL: DB,
+        ...SUPABASE,
+      }),
+    ).rejects.toThrow(/纯站点源/);
   });
 
   it('boots when fully configured', async () => {
     const mod = await loadEnv({
       NODE_ENV: 'production',
+      APP_URL,
       DATABASE_URL: DB,
       ...SUPABASE,
     });
@@ -152,6 +221,7 @@ describe('production', () => {
     await expect(
       loadEnv({
         NODE_ENV: 'production',
+        APP_URL,
         DATABASE_URL: DB,
         SUPABASE_URL: 'https://project.supabase.co',
         SUPABASE_ANON_KEY: 'anon-key',

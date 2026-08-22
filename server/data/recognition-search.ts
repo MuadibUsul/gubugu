@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import {
   recognitionCandidateDisplayLimit,
@@ -172,16 +172,16 @@ async function loadCharacterNames(
     })
     .from(goodsCharacters)
     .innerJoin(characters, eq(characters.id, goodsCharacters.characterId))
-    .where(eq(characters.status, 'published'));
+    .where(
+      and(
+        eq(characters.status, 'published'),
+        inArray(goodsCharacters.goodsId, goodsIds),
+      ),
+    );
 
-  const wanted = new Set(goodsIds);
   const byGoodsId = new Map<string, string[]>();
 
   for (const row of rows) {
-    if (!wanted.has(row.goodsId)) {
-      continue;
-    }
-
     const names = byGoodsId.get(row.goodsId);
 
     if (names) {

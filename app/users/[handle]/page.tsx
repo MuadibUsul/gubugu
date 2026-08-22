@@ -2,21 +2,27 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
-import { UserExchangeListings } from '@/components/user/user-exchange-listings';
 import { UserCollectionHeader } from '@/components/user/user-collection-header';
+import { FollowButton } from '@/components/user/follow-button';
+import { Button } from '@/components/ui/button';
 import {
   UserCollectionSheet,
   type CollectionStatusFilter,
 } from '@/components/user/user-collection-sheet';
 import { UserPhotoStrip } from '@/components/user/user-photo-strip';
 import { demoViewers } from '@/lib/config/demo-viewers';
+import { canViewProfile } from '@/lib/profile-visibility';
 import { getUserProfilePageData } from '@/server/data';
+import { getFollowCounts, isFollowing } from '@/server/data/follows';
+import { getUserReputation } from '@/server/data/reputation';
+import { getAuthUser } from '@/server/auth/session';
 import {
   formatProfileHandle,
   getProfileByHandle,
   type ProfileDetail,
 } from '@/server/data/profiles';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { startConversationAction } from '@/server/messages/actions';
 
 type UserPageProps = {
   params: Promise<{
@@ -63,9 +69,12 @@ function resolveDemoViewerFallback(handle: string): ProfileDetail | null {
  * never enters the component scope and cannot leak through the document title
  * or the RSC payload.
  *
- * `followers` has no follow graph yet, so it is treated as private.
+ * followers 资料仅对关注者与本人可见；private 只对本人进入页面组件范围。
  */
-async function resolvePublicProfile(handle: string) {
+async function resolveBrowsableProfile(
+  handle: string,
+  viewerId: string | null,
+) {
   let profile: ProfileDetail | null = null;
 
   try {
@@ -78,7 +87,15 @@ async function resolvePublicProfile(handle: string) {
 
   profile ??= resolveDemoViewerFallback(handle.replace(/^@/, '').toLowerCase());
 
-  return profile?.visibility === 'public' ? profile : null;
+  if (!profile) return null;
+  const isSelf = profile.userId === viewerId;
+  const isFollower = isSelf
+    ? false
+    : await isFollowing(viewerId, profile.userId);
+
+  return canViewProfile(profile.visibility, { isSelf, isFollower })
+    ? profile
+    : null;
 }
 
 function getSingleValue(value: string | string[] | undefined) {
@@ -89,7 +106,7 @@ export async function generateMetadata({
   params,
 }: UserPageProps): Promise<Metadata> {
   const { handle } = await params;
-  const profile = await resolvePublicProfile(handle);
+  const profile = await resolveBrowsableProfile(handle, null);
 
   return {
     title: profile ? `${profile.displayName} 的收藏页` : '用户主页',
@@ -105,7 +122,8 @@ export default async function UserPage({
 }: UserPageProps) {
   const { handle } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const profile = await resolvePublicProfile(handle);
+  const viewer = await getAuthUser();
+  const profile = await resolveBrowsableProfile(handle, viewer?.id ?? null);
 
   if (!profile) {
     notFound();
@@ -115,14 +133,14 @@ export default async function UserPage({
     status: getSingleValue(resolvedSearchParams.status),
   }).status;
 
-  const data = await getUserProfilePageData({
-    userId: profile.userId,
-  });
-  const exchangeEntryGoods =
-    data.goods.exchange.length > 0 ? data.goods.exchange : data.goods.owned;
-
+  const [data, following, reputation, followCounts] = await Promise.all([
+    getUserProfilePageData({ userId: profile.userId }),
+    isFollowing(viewer?.id ?? null, profile.userId),
+    getUserReputation(profile.userId),
+    getFollowCounts(profile.userId),
+  ]);
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
+    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
       <UserCollectionHeader
         data={data}
         displayName={profile.displayName}
@@ -130,34 +148,45 @@ export default async function UserPage({
         handle={formatProfileHandle(profile.handle)}
         railLabel="收藏者"
       />
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <p className="chip px-3 py-1.5 text-[12px]">
+          换谷信誉 {reputation.averageScore?.toFixed(1) ?? '暂无'} ·{' '}
+          {reputation.reviewCount} 条评价
+        </p>
+        <p className="chip px-3 py-1.5 text-[12px]">
+          {followCounts.followers} 位关注者 · 关注 {followCounts.following} 人
+        </p>
+        {viewer && viewer.id !== profile.userId ? (
+          <>
+            <FollowButton
+              followingId={profile.userId}
+              isFollowing={following}
+              nextPath={`/users/${profile.handle}`}
+            />
+            <form action={startConversationAction}>
+              <input name="recipientId" type="hidden" value={profile.userId} />
+              <input name="contextType" type="hidden" value="profile" />
+              <input
+                name="nextPath"
+                type="hidden"
+                value={`/users/${profile.handle}`}
+              />
+              <Button type="submit" variant="outline">
+                私信
+              </Button>
+            </form>
+          </>
+        ) : null}
+      </div>
 
-      <section className="spread py-14">
-        <div>
-          <p className="lbl">一览</p>
-          <div className="rail-jp">目录</div>
-        </div>
+      <section className="py-14">
         <div className="min-w-0">
+          <p className="section-kicker">公开收藏</p>
+          <h2 className="mt-3 mb-7 text-[clamp(28px,3.4vw,40px)]">收藏清单</h2>
           <UserCollectionSheet
             basePath={`/users/${profile.handle}`}
             data={data}
             status={status}
-          />
-        </div>
-      </section>
-
-      <section className="spread border-border border-t py-14">
-        <div>
-          <p className="lbl">交换</p>
-          <div className="rail-jp">交换</div>
-        </div>
-        <div className="min-w-0">
-          <UserExchangeListings
-            entryGoods={exchangeEntryGoods.map((item) => ({
-              id: item.id,
-              slug: item.slug,
-              name: item.name,
-            }))}
-            items={data.exchangeListings}
           />
         </div>
       </section>

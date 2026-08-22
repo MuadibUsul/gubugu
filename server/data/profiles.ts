@@ -5,9 +5,8 @@ import { z } from 'zod';
 
 import { profiles } from '@/drizzle/schema';
 import { getDemoViewerByUserId } from '@/lib/config/demo-viewers';
+import type { ProfileVisibility } from '@/lib/profile-visibility';
 import { getDb } from '@/server/db/client';
-
-export type ProfileVisibility = 'public' | 'followers' | 'private';
 
 export type ProfileSummary = {
   userId: string;

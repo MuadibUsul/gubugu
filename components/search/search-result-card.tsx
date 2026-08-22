@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
 import { GoodsCardArt } from '@/components/goods/goods-card-art';
-import type { UserGoodsStatus } from '@/lib/user-goods-status';
 import type { GoodsCardData } from '@/server/data/_shared';
+import type { GoodsCardViewerState } from '@/server/data/search-service';
 
 import { formatGoodsTypeLabel } from './search-query';
 import { SearchCardActions } from './search-card-actions';
@@ -10,77 +10,81 @@ import { SearchCardActions } from './search-card-actions';
 type SearchResultCardProps = {
   item: GoodsCardData;
   isAuthenticated: boolean;
-  /** 当前用户对这一件的收藏状态。空数组＝尚未标记。 */
-  activeStatuses: UserGoodsStatus[];
+  viewerState: GoodsCardViewerState;
   isBestMatch?: boolean;
 };
 
 /**
  * 搜索结果卡。
  *
- * `goods-card--lit`（金色装裱内衬）此前被用来标「最佳匹配」，而它在角色页和
- * 收藏页表示「已收录」—— 同一套视觉语言背两个含义。金只属于「拥有」那一层，
- * 所以最佳匹配换成一行文字标记，金留给真正拥有的条目。
+ * 灰度只由服务端的 isLit 决定：收进谷柜仍是灰图，扫码确认后才恢复原色。
+ * 最佳匹配只用文字标记，避免与点亮的金色装裱争夺语义。
  */
 export function SearchResultCard({
   item,
   isAuthenticated,
-  activeStatuses,
+  viewerState,
   isBestMatch = false,
 }: SearchResultCardProps) {
   const detailsHref = `/goods/${item.slug}`;
-  const owned = activeStatuses.includes('owned');
+  const isInCabinet = viewerState.activeStatuses.includes('owned');
+  const cardStateClass = viewerState.isLit
+    ? 'goods-card--lit'
+    : `goods-card--dormant ${isInCabinet ? 'goods-card--cabinet' : ''}`;
 
   return (
-    <article className={`goods-card group ${owned ? 'goods-card--lit' : ''}`}>
+    <article className={`goods-card group min-w-0 ${cardStateClass}`}>
       <GoodsCardArt
         alt={item.name}
-        className="aspect-[4/3]"
+        className="aspect-[3/4]"
         imageUrl={item.primaryImageUrl}
         priority={isBestMatch}
-        sizes="(max-width: 639px) 100vw, (max-width: 1535px) 50vw, 33vw"
+        sizes="(max-width: 639px) 50vw, (max-width: 1279px) 33vw, 20vw"
       >
-        <Link className="absolute inset-0 z-10" href={detailsHref}>
+        <Link
+          className="absolute inset-0 z-10"
+          href={detailsHref}
+          tabIndex={-1}
+        >
           <span className="sr-only">打开 {item.name}</span>
         </Link>
-
-        {owned ? <span className="seal">藏</span> : null}
       </GoodsCardArt>
 
-      <div className="flex flex-1 flex-col gap-2 px-1 pt-3 pb-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-0.5 pt-3 pb-0.5 sm:px-1">
         {isBestMatch ? <p className="lbl text-[var(--shu)]">最接近</p> : null}
 
-        <h3 className="text-[15px] leading-snug transition-colors group-hover:text-[var(--shu)]">
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-[13px] leading-5 transition-colors group-hover:text-[var(--shu)] sm:text-[14.5px]">
           <Link href={detailsHref}>{item.name}</Link>
         </h3>
 
-        <div className="flex flex-wrap items-baseline gap-x-3">
-          <span className="sku-code">{item.skuCode}</span>
-          <span className="text-muted-foreground text-[12.5px]">
-            {formatGoodsTypeLabel(item.goodsType)}
-          </span>
-        </div>
+        <span className="sku-code truncate">{item.skuCode}</span>
 
-        <p className="text-muted-foreground text-[12.5px]">
-          {item.ip.name} · {item.series.name}
+        <p className="text-muted-foreground line-clamp-1 text-[11px] sm:text-[12px]">
+          {item.ip.name} · {formatGoodsTypeLabel(item.goodsType)}
         </p>
 
-        {/* 归属状态必须在结果里可见：看不见的话，收藏者会重复买已经有的东西。 */}
-        <div className="mt-1">
-          {owned ? (
-            <span className="state state--lit">已收录</span>
-          ) : activeStatuses.length > 0 ? (
-            <span className="state state--off">
-              {activeStatuses.includes('wanted') ? '想要' : '可交换'}
-            </span>
+        <div className="mt-1 flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1">
+          {viewerState.isLit ? (
+            <span className="state state--lit">已点亮</span>
+          ) : isInCabinet ? (
+            <span className="state text-[var(--violet)]">已入柜 · 待点亮</span>
+          ) : (
+            <span className="state state--off">未点亮</span>
+          )}
+          {viewerState.activeStatuses.includes('wanted') ? (
+            <span className="state state--wanted">想要</span>
+          ) : null}
+          {viewerState.activeStatuses.includes('exchange') ? (
+            <span className="state state--exchange">可换</span>
           ) : null}
         </div>
 
         <div className="mt-auto pt-3">
           <SearchCardActions
-            activeStatuses={activeStatuses}
+            activeStatuses={viewerState.activeStatuses}
             goodsId={item.id}
             isAuthenticated={isAuthenticated}
+            isLit={viewerState.isLit}
           />
         </div>
       </div>

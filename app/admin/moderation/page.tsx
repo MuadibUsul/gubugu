@@ -6,7 +6,7 @@ import { getModerationQueueData } from '@/server/data';
 
 export const metadata: Metadata = {
   title: '审核队列',
-  description: '处理用户投稿、图片、评论和交换意向的审核队列。',
+  description: '处理用户投稿、图片、评论和举报的统一安全队列。',
 };
 
 export const dynamic = 'force-dynamic';

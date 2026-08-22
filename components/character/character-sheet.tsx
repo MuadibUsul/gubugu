@@ -25,12 +25,12 @@ function SheetEntry({
   index: number;
 }) {
   const acquiredAt =
-    item.viewerState.find((entry) => entry.status === 'owned')?.updatedAt ??
-    null;
+    item.viewerState.find((entry) => entry.status === 'owned')?.litAt ?? null;
 
   return (
     <Link
-      className={`goods-card group ${item.isOwned ? 'goods-card--lit' : 'goods-card--dormant'}`}
+      aria-label={`${item.name}，${item.isLit ? '已点亮' : item.isInCabinet ? '已入柜，待点亮' : '未点亮'}`}
+      className={`goods-card group min-w-0 ${item.isLit ? 'goods-card--lit' : `goods-card--dormant ${item.isInCabinet ? 'goods-card--cabinet' : ''}`}`}
       href={`/goods/${item.slug}`}
     >
       <GoodsCardArt
@@ -51,18 +51,20 @@ function SheetEntry({
         <span className="sku-code">{item.skuCode}</span>
 
         <div className="mt-auto pt-2">
-          {item.isOwned ? (
+          {item.isLit ? (
             // 入藏日期本来就在 viewerState 里，只是一直没取用 —— 收集表上
             // 每一件都只是「有/没有」，缺了「什么时候进来的」。
             acquiredAt ? (
               <span className="acquired">{formatCatalogDate(acquiredAt)}</span>
             ) : (
-              <span className="state state--lit">已收录</span>
+              <span className="state state--lit">已点亮</span>
             )
+          ) : item.isInCabinet ? (
+            <span className="state state--off">已入柜 · 待扫描</span>
           ) : (
-            <span className="state state--off">还没有</span>
+            <span className="state state--off">未点亮</span>
           )}
-          {item.isWanted && !item.isOwned ? (
+          {item.isWanted && !item.isLit ? (
             <span className="lbl ml-3">想要</span>
           ) : null}
           {item.isExchange ? <span className="lbl ml-3">可交换</span> : null}
@@ -93,7 +95,7 @@ export function CharacterSheet({ items, totalCount }: CharacterSheetProps) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
         {items.map((item, index) => (
           <SheetEntry index={index} item={item} key={item.id} />
         ))}

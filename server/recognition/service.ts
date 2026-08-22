@@ -1,6 +1,12 @@
 import 'server-only';
 
+import { inArray } from 'drizzle-orm';
+
+import { goodsImages, recognitionAttempts } from '@/drizzle/schema';
 import {
+  isRecognitionAttemptEligible,
+  recognitionAttemptTtlMs,
+  recognitionCandidateMapSchema,
   recognitionStrongMatchThreshold,
   recognitionSuccessResponseSchema,
   type RecognitionCandidate,
@@ -10,7 +16,7 @@ import {
   findRecognitionCandidates,
   hasReadyEmbeddings,
 } from '@/server/data/recognition-search';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { getDb, isDatabaseAccessConfigurationError } from '@/server/db/client';
 import {
   embedImage,
   embeddingModel,
@@ -20,6 +26,7 @@ import { buildMockRecognitionCandidates } from '@/server/recognition/mock';
 
 type RecognizeGoodsImageInput = RecognitionRequestMetadata & {
   file: File;
+  userId: string;
 };
 
 type MatchResult = {
@@ -68,13 +75,58 @@ async function matchAgainstCatalogue(file: File): Promise<MatchResult> {
   }
 }
 
+async function buildCandidateMap(candidates: RecognitionCandidate[]) {
+  const matches = candidates.flatMap((candidate) =>
+    candidate.similarity.matchedGoodsImageId
+      ? [
+          {
+            candidateId: candidate.id,
+            goodsImageId: candidate.similarity.matchedGoodsImageId,
+          },
+        ]
+      : [],
+  );
+
+  if (matches.length === 0) {
+    return recognitionCandidateMapSchema.parse({});
+  }
+
+  const rows = await getDb()
+    .select({ id: goodsImages.id, goodsId: goodsImages.goodsId })
+    .from(goodsImages)
+    .where(
+      inArray(
+        goodsImages.id,
+        matches.map(({ goodsImageId }) => goodsImageId),
+      ),
+    );
+  const goodsIdByImageId = new Map(
+    rows.map((row) => [row.id, row.goodsId] as const),
+  );
+
+  return recognitionCandidateMapSchema.parse(
+    Object.fromEntries(
+      matches.flatMap(({ candidateId, goodsImageId }) => {
+        const goodsId = goodsIdByImageId.get(goodsImageId);
+        return goodsId ? [[candidateId, goodsId]] : [];
+      }),
+    ),
+  );
+}
+
 export async function recognizeGoodsImage({
   file,
+  userId,
   source,
   captureMode,
 }: RecognizeGoodsImageInput) {
   const { candidates, provider, warnings } = await matchAgainstCatalogue(file);
   const topScore = candidates[0]?.score ?? null;
+  const generatedAt = new Date();
+  const requestId = crypto.randomUUID();
+  const candidateMap = isRecognitionAttemptEligible({ source, provider })
+    ? await buildCandidateMap(candidates)
+    : recognitionCandidateMapSchema.parse({});
 
   const allWarnings = [
     '当前结果用于辅助确认，请以最终选择的商品页为准。',
@@ -91,13 +143,13 @@ export async function recognizeGoodsImage({
     allWarnings.push('当前第一候选的置信度偏弱，建议手动核对或重新拍摄。');
   }
 
-  return recognitionSuccessResponseSchema.parse({
+  const response = recognitionSuccessResponseSchema.parse({
     ok: true,
-    requestId: crypto.randomUUID(),
+    requestId,
     pipeline: {
       provider,
       stage: 'candidate_matching',
-      generatedAt: new Date().toISOString(),
+      generatedAt: generatedAt.toISOString(),
       embeddingVersion:
         provider === 'embedding-search'
           ? `${embeddingProvider}/${embeddingModel}`
@@ -113,4 +165,19 @@ export async function recognizeGoodsImage({
     candidates,
     warnings: allWarnings,
   });
+
+  await getDb()
+    .insert(recognitionAttempts)
+    .values({
+      id: requestId,
+      userId,
+      source,
+      provider,
+      candidateMap,
+      expiresAt: new Date(generatedAt.getTime() + recognitionAttemptTtlMs),
+      createdAt: generatedAt,
+      updatedAt: generatedAt,
+    });
+
+  return response;
 }

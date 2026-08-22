@@ -1,6 +1,10 @@
-import type { GoodsSearchFilterOptions } from '@/server/data';
+'use client';
+
+import { useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { formatTagLabel } from '@/lib/catalog-labels';
+import type { GoodsSearchFilterOptions } from '@/server/data';
 
 import { formatGoodsTypeLabel, type SearchPageControls } from './search-query';
 
@@ -9,220 +13,170 @@ type SearchFiltersProps = {
   filterOptions?: GoodsSearchFilterOptions;
 };
 
-const controlClassName = 'ui-field h-11 px-4';
+const controlClassName = 'ui-field h-10 w-full px-3';
 
 export function SearchFilters({ controls, filterOptions }: SearchFiltersProps) {
-  const hasActiveFilters =
-    Boolean(controls.ipSlug) ||
-    Boolean(controls.characterSlug) ||
-    Boolean(controls.seriesSlug) ||
-    Boolean(controls.goodsType) ||
-    controls.tagSlugs.length > 0;
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 64rem)');
+    const sync = () => {
+      if (detailsRef.current) detailsRef.current.open = media.matches;
+    };
+
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+
+  const activeCount =
+    Number(Boolean(controls.ipSlug)) +
+    Number(Boolean(controls.characterSlug)) +
+    Number(Boolean(controls.seriesSlug)) +
+    Number(Boolean(controls.goodsType)) +
+    controls.tagSlugs.length;
+  const tags = filterOptions?.tags ?? [];
+
+  const renderTags = (items: typeof tags) => (
+    <div className="flex flex-wrap gap-2">
+      {items.map((tag) => {
+        const inputId = `search-tag-${tag.slug}`;
+
+        return (
+          <label className="cursor-pointer" htmlFor={inputId} key={tag.id}>
+            <input
+              className="peer sr-only"
+              defaultChecked={controls.tagSlugs.includes(tag.slug)}
+              id={inputId}
+              name="tag"
+              type="checkbox"
+              value={tag.slug}
+            />
+            <span className="chip inline-flex px-2.5 py-1 text-[12px] transition-[border-color,background-color,color] duration-150 peer-checked:border-[var(--shu)] peer-checked:bg-[var(--shu-soft)] peer-checked:text-[var(--shu)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--shu)]">
+              {formatTagLabel(tag.slug, tag.name)}{' '}
+              <span className="ml-1 opacity-60">{tag.goodsCount}</span>
+            </span>
+          </label>
+        );
+      })}
+    </div>
+  );
 
   return (
-    <aside className="xl:sticky xl:top-6 xl:self-start">
-      <div className="collection-panel p-5 sm:p-6">
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-              过滤范围
-            </p>
-            <div>
-              <h2 className="font-heading text-foreground text-4xl leading-none">
-                筛选
-              </h2>
-            </div>
+    <form action="/search">
+      {controls.query ? (
+        <input name="query" type="hidden" value={controls.query} />
+      ) : null}
+      <details
+        className="collection-panel group lg:sticky lg:top-24"
+        ref={detailsRef}
+      >
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 lg:hidden">
+          <span className="font-medium">筛选结果</span>
+          <span className="num">
+            {activeCount ? `${activeCount} 项已选` : '展开'}
+          </span>
+        </summary>
+
+        <div className="border-border space-y-5 border-t p-4 group-open:block lg:!block lg:border-t-0">
+          <div className="hidden items-baseline justify-between lg:flex">
+            <h2 className="text-xl">筛选</h2>
+            <span className="num">
+              {activeCount ? `${activeCount} 项` : '全部'}
+            </span>
           </div>
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-semibold uppercase">图鉴范围</h3>
-              <span className="text-muted-foreground text-xs">
-                IP / 角色 / 系列
-              </span>
-            </div>
+          <label className="block space-y-1.5 text-[12px] text-[var(--ink-2)]">
+            IP
+            <select
+              className={controlClassName}
+              defaultValue={controls.ipSlug ?? ''}
+              name="ipSlug"
+            >
+              <option value="">全部 IP</option>
+              {(filterOptions?.ips ?? []).map((item) => (
+                <option key={item.id} value={item.slug}>
+                  {item.name}（{item.goodsCount}）
+                </option>
+              ))}
+            </select>
+          </label>
 
-            <div className="space-y-3">
-              <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
-                htmlFor="search-sidebar-ip"
-              >
-                IP
-              </label>
-              <select
-                className={controlClassName}
-                defaultValue={controls.ipSlug ?? ''}
-                id="search-sidebar-ip"
-                name="ipSlug"
-              >
-                <option value="">全部 IP</option>
-                {(filterOptions?.ips ?? []).map((item) => (
-                  <option key={item.id} value={item.slug}>
-                    {item.name} ({item.goodsCount})
-                  </option>
-                ))}
-              </select>
-            </div>
+          <label className="block space-y-1.5 text-[12px] text-[var(--ink-2)]">
+            角色
+            <select
+              className={controlClassName}
+              defaultValue={controls.characterSlug ?? ''}
+              name="characterSlug"
+            >
+              <option value="">全部角色</option>
+              {(filterOptions?.characters ?? []).map((item) => (
+                <option key={item.id} value={item.slug}>
+                  {item.name}（{item.goodsCount}）
+                </option>
+              ))}
+            </select>
+          </label>
 
-            <div className="space-y-3">
-              <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
-                htmlFor="search-sidebar-character"
-              >
-                角色
-              </label>
-              <select
-                className={controlClassName}
-                defaultValue={controls.characterSlug ?? ''}
-                id="search-sidebar-character"
-                name="characterSlug"
-              >
-                <option value="">全部角色</option>
-                {(filterOptions?.characters ?? []).map((item) => (
-                  <option key={item.id} value={item.slug}>
-                    {item.name} ({item.goodsCount})
-                  </option>
-                ))}
-              </select>
-            </div>
+          <label className="block space-y-1.5 text-[12px] text-[var(--ink-2)]">
+            系列
+            <select
+              className={controlClassName}
+              defaultValue={controls.seriesSlug ?? ''}
+              name="seriesSlug"
+            >
+              <option value="">全部系列</option>
+              {(filterOptions?.series ?? []).map((item) => (
+                <option key={item.id} value={item.slug}>
+                  {item.name}（{item.goodsCount}）
+                </option>
+              ))}
+            </select>
+          </label>
 
-            <div className="space-y-3">
-              <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
-                htmlFor="search-sidebar-series"
-              >
-                系列
-              </label>
-              <select
-                className={controlClassName}
-                defaultValue={controls.seriesSlug ?? ''}
-                id="search-sidebar-series"
-                name="seriesSlug"
-              >
-                <option value="">全部系列</option>
-                {(filterOptions?.series ?? []).map((item) => (
-                  <option key={item.id} value={item.slug}>
-                    {item.name} ({item.goodsCount})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </section>
+          <label className="block space-y-1.5 text-[12px] text-[var(--ink-2)]">
+            商品类型
+            <select
+              className={controlClassName}
+              defaultValue={controls.goodsType ?? ''}
+              name="goodsType"
+            >
+              <option value="">全部类型</option>
+              {(filterOptions?.goodsTypes ?? []).map((item) => (
+                <option key={item.value} value={item.value}>
+                  {formatGoodsTypeLabel(item.value)}（{item.goodsCount}）
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-semibold uppercase">商品特征</h3>
-              <span className="text-muted-foreground text-xs">类型 + 标签</span>
-            </div>
-
-            <div className="space-y-3">
-              <label
-                className="text-muted-foreground block text-[0.7rem] font-semibold uppercase"
-                htmlFor="search-sidebar-goods-type"
-              >
-                商品类型
-              </label>
-              <select
-                className={controlClassName}
-                defaultValue={controls.goodsType ?? ''}
-                id="search-sidebar-goods-type"
-                name="goodsType"
-              >
-                <option value="">全部商品类型</option>
-                {(filterOptions?.goodsTypes ?? []).map((goodsType) => (
-                  <option key={goodsType.value} value={goodsType.value}>
-                    {formatGoodsTypeLabel(goodsType.value)} (
-                    {goodsType.goodsCount})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
-                标签
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {(filterOptions?.tags ?? []).length > 0 ? (
-                  filterOptions?.tags.map((tag) => {
-                    const inputId = `search-tag-${tag.slug}`;
-                    const isChecked = controls.tagSlugs.includes(tag.slug);
-
-                    return (
-                      <label
-                        className="cursor-pointer"
-                        htmlFor={inputId}
-                        key={tag.id}
-                      >
-                        <input
-                          className="peer sr-only"
-                          defaultChecked={isChecked}
-                          id={inputId}
-                          name="tag"
-                          type="checkbox"
-                          value={tag.slug}
-                        />
-                        <span className="hud-chip text-foreground/84 peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex px-3 py-1.5 text-sm transition">
-                          {tag.name}
-                          <span className="text-muted-foreground ml-2 text-xs">
-                            {tag.goodsCount}
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })
-                ) : (
-                  <div className="hud-card text-muted-foreground border-dashed px-4 py-4 text-sm">
-                    暂无标签
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {hasActiveFilters ? (
+          {tags.length ? (
             <section className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <h3 className="text-sm font-semibold uppercase">当前过滤</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {controls.ipSlug ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">
-                    IP · {controls.ipSlug}
-                  </span>
-                ) : null}
-                {controls.characterSlug ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">
-                    角色 · {controls.characterSlug}
-                  </span>
-                ) : null}
-                {controls.seriesSlug ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">
-                    系列 · {controls.seriesSlug}
-                  </span>
-                ) : null}
-                {controls.goodsType ? (
-                  <span className="hud-chip px-3 py-1.5 text-sm">
-                    类型 · {formatGoodsTypeLabel(controls.goodsType)}
-                  </span>
-                ) : null}
-                {controls.tagSlugs.map((tagSlug) => (
-                  <span className="hud-chip px-3 py-1.5 text-sm" key={tagSlug}>
-                    标签 · {tagSlug}
-                  </span>
-                ))}
-              </div>
+              <p className="text-[12px] text-[var(--ink-2)]">标签</p>
+              {renderTags(tags.slice(0, 8))}
+              {tags.length > 8 ? (
+                <details>
+                  <summary className="cursor-pointer text-[12px] text-[var(--shu)]">
+                    更多标签（{tags.length - 8}）
+                  </summary>
+                  <div className="mt-3">{renderTags(tags.slice(8))}</div>
+                </details>
+              ) : null}
             </section>
           ) : null}
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Button type="submit">应用过滤</Button>
-            <Button asChild variant="outline">
-              <a href="/search">重置搜索</a>
+          <div className="flex gap-2 pt-1">
+            <Button className="flex-1" size="sm" type="submit">
+              应用
             </Button>
+            {activeCount ? (
+              <Button asChild size="sm" variant="outline">
+                <a href="/search">重置</a>
+              </Button>
+            ) : null}
           </div>
         </div>
-      </div>
-    </aside>
+      </details>
+    </form>
   );
 }

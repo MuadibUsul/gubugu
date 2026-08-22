@@ -15,9 +15,9 @@ export const goodsRatingDimensionMeta = [
   },
   {
     key: 'valueScore',
-    label: '性价比',
-    title: '价格价值',
-    description: '结合售价与实物表现，是否觉得值这个价格。',
+    label: '收藏价值',
+    title: '收藏价值',
+    description: '结合做工、设计与获取难度，评估长期收藏意愿。',
   },
   {
     key: 'rarityScore',

@@ -2,7 +2,7 @@
 
 ## Visual Direction
 
-Gooods Dex should feel like a premium collectible encyclopedia.
+谷布谷 should feel like a premium collectible encyclopedia.
 
 The visual tone should be:
 
@@ -57,6 +57,31 @@ Search UI should feel:
 - fast to scan
 - stable
 - information-dense without clutter
+
+## Public Goods Library
+
+`/search` is the canonical public goods library, not only a keyword-results page.
+It must expose every published SKU to signed-out and signed-in visitors, with
+search and filters layered on top of the complete catalogue.
+
+Public-library cards, home catalogue previews, IP and series SKU walls,
+character sheets, and user cabinet thumbnails share one lighting language:
+
+| State               | Thumbnail                                              | Visible status  | Primary action |
+| ------------------- | ------------------------------------------------------ | --------------- | -------------- |
+| Not in cabinet      | Grayscale                                              | 未点亮          | 收进谷柜       |
+| In cabinet, not lit | Grayscale with a restrained violet cabinet border      | 已入柜 · 待点亮 | 扫描点亮       |
+| Lit                 | Full color with the gold mount and red collection seal | 已点亮          | Open details   |
+
+Rules:
+
+- saving a SKU to the cabinet never restores thumbnail color
+- only a successful camera recognition and user confirmation can light a SKU
+- grayscale thumbnails must remain grayscale on hover; hover may lift the card but must not preview its color
+- SKU detail galleries always show the complete full-color, high-resolution catalogue image, regardless of cabinet or lighting state
+- state must be communicated with visible text as well as color, border, or the decorative seal
+- server-rendered pages must emit the correct dormant or lit state to avoid a flash of unauthorized color
+- catalogue grids use two columns at 320/360 widths when space permits, three at intermediate widths, and four on PC catalogue walls
 
 ## Encyclopedia Feel
 
@@ -115,7 +140,7 @@ A good SKU detail page should let the user understand quickly:
 
 - what the item is
 - which IP / character / series it belongs to
-- whether they own it, want it, or want to exchange it
+- whether it is in their cabinet, lit, wanted, or available to exchange
 - what other users think about it
 
 ## Visual Language
@@ -172,7 +197,8 @@ Collection actions must feel obvious and satisfying.
 
 Key actions:
 
-- mark owned
+- save to or remove from the cabinet
+- scan a physical item to light it
 - mark wanted
 - mark exchange
 
@@ -180,7 +206,9 @@ Interaction guidance:
 
 - place state actions close to the SKU hero area
 - make status changes visually clear
-- support a sense of lighting or activation when a user adds an item to their collection
+- keep cabinet saving and lighting visually and behaviorally distinct
+- never expose a normal button that directly marks an unverified SKU as lit
+- use a short, one-time seal response after successful lighting; do not animate ordinary cabinet saves as if they were verified
 
 ## Character and Series Pages
 
@@ -205,6 +233,11 @@ It should communicate:
 - upload progress
 - candidate results
 - user confirmation
+- whether the current result is eligible to light the SKU
+
+Uploading an image may help identify a SKU, but it does not light a collection.
+The lighting action belongs to the camera scan flow and must complete before the
+UI presents a full-color thumbnail or “已点亮” state.
 
 The UI should not imply:
 
@@ -222,6 +255,15 @@ Guidance:
 - prioritize data quality and moderation efficiency
 - do not turn the entire product aesthetic into back-office UI
 
+## SKU Share Cards
+
+- Put `分享谷卡` in the SKU title/chip row so it stays visible in the first mobile viewport; do not bury it inside collection or exchange actions.
+- Export one fixed 1080 × 1440 light-theme PNG. Use `object-contain` for merchandise art and keep IP/series, item name, at most three compact attributes, SKU code and brand signature readable.
+- Do not include a viewer name, cabinet state or a fake `已点亮` seal. Share cards are public SKU artifacts, not proof of ownership.
+- Open a native dialog only on demand. Mobile presents it as a bottom sheet; desktop uses a centered two-column preview. The generated `File` is reused for preview and actions.
+- Action order is `系统分享 / 下载高清 PNG / 复制 SKU 链接`. Never label a normal Web button as direct WeChat or Douyin publishing.
+- If file sharing is unsupported, explain the link/download fallback. Cancellation is neutral feedback, not an error.
+
 ## Quality Bar
 
 Every new user-facing screen should be checked against these questions:
@@ -232,3 +274,19 @@ Every new user-facing screen should be checked against these questions:
 - is the visual hierarchy strong on desktop
 - does the layout still work responsively
 - do interactions support a satisfying collecting experience
+
+## Current Implementation Rules
+
+- Brand metaphor: airy anime collectible scrapbook. Warm off-white protects image fidelity; sakura pink, violet and sky blue create atmosphere without becoming neon.
+- `--shu` is the primary action color; violet supports discovery, owned uses `--kin`, wanted uses `--want`, and exchange uses `--exchange`.
+- Use the system sans stack for headings and body copy. Hierarchy comes from weight, scale and spacing, not serif display type or wide Chinese tracking.
+- Consumer cards use 14–24px radii, one subtle border and one soft shadow. Avoid deeply nested panels, glass effects and decorative dashboard statistics.
+- Product and user images remain the strongest visual elements. Gradients belong to page atmosphere and primary actions, not every component.
+- `.section-kicker` is reserved for section identity. `.lbl` and `.num` stay quiet metadata; collection states keep their semantic colors.
+- Chinese labels lead the interface. Original titles may remain when they are the official catalogue name, but raw slugs and enum values must be formatted before display.
+- Global consumer navigation is consistently ordered and labelled as `谷库 / 点亮 / 换谷 / 我的`. `谷库` links to `/search`, and `点亮` links to `/recognition`; administration remains contextual and role-gated.
+- Search results appear in the first viewport. Desktop filters use a sticky side rail; mobile filters collapse.
+- SKU pages show item, specification and collection state before community content. Rating and posting forms remain collapsed until requested.
+- Frequent UI feedback uses 120–220ms CSS transitions on explicit properties. Do not use `transition: all`, JavaScript animation libraries, or motion on keyboard navigation.
+- Pressable controls use a subtle `scale(.97)` active state and retain visible keyboard focus.
+- Hover transforms are limited to fine pointers; `prefers-reduced-motion` removes movement.

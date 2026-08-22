@@ -1,6 +1,11 @@
 import Link from 'next/link';
 
-import { formatCatalogCurrency, formatCatalogDate } from '@/lib/formatters';
+import {
+  formatGoodsTypeLabel,
+  formatMaterialLabel,
+  formatTagLabel,
+} from '@/lib/catalog-labels';
+import { formatCatalogDate } from '@/lib/formatters';
 import type { GoodsDetailPageData } from '@/server/data';
 
 type GoodsSpecTableProps = {
@@ -54,15 +59,11 @@ export function GoodsSpecTable({ goods }: GoodsSpecTableProps) {
             ))
           : '暂未关联',
     },
-    { label: '类型', value: goods.goodsType },
-    { label: '材质', value: goods.material ?? '暂未收录' },
+    { label: '类型', value: formatGoodsTypeLabel(goods.goodsType) },
+    { label: '材质', value: formatMaterialLabel(goods.material) },
     { label: '尺寸', value: goods.sizeLabel ?? '暂未收录' },
     { label: '版本', value: goods.edition ?? '暂未收录' },
     { label: '发售', value: formatCatalogDate(goods.releaseDate) },
-    {
-      label: '定价',
-      value: formatCatalogCurrency(goods.msrpAmount, goods.currencyCode),
-    },
   ];
 
   return (
@@ -89,7 +90,7 @@ export function GoodsSpecTable({ goods }: GoodsSpecTableProps) {
               href={`/search?tag=${encodeURIComponent(tag.slug)}`}
               key={tag.id}
             >
-              {tag.name}
+              {formatTagLabel(tag.slug, tag.name)}
             </Link>
           ))}
         </div>

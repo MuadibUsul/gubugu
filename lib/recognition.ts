@@ -21,6 +21,8 @@ export const recognitionErrorCodeValues = [
   'MISSING_IMAGE',
   'UNSUPPORTED_IMAGE_TYPE',
   'IMAGE_TOO_LARGE',
+  'UNAUTHORIZED',
+  'RATE_LIMITED',
   'INTERNAL_ERROR',
 ] as const;
 
@@ -39,17 +41,41 @@ export const recognitionErrorCodeSchema = z.enum(recognitionErrorCodeValues);
 
 export const recognitionUploadLimits = {
   maxFileSizeBytes: 10 * 1024 * 1024,
-  acceptedMimePrefix: 'image/',
 } as const;
 
 export const recognitionCandidateDisplayLimit = 5;
 export const recognitionStrongMatchThreshold = 0.72;
 export const recognitionWeakMatchThreshold = 0.58;
+export const recognitionAttemptTtlMs = 15 * 60 * 1000;
 
 export const recognitionRequestMetadataSchema = z.object({
   source: recognitionSourceSchema.default('upload'),
   captureMode: recognitionCaptureModeSchema.optional(),
 });
+
+export const recognitionCandidateMapSchema = z
+  .record(z.string().uuid(), z.string().uuid())
+  .refine(
+    (value) => Object.keys(value).length <= recognitionCandidateDisplayLimit,
+    '识别候选数量超出限制。',
+  );
+
+export const confirmRecognitionCandidateInputSchema = z
+  .object({
+    requestId: z.string().uuid(),
+    candidateId: z.string().uuid(),
+  })
+  .strict();
+
+export function isRecognitionAttemptEligible({
+  source,
+  provider,
+}: {
+  source: string;
+  provider: string;
+}) {
+  return source === 'camera' && provider === 'embedding-search';
+}
 
 // Future image-similarity matching should resolve to a specific goods_images row
 // when possible, while keeping the candidate response stable for the current
@@ -128,6 +154,12 @@ export const recognitionResponseSchema = z.union([
 
 export type RecognitionRequestMetadata = z.infer<
   typeof recognitionRequestMetadataSchema
+>;
+export type RecognitionCandidateMap = z.infer<
+  typeof recognitionCandidateMapSchema
+>;
+export type ConfirmRecognitionCandidateInput = z.infer<
+  typeof confirmRecognitionCandidateInputSchema
 >;
 export type RecognitionCandidate = z.infer<typeof recognitionCandidateSchema>;
 export type RecognitionCandidateSimilarity = z.infer<

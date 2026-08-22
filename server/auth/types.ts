@@ -1,4 +1,4 @@
-export type AuthProvider = 'supabase' | 'local-demo';
+export type AuthProvider = 'supabase' | 'local';
 
 export type AuthUser = {
   id: string;

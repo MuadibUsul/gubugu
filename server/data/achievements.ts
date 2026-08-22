@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 
 import {
   evaluateAchievements,
@@ -78,6 +78,7 @@ async function loadScopeProgress(
           eq(userGoods.goodsId, goods.id),
           eq(userGoods.userId, userId),
           eq(userGoods.status, 'owned'),
+          isNotNull(userGoods.litAt),
         ),
       )
       .where(and(eq(goodsCharacters.characterId, characterId), publishedGoods));
@@ -106,6 +107,7 @@ async function loadScopeProgress(
         eq(userGoods.goodsId, goods.id),
         eq(userGoods.userId, userId),
         eq(userGoods.status, 'owned'),
+        isNotNull(userGoods.litAt),
       ),
     )
     .where(and(eq(goods.seriesId, touched.seriesId), publishedGoods));
@@ -133,6 +135,7 @@ async function loadScopeProgress(
         eq(userGoods.goodsId, goods.id),
         eq(userGoods.userId, userId),
         eq(userGoods.status, 'owned'),
+        isNotNull(userGoods.litAt),
       ),
     )
     .where(and(eq(series.ipId, touched.ipId), publishedGoods));
@@ -191,6 +194,7 @@ export async function recordAchievementsForGoods({
       and(
         eq(userGoods.userId, userId),
         eq(userGoods.status, 'owned'),
+        isNotNull(userGoods.litAt),
         publishedGoods,
       ),
     );

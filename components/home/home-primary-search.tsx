@@ -45,10 +45,11 @@ export function HomePrimarySearch() {
 
   return (
     <div>
-      <div className="border-input flex border focus-within:border-[var(--shu)]">
+      <div className="flex rounded-[18px] border border-[var(--rule)] bg-[var(--surface)] p-1.5 shadow-[0_14px_36px_-28px_var(--ink)] focus-within:border-[var(--shu)] focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--shu)_13%,transparent)]">
         <input
+          aria-label="搜索谷子"
           autoComplete="off"
-          className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[15px] focus-visible:shadow-none"
+          className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-[15px] focus-visible:shadow-none sm:px-4"
           name="query"
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -63,20 +64,19 @@ export function HomePrimarySearch() {
           value={query}
         />
         <button
-          className="shrink-0 bg-[var(--shu)] px-6 text-[14px] font-medium text-[var(--shu-ink)]"
+          className="shrink-0 rounded-[13px] bg-[linear-gradient(135deg,var(--shu),color-mix(in_oklab,var(--shu)_66%,var(--violet)))] px-5 text-[14px] font-bold text-white shadow-[0_10px_24px_-14px_var(--shu)] sm:px-6"
           onClick={() => submit(query)}
           type="button"
         >
-          搜索
+          搜索 <span aria-hidden="true">→</span>
         </button>
       </div>
 
-      {/* 建议词排成一行文字，不是一排胶囊 —— 索引的做法 */}
-      <div className="text-muted-foreground mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[13px]">
-        <span className="lbl">试试</span>
+      <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[12px]">
+        <span className="mr-1 font-semibold">热门：</span>
         {suggestions.map((item) => (
           <button
-            className="underline-offset-4 hover:text-[var(--shu)] hover:underline"
+            className="rounded-full bg-[var(--surface)]/78 px-2.5 py-1 hover:bg-[var(--shu-soft)] hover:text-[var(--shu)]"
             key={item}
             onClick={() => submit(item)}
             type="button"

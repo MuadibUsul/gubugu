@@ -13,8 +13,8 @@ import { getGoodsSearchPageData } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 export const metadata: Metadata = {
-  title: '搜索',
-  description: '按关键词、IP、角色、系列、商品类型和标签定位 SKU。',
+  title: '公共谷库',
+  description: '浏览全部谷子，并按关键词、IP、角色、系列和类型定位 SKU。',
 };
 
 const searchPageQuerySchema = z.object({
@@ -92,65 +92,60 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
-      <form action="/search">
-        <section className="spread border-border border-b pb-12">
-          <div>
-            <p className="lbl">检索</p>
-            <div className="rail-jp">索引</div>
-          </div>
+    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
+      <form
+        action="/search"
+        className="relative overflow-hidden rounded-[26px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_72%,var(--surface)))] px-5 py-7 sm:px-8 sm:py-9"
+      >
+        <span className="absolute -top-24 right-[8%] size-60 rounded-full bg-[color-mix(in_oklab,var(--violet)_8%,transparent)] blur-3xl" />
+        <div className="relative min-w-0">
+          <p className="section-kicker">公共谷库 · 全站 SKU 图鉴</p>
+          <h1 className="mt-3 text-[clamp(32px,4vw,48px)] leading-[1.12]">
+            每一件都看得见，拥有的才会亮。
+          </h1>
+          <p className="text-muted-foreground mt-3 text-sm">
+            收进谷柜不会点亮缩略图；扫描现实中的谷子并确认
+            SKU，才会恢复它的颜色。
+          </p>
 
-          <div className="min-w-0">
-            <h1 className="text-[clamp(28px,3.6vw,44px)] leading-[1.14]">
-              先找到正确的条目
-            </h1>
-            <div className="rule-kin mt-4" />
-
-            {/* 检索框不做 autoFocus：直接进搜索页的人会自己点，从其他页带着
-                关键词过来的人则会被强行拉到输入框、页面跳一下。 */}
-            <div className="border-input mt-6 flex max-w-[560px] border focus-within:border-[var(--shu)]">
-              <input
-                autoComplete="off"
-                className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[15px] focus-visible:shadow-none"
-                defaultValue={controls.query ?? ''}
-                name="query"
-                placeholder="商品名、型号，或者角色名"
-                type="search"
-              />
-              <button
-                className="shrink-0 bg-[var(--shu)] px-6 text-[14px] font-medium text-[var(--shu-ink)]"
-                type="submit"
-              >
-                搜索
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="spread py-12">
-          <div>
-            <p className="lbl">筛选</p>
-            <div className="rail-jp">筛选</div>
-          </div>
-
-          <div className="min-w-0">
-            <SearchFilters
-              controls={controls}
-              filterOptions={pageData?.filterOptions}
+          <div className="mt-6 flex max-w-[680px] rounded-[18px] border border-[var(--rule)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-card)] focus-within:border-[var(--shu)]">
+            <input
+              aria-label="搜索谷子"
+              autoComplete="off"
+              className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-[15px] focus-visible:shadow-none sm:px-4"
+              defaultValue={controls.query ?? ''}
+              name="query"
+              placeholder="商品名、型号，或者角色名"
+              type="search"
             />
-            <div className="mt-10">
-              <SearchResults
-                controls={controls}
-                filterOptions={pageData?.filterOptions}
-                isAuthenticated={Boolean(authUser)}
-                result={pageData?.results}
-                state={state}
-                viewerStatuses={pageData?.viewerStatuses}
-              />
-            </div>
+            <button
+              className="shrink-0 rounded-[13px] bg-[linear-gradient(135deg,var(--shu),color-mix(in_oklab,var(--shu)_66%,var(--violet)))] px-5 text-[14px] font-bold text-white sm:px-7"
+              type="submit"
+            >
+              搜索 →
+            </button>
           </div>
-        </section>
+        </div>
       </form>
+
+      <section className="grid gap-6 py-9 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+        <div className="min-w-0 lg:order-1">
+          <SearchFilters
+            controls={controls}
+            filterOptions={pageData?.filterOptions}
+          />
+        </div>
+        <div className="min-w-0 lg:order-2">
+          <SearchResults
+            controls={controls}
+            filterOptions={pageData?.filterOptions}
+            isAuthenticated={Boolean(authUser)}
+            result={pageData?.results}
+            state={state}
+            viewerStates={pageData?.viewerStates}
+          />
+        </div>
+      </section>
     </main>
   );
 }

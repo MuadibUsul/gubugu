@@ -5,7 +5,6 @@ import { z } from 'zod';
 
 import {
   characters,
-  exchangeListings,
   goods,
   goodsCharacters,
   goodsImages,
@@ -30,6 +29,7 @@ import { getDb } from '@/server/db/client';
 const CATALOG_REVALIDATE_SECONDS = 300;
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
 import {
+  getUserGoodsStateFlags,
   getUserGoodsStateMap,
   type UserGoodsStateSnapshot,
 } from '@/server/data/user-goods';
@@ -98,6 +98,8 @@ export type CharacterCollectionGoodsCard = Awaited<
   ReturnType<typeof getPublishedGoodsCardsByIds>
 >[number] & {
   viewerState: UserGoodsStateSnapshot['statuses'];
+  isInCabinet: boolean;
+  isLit: boolean;
   isOwned: boolean;
   isWanted: boolean;
   isExchange: boolean;
@@ -218,7 +220,6 @@ export type GoodsDetailPageData = {
     ratingAverage: number | null;
     ratingCount: number;
     postCount: number;
-    openExchangeCount: number;
   };
 };
 
@@ -505,89 +506,70 @@ async function getGoodsDetailPageDataUncached(goodsSlug: string) {
     return null;
   }
 
-  const [
-    imageRows,
-    tagRows,
-    characterRows,
-    ratingRows,
-    postRows,
-    exchangeRows,
-  ] = await Promise.all([
-    db
-      .select({
-        id: goodsImages.id,
-        imageUrl: goodsImages.imageUrl,
-        altText: goodsImages.altText,
-        sortOrder: goodsImages.sortOrder,
-        isPrimary: goodsImages.isPrimary,
-      })
-      .from(goodsImages)
-      .where(eq(goodsImages.goodsId, detail.id))
-      .orderBy(desc(goodsImages.isPrimary), asc(goodsImages.sortOrder)),
-    db
-      .select({
-        id: tags.id,
-        slug: tags.slug,
-        name: tags.name,
-      })
-      .from(goodsTags)
-      .innerJoin(tags, eq(goodsTags.tagId, tags.id))
-      .where(eq(goodsTags.goodsId, detail.id))
-      .orderBy(asc(tags.name)),
-    db
-      .select({
-        id: characters.id,
-        slug: characters.slug,
-        name: characters.name,
-        nameLocalized: characters.nameLocalized,
-        avatarImageUrl: characters.avatarImageUrl,
-        sortOrder: goodsCharacters.sortOrder,
-        isPrimary: goodsCharacters.isPrimary,
-      })
-      .from(goodsCharacters)
-      .innerJoin(characters, eq(goodsCharacters.characterId, characters.id))
-      .where(eq(goodsCharacters.goodsId, detail.id))
-      .orderBy(
-        asc(goodsCharacters.sortOrder),
-        desc(goodsCharacters.isPrimary),
-        asc(characters.name),
-      ),
-    db
-      .select({
-        averageScore: sql<string | null>`avg(${ratings.score})`,
-        ratingCount: sql<number>`count(${ratings.id})`,
-      })
-      .from(ratings)
-      .where(eq(ratings.goodsId, detail.id)),
-    db
-      .select({
-        postCount: sql<number>`count(${posts.id})`,
-      })
-      .from(posts)
-      .where(
-        and(
-          eq(posts.goodsId, detail.id),
-          eq(posts.status, 'visible'),
-          eq(posts.moderationStatus, 'approved'),
+  const [imageRows, tagRows, characterRows, ratingRows, postRows] =
+    await Promise.all([
+      db
+        .select({
+          id: goodsImages.id,
+          imageUrl: goodsImages.imageUrl,
+          altText: goodsImages.altText,
+          sortOrder: goodsImages.sortOrder,
+          isPrimary: goodsImages.isPrimary,
+        })
+        .from(goodsImages)
+        .where(eq(goodsImages.goodsId, detail.id))
+        .orderBy(desc(goodsImages.isPrimary), asc(goodsImages.sortOrder)),
+      db
+        .select({
+          id: tags.id,
+          slug: tags.slug,
+          name: tags.name,
+        })
+        .from(goodsTags)
+        .innerJoin(tags, eq(goodsTags.tagId, tags.id))
+        .where(eq(goodsTags.goodsId, detail.id))
+        .orderBy(asc(tags.name)),
+      db
+        .select({
+          id: characters.id,
+          slug: characters.slug,
+          name: characters.name,
+          nameLocalized: characters.nameLocalized,
+          avatarImageUrl: characters.avatarImageUrl,
+          sortOrder: goodsCharacters.sortOrder,
+          isPrimary: goodsCharacters.isPrimary,
+        })
+        .from(goodsCharacters)
+        .innerJoin(characters, eq(goodsCharacters.characterId, characters.id))
+        .where(eq(goodsCharacters.goodsId, detail.id))
+        .orderBy(
+          asc(goodsCharacters.sortOrder),
+          desc(goodsCharacters.isPrimary),
+          asc(characters.name),
         ),
-      ),
-    db
-      .select({
-        openExchangeCount: sql<number>`count(${exchangeListings.id})`,
-      })
-      .from(exchangeListings)
-      .where(
-        and(
-          eq(exchangeListings.goodsId, detail.id),
-          eq(exchangeListings.status, 'open'),
-          eq(exchangeListings.moderationStatus, 'approved'),
+      db
+        .select({
+          averageScore: sql<string | null>`avg(${ratings.score})`,
+          ratingCount: sql<number>`count(${ratings.id})`,
+        })
+        .from(ratings)
+        .where(eq(ratings.goodsId, detail.id)),
+      db
+        .select({
+          postCount: sql<number>`count(${posts.id})`,
+        })
+        .from(posts)
+        .where(
+          and(
+            eq(posts.goodsId, detail.id),
+            eq(posts.status, 'visible'),
+            eq(posts.moderationStatus, 'approved'),
+          ),
         ),
-      ),
-  ]);
+    ]);
 
   const ratingSummary = ratingRows[0];
   const postSummary = postRows[0];
-  const exchangeSummary = exchangeRows[0];
 
   return {
     id: detail.id,
@@ -625,7 +607,6 @@ async function getGoodsDetailPageDataUncached(goodsSlug: string) {
         : null,
       ratingCount: Number(ratingSummary?.ratingCount ?? 0),
       postCount: Number(postSummary?.postCount ?? 0),
-      openExchangeCount: Number(exchangeSummary?.openExchangeCount ?? 0),
     },
   } satisfies GoodsDetailPageData;
 }
@@ -667,20 +648,16 @@ export async function getCharacterEncyclopediaViewData(
       goodsId: item.id,
       statuses: [],
     };
-    const isOwned = snapshot.statuses.some(({ status }) => status === 'owned');
-    const isWanted = snapshot.statuses.some(
-      ({ status }) => status === 'wanted',
-    );
-    const isExchange = snapshot.statuses.some(
-      ({ status }) => status === 'exchange',
-    );
+    const flags = getUserGoodsStateFlags(snapshot);
 
     return {
       ...item,
       viewerState: snapshot.statuses,
-      isOwned,
-      isWanted,
-      isExchange,
+      isInCabinet: flags.isInCabinet,
+      isLit: flags.isLit,
+      isOwned: flags.isLit,
+      isWanted: flags.isWanted,
+      isExchange: flags.isExchange,
     } satisfies CharacterCollectionGoodsCard;
   });
 

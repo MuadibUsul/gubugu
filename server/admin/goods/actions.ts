@@ -5,7 +5,14 @@ import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { goods, goodsImages, goodsTags, series, tags } from '@/drizzle/schema';
+import {
+  crawlerDrafts,
+  goods,
+  goodsImages,
+  goodsTags,
+  series,
+  tags,
+} from '@/drizzle/schema';
 import { catalogCacheTag } from '@/lib/cache-tags';
 import { slugifyText } from '@/lib/slug';
 import type { SaveAdminGoodsActionState } from '@/server/admin/goods/action-state';
@@ -13,6 +20,16 @@ import { requireAdminAccess } from '@/server/auth/admin';
 import { getDb, type Database } from '@/server/db/client';
 
 const entityStatusValues = ['draft', 'published', 'archived'] as const;
+const officialTypeValues = [
+  'official',
+  'official_bonus',
+  'official_limited',
+  'licensed',
+  'doujin',
+  'self_made',
+  'unknown',
+] as const;
+const verificationStatusValues = ['verified', 'unverified'] as const;
 
 type GoodsAdminTransaction = Parameters<
   Parameters<Database['transaction']>[0]
@@ -93,6 +110,7 @@ const optionalCurrencyCodeFieldSchema = optionalFormStringSchema
 const saveAdminGoodsInputSchema = z
   .object({
     goodsId: optionalUuidFormSchema,
+    crawlerDraftId: optionalUuidFormSchema,
     returnQuery: optionalFormStringSchema
       .refine((value) => value.length <= 100, {
         message: '返回查询词过长。',
@@ -119,10 +137,30 @@ const saveAdminGoodsInputSchema = z
     releaseDate: optionalDateFieldSchema,
     msrpAmount: optionalAmountFieldSchema,
     currencyCode: optionalCurrencyCodeFieldSchema,
+    manufacturer: optionalTextFieldSchema(128),
+    region: optionalTextFieldSchema(64),
+    officialType: z.enum(officialTypeValues),
+    verificationStatus: z.enum(verificationStatusValues),
     metadataText: optionalTextFieldSchema(12000),
     status: z.enum(entityStatusValues),
   })
   .superRefine((value, ctx) => {
+    if (value.goodsId && value.crawlerDraftId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '采集草稿只能创建新商品，不能覆盖已有 SKU。',
+        path: ['crawlerDraftId'],
+      });
+    }
+
+    if (value.crawlerDraftId && value.status !== 'published') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '审核通过的采集草稿必须以已发布状态进入谷库。',
+        path: ['status'],
+      });
+    }
+
     if (value.msrpAmount && !value.currencyCode) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -262,7 +300,9 @@ function normalizeImageRows(formData: FormData) {
     const altText = rawAltTexts[index]?.trim() ?? '';
     const sortOrderValue = rawSortOrders[index]?.trim() ?? '';
 
-    if (!id && !imageUrl && !altText && !sortOrderValue) {
+    // A blank editor row still carries its generated sort order (usually "0").
+    // Do not mistake that UI bookkeeping value for an actual image record.
+    if (!id && !imageUrl && !altText) {
       continue;
     }
 
@@ -365,6 +405,10 @@ function buildReturnPath(
   input: z.output<typeof saveAdminGoodsInputSchema>,
   goodsId: string,
 ) {
+  if (input.crawlerDraftId) {
+    return '/admin/crawler?view=drafts&notice=draft-published';
+  }
+
   const params = new URLSearchParams();
 
   if (input.returnQuery) {
@@ -521,6 +565,13 @@ async function syncGoodsImages(
 
 function mapDatabaseError(error: unknown): SaveAdminGoodsActionState {
   if (error instanceof Error) {
+    if (error.message.includes('CRAWLER_DRAFT_NOT_PENDING')) {
+      return {
+        status: 'error',
+        message: '这条采集草稿已被其他管理员处理，请返回采集队列刷新。',
+      };
+    }
+
     if (error.message.includes('goods_sku_code_unique')) {
       return {
         status: 'error',
@@ -560,10 +611,11 @@ export async function saveAdminGoodsAction(
   _previousState: SaveAdminGoodsActionState,
   formData: FormData,
 ): Promise<SaveAdminGoodsActionState> {
-  await requireAdminAccess('/admin/goods');
+  const viewer = await requireAdminAccess('/admin/goods');
 
   const parsed = saveAdminGoodsInputSchema.safeParse({
     goodsId: formData.get('goodsId'),
+    crawlerDraftId: formData.get('crawlerDraftId'),
     returnQuery: formData.get('returnQuery'),
     returnStatus: formData.get('returnStatus'),
     returnSeriesId: formData.get('returnSeriesId'),
@@ -579,6 +631,10 @@ export async function saveAdminGoodsAction(
     releaseDate: formData.get('releaseDate'),
     msrpAmount: formData.get('msrpAmount'),
     currencyCode: formData.get('currencyCode'),
+    manufacturer: formData.get('manufacturer'),
+    region: formData.get('region'),
+    officialType: formData.get('officialType'),
+    verificationStatus: formData.get('verificationStatus'),
     metadataText: formData.get('metadataText'),
     status: formData.get('status'),
   });
@@ -707,6 +763,19 @@ export async function saveAdminGoodsAction(
 
   try {
     await db.transaction(async (tx) => {
+      if (parsed.data.crawlerDraftId) {
+        const draftRows = await tx
+          .select({ id: crawlerDrafts.id, status: crawlerDrafts.status })
+          .from(crawlerDrafts)
+          .where(eq(crawlerDrafts.id, parsed.data.crawlerDraftId))
+          .limit(1)
+          .for('update');
+
+        if (!draftRows[0] || draftRows[0].status !== 'pending') {
+          throw new Error('CRAWLER_DRAFT_NOT_PENDING');
+        }
+      }
+
       if (parsed.data.goodsId) {
         await tx
           .update(goods)
@@ -723,6 +792,10 @@ export async function saveAdminGoodsAction(
             releaseDate: parsed.data.releaseDate,
             msrpAmount: parsed.data.msrpAmount,
             currencyCode: parsed.data.currencyCode,
+            manufacturer: parsed.data.manufacturer,
+            region: parsed.data.region,
+            officialType: parsed.data.officialType,
+            verificationStatus: parsed.data.verificationStatus,
             metadata: metadataResult.data,
             status: parsed.data.status,
             updatedAt: now,
@@ -743,6 +816,10 @@ export async function saveAdminGoodsAction(
           releaseDate: parsed.data.releaseDate,
           msrpAmount: parsed.data.msrpAmount,
           currencyCode: parsed.data.currencyCode,
+          manufacturer: parsed.data.manufacturer,
+          region: parsed.data.region,
+          officialType: parsed.data.officialType,
+          verificationStatus: parsed.data.verificationStatus,
           metadata: metadataResult.data,
           status: parsed.data.status,
         });
@@ -762,6 +839,24 @@ export async function saveAdminGoodsAction(
       }
 
       await syncGoodsImages(tx, goodsId, imageRowsResult.rows, now);
+
+      if (parsed.data.crawlerDraftId) {
+        await tx
+          .update(crawlerDrafts)
+          .set({
+            status: 'published',
+            publishedGoodsId: goodsId,
+            reviewedBy: viewer.id,
+            reviewedAt: now,
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(crawlerDrafts.id, parsed.data.crawlerDraftId),
+              eq(crawlerDrafts.status, 'pending'),
+            ),
+          );
+      }
     });
   } catch (error) {
     return mapDatabaseError(error);
@@ -772,6 +867,7 @@ export async function saveAdminGoodsAction(
   updateTag(catalogCacheTag);
   revalidatePath('/admin');
   revalidatePath('/admin/goods');
+  revalidatePath('/admin/crawler');
   revalidatePath('/search');
 
   if (existingGoods?.slug) {

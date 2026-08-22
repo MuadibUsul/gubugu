@@ -3,24 +3,25 @@ import Link from 'next/link';
 import { listHotIps, type HomeHotIp } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
-/**
- * 目次 —— 作品列表。
- *
- * 刻意不是卡片网格。图录的目录是带编号的条目行加引导线，一眼能数清有几部、
- * 每部多大；卡片墙做不到这件事，它把每个条目变成等大的色块。
- */
 function ContentsRow({ ip, index }: { ip: HomeHotIp; index: number }) {
+  const tones = [
+    'bg-[var(--shu-soft)] border-[color:color-mix(in_oklab,var(--shu)_18%,var(--rule))]',
+    'bg-[var(--violet-soft)] border-[color:color-mix(in_oklab,var(--violet)_18%,var(--rule))]',
+    'bg-[var(--sky-soft)] border-[color:color-mix(in_oklab,var(--sky)_18%,var(--rule))]',
+  ] as const;
+
   return (
     <Link
-      className="border-border group hover:border-rule-2 flex items-baseline gap-4 border-b py-5 last:border-b-0"
+      className={`panel-float group relative min-h-[154px] overflow-hidden rounded-[20px] border p-5 ${tones[index % tones.length]}`}
       href={`/ips/${ip.slug}`}
     >
-      <span className="num w-10 shrink-0">
-        {String(index + 1).padStart(3, '0')}
+      <span className="absolute -right-3 -bottom-5 font-mono text-[76px] leading-none font-black text-[var(--ink)]/[0.035]">
+        {String(index + 1).padStart(2, '0')}
       </span>
 
-      <span className="min-w-0">
-        <span className="font-heading block text-[22px] leading-tight font-semibold transition-colors group-hover:text-[var(--shu)]">
+      <span className="relative block min-w-0">
+        <span className="num">IP · {String(index + 1).padStart(2, '0')}</span>
+        <span className="font-heading mt-3 block text-[20px] leading-tight font-bold transition-colors group-hover:text-[var(--shu)]">
           {ip.name}
         </span>
         {ip.nameLocalized && ip.nameLocalized !== ip.name ? (
@@ -28,32 +29,25 @@ function ContentsRow({ ip, index }: { ip: HomeHotIp; index: number }) {
             {ip.nameLocalized}
           </span>
         ) : null}
+        <span className="text-muted-foreground mt-4 block text-[12px]">
+          {ip.goodsCount} 件谷子 · {ip.characterCount} 个角色 · {ip.seriesCount}{' '}
+          个系列
+        </span>
       </span>
-
-      {/* 引导线，把条目和它的数字连起来 —— 目录的做法 */}
-      <span
-        aria-hidden="true"
-        className="border-border mx-1 hidden min-w-6 flex-1 translate-y-[-4px] border-b border-dotted sm:block"
-      />
-
-      <span className="num shrink-0 whitespace-nowrap">
-        {ip.goodsCount} 件 · {ip.characterCount} 角色 · {ip.seriesCount} 系列
-      </span>
+      <span className="absolute top-5 right-5 text-[var(--shu)]">↗</span>
     </Link>
   );
 }
 
 export function HomeContentsFallback() {
   return (
-    <div className="spread">
-      <div>
-        <p className="lbl">目次</p>
-      </div>
-      <div className="space-y-5">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <div className="border-border border-b py-5" key={index}>
-            <div className="bg-muted h-6 w-48 animate-pulse" />
-          </div>
+    <div className="py-14">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div
+            className="bg-muted h-[154px] animate-pulse rounded-[20px]"
+            key={index}
+          />
         ))}
       </div>
     </div>
@@ -65,7 +59,7 @@ export async function HomeContentsSection() {
   let failed = false;
 
   try {
-    ips = await listHotIps({ limit: 12 });
+    ips = await listHotIps({ limit: 6 });
   } catch (error) {
     if (!isDatabaseAccessConfigurationError(error)) {
       console.error(error);
@@ -75,20 +69,22 @@ export async function HomeContentsSection() {
   }
 
   return (
-    <section className="spread border-border border-b py-16">
-      <div>
-        <p className="lbl">目次</p>
-        <div className="rail-jp">作品</div>
-      </div>
-
+    <section className="py-16">
       <div className="min-w-0">
-        <div className="flex items-baseline justify-between gap-5">
-          <h2 className="text-[26px]">收录的作品</h2>
+        <div className="flex items-end justify-between gap-5">
+          <div>
+            <p className="section-kicker">从喜欢的作品出发</p>
+            <h2 className="mt-3 text-[clamp(28px,3.4vw,40px)]">热门作品</h2>
+          </div>
           {ips.length > 0 ? (
-            <span className="num">全 {ips.length} 部</span>
+            <Link
+              className="text-muted-foreground text-sm font-semibold hover:text-[var(--shu)]"
+              href="/search"
+            >
+              浏览全部 →
+            </Link>
           ) : null}
         </div>
-        <div className="rule-kin mt-3" />
 
         {failed ? (
           <div className="empty-state mt-6">
@@ -101,7 +97,7 @@ export async function HomeContentsSection() {
             第一部作品录入之后，它会出现在这里。
           </div>
         ) : (
-          <div className="mt-4">
+          <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ips.map((ip, index) => (
               <ContentsRow index={index} ip={ip} key={ip.id} />
             ))}

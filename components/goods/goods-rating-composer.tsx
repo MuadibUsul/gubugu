@@ -28,13 +28,9 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
-      disabled={pending}
-      type="submit"
-    >
+    <Button disabled={pending} type="submit">
       {pending ? '保存中...' : '保存评分'}
-    </button>
+    </Button>
   );
 }
 
@@ -74,7 +70,7 @@ export function GoodsRatingComposer({
             <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
               评分
             </p>
-            <h2 className="font-heading text-foreground text-4xl leading-none">
+            <h2 className="font-heading text-foreground text-[28px] leading-tight">
               给这个 SKU 打分
             </h2>
             <p className="text-muted-foreground text-sm leading-7">
@@ -95,8 +91,16 @@ export function GoodsRatingComposer({
   }
 
   return (
-    <div className="collection-panel p-5 sm:p-6">
-      <div className="space-y-5">
+    <details className="collection-panel" open={state.status === 'error'}>
+      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+        <span className="font-medium">
+          {userRating ? '修改我的评分' : '写一条评分'}
+        </span>
+        <span className="num">
+          {userRating ? userRating.overallScore.toFixed(2) : '五个维度'}
+        </span>
+      </summary>
+      <div className="border-border space-y-5 border-t p-5 sm:p-6">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
@@ -106,7 +110,7 @@ export function GoodsRatingComposer({
               {userLabel ?? '已登录收藏者'}
             </span>
           </div>
-          <h2 className="font-heading text-foreground text-4xl leading-none">
+          <h2 className="font-heading text-foreground text-[28px] leading-tight">
             多维评分
           </h2>
           <p className="text-muted-foreground text-sm leading-7">
@@ -115,7 +119,7 @@ export function GoodsRatingComposer({
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
           <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-4 py-4">
             <p className="text-muted-foreground text-[0.68rem] uppercase">
               预览总分
@@ -152,7 +156,8 @@ export function GoodsRatingComposer({
                 className="border-border/70 bg-background/74 rounded-[var(--radius)] border px-4 py-4"
                 key={dimension.key}
               >
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <legend className="sr-only">{dimension.label}</legend>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between xl:flex-col xl:items-stretch">
                   <div className="max-w-xl">
                     <p className="text-foreground text-sm font-semibold">
                       {dimension.label}
@@ -186,7 +191,7 @@ export function GoodsRatingComposer({
                             type="radio"
                             value={score}
                           />
-                          <span className="border-border/70 bg-card/76 text-muted-foreground peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition">
+                          <span className="border-border/70 bg-card/76 text-muted-foreground peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition-[border-color,background-color,color] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--shu)]">
                             {score}
                           </span>
                         </label>
@@ -199,9 +204,9 @@ export function GoodsRatingComposer({
           </div>
 
           <fieldset className="space-y-3">
-            <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
+            <legend className="text-muted-foreground text-[0.68rem] font-semibold">
               总评价标签
-            </p>
+            </legend>
             <div className="flex flex-wrap gap-2">
               {goodsRatingVerdictValues.map((verdict) => {
                 const inputId = `overall-tag-${verdict}`;
@@ -226,7 +231,7 @@ export function GoodsRatingComposer({
                       type="radio"
                       value={verdict}
                     />
-                    <span className="border-border/70 bg-card/76 text-muted-foreground peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex rounded-full border px-4 py-2 text-sm font-semibold transition">
+                    <span className="border-border/70 bg-card/76 text-muted-foreground peer-checked:border-accent peer-checked:bg-accent/14 peer-checked:text-foreground inline-flex rounded-full border px-4 py-2 text-sm font-semibold transition-[border-color,background-color,color] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--shu)]">
                       {goodsRatingVerdictMeta[verdict].label}
                     </span>
                   </label>
@@ -260,7 +265,11 @@ export function GoodsRatingComposer({
           </label>
 
           {state.status === 'error' && state.message ? (
-            <div className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7">
+            <div
+              aria-live="polite"
+              className="border-destructive/30 bg-destructive/8 text-muted-foreground rounded-[var(--radius)] border px-4 py-3 text-sm leading-7"
+              role="alert"
+            >
               {state.message}
             </div>
           ) : null}
@@ -279,6 +288,6 @@ export function GoodsRatingComposer({
           </div>
         </form>
       </div>
-    </div>
+    </details>
   );
 }

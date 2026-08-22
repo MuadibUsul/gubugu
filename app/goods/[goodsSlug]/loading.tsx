@@ -1,20 +1,19 @@
 function Line({ className }: { className: string }) {
-  return <div className={`bg-muted animate-pulse ${className}`} />;
+  return (
+    <div className={`bg-muted animate-pulse rounded-[12px] ${className}`} />
+  );
 }
 
 export default function GoodsLoading() {
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-5 pt-14 pb-24 md:px-10">
-      <section className="spread border-border border-b pb-14">
-        <div>
-          <Line className="h-3 w-10" />
-        </div>
+    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
+      <section className="rounded-[28px] border border-[var(--rule)] bg-[var(--surface)] p-5 sm:p-8 lg:p-10">
         <div className="min-w-0 space-y-4">
           <Line className="h-4 w-56" />
-          <Line className="h-11 w-full max-w-[30rem]" />
-          <Line className="h-px w-full max-w-[20rem]" />
-          <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-            <Line className="aspect-[4/3] w-full" />
+          <Line className="h-12 w-full max-w-[36rem]" />
+          <Line className="h-8 w-48" />
+          <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,.92fr)] lg:gap-10">
+            <Line className="aspect-[4/5] w-full rounded-[20px]" />
             <div className="space-y-4">
               {Array.from({ length: 8 }).map((_, index) => (
                 <Line className="h-5 w-full" key={index} />

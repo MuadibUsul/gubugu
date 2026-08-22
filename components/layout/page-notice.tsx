@@ -16,12 +16,6 @@ type PageNoticeProps = {
   children?: React.ReactNode;
 };
 
-/**
- * 全站的错误 / 未找到 / 无权限页面共用这一个版式。
- *
- * 之前这 11 个页面各自复制了一份同样的面板结构，任何视觉调整都要改 11 遍，
- * 而且它们已经和主体页面脱节了。合并成一个之后，它们自动跟着体系走。
- */
 export function PageNotice({
   eyebrow,
   railLabel,
@@ -31,18 +25,20 @@ export function PageNotice({
   children,
 }: PageNoticeProps) {
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-5 pt-20 pb-24 md:px-10">
-      <div className="spread">
-        <div>
-          <p className="lbl">{eyebrow}</p>
-          {railLabel ? <div className="rail-jp">{railLabel}</div> : null}
-        </div>
-
-        <div className="min-w-0">
-          <h1 className="text-[clamp(26px,3.4vw,40px)] leading-[1.16] text-balance">
+    <main className="mx-auto w-full max-w-[920px] px-4 py-10 sm:px-6 md:px-8 md:py-16">
+      <section className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_72%,var(--surface)))] p-6 shadow-[var(--shadow-card)] sm:p-10 lg:p-12">
+        <span className="absolute -top-20 -right-16 size-56 rounded-full bg-[color-mix(in_oklab,var(--violet)_9%,transparent)] blur-3xl" />
+        <div className="relative min-w-0">
+          <div className="grid size-14 place-items-center rounded-[18px] bg-[var(--surface)] text-2xl font-extrabold text-[var(--shu)] shadow-[var(--shadow-card)]">
+            ✦
+          </div>
+          <p className="section-kicker mt-6">
+            {eyebrow}
+            {railLabel ? ` · ${railLabel}` : ''}
+          </p>
+          <h1 className="mt-4 text-[clamp(30px,4vw,46px)] leading-[1.14] text-balance">
             {title}
           </h1>
-          <div className="rule-kin mt-4" />
           <p className="text-muted-foreground mt-4 max-w-[58ch]">
             {description}
           </p>
@@ -50,27 +46,20 @@ export function PageNotice({
           {children}
 
           {actions.length > 0 ? (
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap gap-3">
               {actions.map((action) => (
                 <Link
-                  className="border-border group flex items-baseline gap-4 border-b py-4 last:border-b-0"
+                  className="rounded-[14px] border border-[var(--rule)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold shadow-[var(--shadow-card)] hover:border-[var(--shu)]"
                   href={action.href}
                   key={action.href}
                 >
-                  <span className="font-heading text-[17px] font-semibold transition-colors group-hover:text-[var(--shu)]">
-                    {action.label}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="border-border mx-1 hidden min-w-6 flex-1 translate-y-[-4px] border-b border-dotted sm:block"
-                  />
-                  <span className="num shrink-0">{action.href}</span>
+                  {action.label} <span aria-hidden="true">→</span>
                 </Link>
               ))}
             </div>
           ) : null}
         </div>
-      </div>
+      </section>
     </main>
   );
 }
