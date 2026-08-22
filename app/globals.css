@@ -721,6 +721,23 @@
     color: var(--exchange);
   }
 
+  /* ---------- 点亮入口（仅手机）---------- */
+  /* 点亮 scans a physical 谷子 with a phone camera, so its entries only show when
+     the host page marks the request as a scannable device via data-can-scan. On
+     desktop web the entries hide and any .scan-hint stand-in takes their place.
+     The route and API are also hard-gated server-side; this is UX, not the gate. */
+  [data-can-scan='false'] .scan-only {
+    display: none !important;
+  }
+
+  .scan-hint {
+    display: none;
+  }
+
+  [data-can-scan='false'] .scan-hint {
+    display: flex;
+  }
+
   .meter-value {
     font-family: var(--font-heading-family);
     font-size: 52px;

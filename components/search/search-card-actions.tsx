@@ -73,12 +73,19 @@ export function SearchCardActions({
 
   if (isInCabinet) {
     return (
-      <Link
-        className="relative z-20 flex min-h-11 w-full items-center justify-center rounded-[12px] bg-[linear-gradient(135deg,var(--shu),var(--violet))] px-2 text-center text-[12px] font-bold text-white transition-transform duration-150 ease-[var(--ease)] active:scale-[.97] motion-reduce:transform-none"
-        href="/recognition"
-      >
-        ◎ 扫描点亮
-      </Link>
+      <>
+        <Link
+          className="scan-only relative z-20 flex min-h-11 w-full items-center justify-center rounded-[12px] bg-[linear-gradient(135deg,var(--shu),var(--violet))] px-2 text-center text-[12px] font-bold text-white transition-transform duration-150 ease-[var(--ease)] active:scale-[.97] motion-reduce:transform-none"
+          href="/recognition"
+        >
+          ◎ 扫描点亮
+        </Link>
+        {/* 点亮 is phone-only; on desktop web the scan entry is hidden and this
+            stand-in explains where to light it instead of a dead action. */}
+        <span className="scan-hint min-h-11 w-full items-center justify-center rounded-[12px] border border-[var(--rule)] bg-[var(--surface)] px-2 text-center text-[12px] font-semibold text-[var(--muted-foreground)]">
+          已入柜 · 在手机上点亮
+        </span>
+      </>
     );
   }
 

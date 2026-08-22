@@ -11,6 +11,7 @@ import { GoodsStatusActions } from '@/components/goods/goods-status-actions';
 import { toAbsoluteImageUrl } from '@/lib/goods-image';
 import { getAuthUser } from '@/server/auth/session';
 import { getGoodsDetailPageData, getGoodsDetailViewData } from '@/server/data';
+import { isMobileRequest } from '@/server/device';
 
 const goodsDetailPageParamsSchema = z.object({
   goodsSlug: z.string().trim().min(1),
@@ -85,7 +86,10 @@ export default async function GoodsDetailPage({
     lighting: getSingleValue(rawSearchParams.lighting),
     collectionUpdate: getSingleValue(rawSearchParams.collectionUpdate),
   });
-  const authUser = await getAuthUser();
+  const [authUser, canScan] = await Promise.all([
+    getAuthUser(),
+    isMobileRequest(),
+  ]);
   const data = await getGoodsDetailViewData({
     goodsSlug,
     userId: authUser?.id,
@@ -101,7 +105,10 @@ export default async function GoodsDetailPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
+    <main
+      className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8"
+      data-can-scan={canScan ? 'true' : 'false'}
+    >
       {showLightingSuccess ? (
         <div className="callout callout--kin mb-6" role="status">
           <p>

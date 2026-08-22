@@ -51,7 +51,7 @@ export function HomeFrontispiece({
             <b className="text-foreground text-base">{ipCount}</b> 部作品
           </span>
           <Link
-            className="chip px-3.5 py-2 font-semibold text-[var(--violet)]"
+            className="scan-only chip px-3.5 py-2 font-semibold text-[var(--violet)]"
             href="/recognition"
           >
             扫描点亮 →

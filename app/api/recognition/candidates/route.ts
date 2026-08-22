@@ -7,6 +7,7 @@ import {
 } from '@/lib/recognition';
 import { isAcceptedImageMimeType } from '@/lib/image-upload';
 import { consumeServerWrite } from '@/lib/rate-limit';
+import { isMobileUserAgent } from '@/lib/device';
 import { getAuthUser } from '@/server/auth/session';
 import { recognizeGoodsImage } from '@/server/recognition/service';
 
@@ -45,6 +46,13 @@ function buildErrorResponse({
 }
 
 export async function POST(request: Request) {
+  // The recognition flow is phone-only; a desktop client must not reach it even
+  // by calling the API directly. A bare 404 mirrors the hidden page rather than
+  // hinting that the endpoint exists on the wrong device.
+  if (!isMobileUserAgent(request.headers.get('user-agent'))) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const user = await getAuthUser();
   if (!user) {
     return buildErrorResponse({

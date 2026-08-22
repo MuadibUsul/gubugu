@@ -169,7 +169,7 @@ export function GoodsStatusActions({
       </form>
 
       {!isLit ? (
-        <div className="mt-4 rounded-[16px] border border-[var(--violet)]/30 bg-[var(--violet-soft)] p-4">
+        <div className="scan-only mt-4 rounded-[16px] border border-[var(--violet)]/30 bg-[var(--violet-soft)] p-4">
           <p className="text-sm font-semibold text-[var(--violet)]">
             扫描现实中的谷子，点亮这枚收藏
           </p>

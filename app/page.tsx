@@ -17,6 +17,7 @@ import {
   searchGoodsCatalog,
 } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { isMobileRequest } from '@/server/device';
 
 async function loadFrontispieceData() {
   try {
@@ -40,9 +41,10 @@ async function loadFrontispieceData() {
 }
 
 export default async function Home() {
-  const [frontispiece, authUser] = await Promise.all([
+  const [frontispiece, authUser, canScan] = await Promise.all([
     loadFrontispieceData(),
     getAuthUser(),
+    isMobileRequest(),
   ]);
   const featuredViewerStates = await getGoodsCardViewerStateMap({
     viewerId: authUser?.id,
@@ -50,7 +52,10 @@ export default async function Home() {
   });
 
   return (
-    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-20 sm:px-6 md:px-8 md:pt-8">
+    <main
+      className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-20 sm:px-6 md:px-8 md:pt-8"
+      data-can-scan={canScan ? 'true' : 'false'}
+    >
       <HomeFrontispiece
         featuredItems={frontispiece.featuredItems}
         goodsCount={frontispiece.goodsCount}

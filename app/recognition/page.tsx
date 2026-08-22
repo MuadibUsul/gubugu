@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 import { RecognitionShell } from '@/components/recognition/recognition-shell';
 import { requireAuthUser } from '@/server/auth/session';
+import { isMobileRequest } from '@/server/device';
 
 export const metadata: Metadata = {
   title: '扫描点亮',
@@ -9,6 +11,13 @@ export const metadata: Metadata = {
 };
 
 export default async function RecognitionPage() {
+  // 点亮 scans a physical 谷子 with a phone camera. Desktop web has no entry to
+  // this flow, and a direct URL must be blocked too — a 404 keeps it fully
+  // hidden rather than revealing a "wrong device" page.
+  if (!(await isMobileRequest())) {
+    notFound();
+  }
+
   await requireAuthUser('/recognition');
   return (
     <main>

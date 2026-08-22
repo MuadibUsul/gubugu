@@ -27,6 +27,8 @@ const entries = [
     note: '识别手中的实物并点亮',
     mark: '◎',
     tone: 'bg-[var(--sky-soft)] text-[var(--sky)]',
+    // 点亮 is phone-only, so this entry is hidden on desktop web via .scan-only.
+    scanOnly: true,
   },
   {
     label: '我的谷柜',
@@ -73,7 +75,9 @@ export function HomeIndexSection() {
           <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             {entries.map((entry) => (
               <Link
-                className="panel-float group flex items-center gap-4 rounded-[20px] border border-[var(--rule)] bg-[var(--surface)] p-5"
+                className={`panel-float group flex items-center gap-4 rounded-[20px] border border-[var(--rule)] bg-[var(--surface)] p-5${
+                  'scanOnly' in entry && entry.scanOnly ? ' scan-only' : ''
+                }`}
                 href={entry.href}
                 key={entry.href}
               >

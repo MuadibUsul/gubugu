@@ -2,12 +2,15 @@ import Link from 'next/link';
 
 import { SiteNavLinks } from '@/components/layout/site-nav-links';
 import { getAuthUser } from '@/server/auth/session';
+import { isMobileRequest } from '@/server/device';
 
 export async function SiteNavigation() {
-  const user = await getAuthUser();
+  const [user, canScan] = await Promise.all([getAuthUser(), isMobileRequest()]);
   const primaryLinks = [
     { href: '/search', label: '谷库' },
-    { href: '/recognition', label: '点亮' },
+    // 点亮 is phone-only, so the entry only appears on mobile. On desktop the
+    // route itself 404s, so listing it here would be a dead link.
+    ...(canScan ? [{ href: '/recognition', label: '点亮' }] : []),
     { href: '/matches', label: '换谷' },
     user
       ? { href: '/me', label: '我的' }

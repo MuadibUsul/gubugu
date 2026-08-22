@@ -11,6 +11,7 @@ import {
 import { getAuthUser } from '@/server/auth/session';
 import { getGoodsSearchPageData } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { isMobileRequest } from '@/server/device';
 
 export const metadata: Metadata = {
   title: '公共谷库',
@@ -70,7 +71,10 @@ function normalizeSearchControls(
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const controls = normalizeSearchControls(resolvedSearchParams);
-  const authUser = await getAuthUser();
+  const [authUser, canScan] = await Promise.all([
+    getAuthUser(),
+    isMobileRequest(),
+  ]);
   let pageData: Awaited<ReturnType<typeof getGoodsSearchPageData>> | null =
     null;
   let state: 'ready' | 'error' = 'ready';
@@ -92,7 +96,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
+    <main
+      className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8"
+      data-can-scan={canScan ? 'true' : 'false'}
+    >
       <form
         action="/search"
         className="relative overflow-hidden rounded-[26px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_72%,var(--surface)))] px-5 py-7 sm:px-8 sm:py-9"
