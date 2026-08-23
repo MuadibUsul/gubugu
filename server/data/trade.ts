@@ -197,6 +197,8 @@ export async function listUserTradeGoods(
 
 export async function listOpenTradeListings(input?: {
   limit?: number;
+  /** 只看某个发布者的公开换谷帖（用于其个人主页的换谷板）。 */
+  ownerId?: string;
 }): Promise<TradeListingView[]> {
   const limit = z.number().int().min(1).max(48).catch(12).parse(input?.limit);
   const db = getDb();
@@ -208,6 +210,9 @@ export async function listOpenTradeListings(input?: {
         eq(exchangeListings.status, 'open'),
         eq(exchangeListings.moderationStatus, 'approved'),
         eq(exchangeListings.allowCash, false),
+        input?.ownerId
+          ? eq(exchangeListings.userId, input.ownerId)
+          : undefined,
         exists(
           db
             .select({ id: userGoods.id })
