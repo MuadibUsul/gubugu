@@ -17,8 +17,9 @@ type SearchResultCardProps = {
 /**
  * 搜索结果卡。
  *
- * 灰度只由服务端的 isLit 决定：收进谷柜仍是灰图，扫码确认后才恢复原色。
- * 最佳匹配只用文字标记，避免与点亮的金色装裱争夺语义。
+ * 公共谷库里每件图鉴都以原色呈现——浏览的是全站图鉴，不是自己的收藏，所以不做明暗区分。
+ * 明暗（灰图 vs 彩图）只在谷柜里表达点亮状态；这里的持有 / 点亮状态改由文字徽标传达。
+ * 最佳匹配只用文字标记。
  */
 export function SearchResultCard({
   item,
@@ -28,12 +29,9 @@ export function SearchResultCard({
 }: SearchResultCardProps) {
   const detailsHref = `/goods/${item.slug}`;
   const isInCabinet = viewerState.activeStatuses.includes('owned');
-  const cardStateClass = viewerState.isLit
-    ? 'goods-card--lit'
-    : `goods-card--dormant ${isInCabinet ? 'goods-card--cabinet' : ''}`;
 
   return (
-    <article className={`goods-card group min-w-0 ${cardStateClass}`}>
+    <article className="goods-card group min-w-0">
       <GoodsCardArt
         alt={item.name}
         className="aspect-[3/4]"

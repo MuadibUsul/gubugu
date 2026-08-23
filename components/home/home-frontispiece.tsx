@@ -36,7 +36,7 @@ export function HomeFrontispiece({
         </h1>
 
         <p className="text-muted-foreground mt-5 max-w-[56ch] text-[15px] sm:text-base">
-          公共谷库里的每一件都能查看。先收进谷柜，再扫描手中的实物，让灰色缩略图真正亮起来。
+          公共谷库里的每一件都以原色陈列。收进谷柜后，扫描手中的实物确认 SKU，那件才在你的收藏里由灰转彩。
         </p>
 
         <div className="mt-7 max-w-[620px]">
@@ -74,14 +74,12 @@ export function HomeFrontispiece({
             isLit: false,
           };
           const isInCabinet = viewerState.activeStatuses.includes('owned');
-          const stateClass = viewerState.isLit
-            ? 'goods-card--lit'
-            : `goods-card--dormant ${isInCabinet ? 'goods-card--cabinet' : ''}`;
 
+          // 公共浏览页统一原色，不做明暗区分；点亮态只在谷柜表达。
           return (
             <Link
               aria-label={`${item.name}，${viewerState.isLit ? '已点亮' : isInCabinet ? '已入柜，待点亮' : '未点亮'}`}
-              className={`goods-card hero-goods-card group absolute ${stateClass} ${positions[index]}`}
+              className={`goods-card hero-goods-card group absolute ${positions[index]}`}
               href={`/goods/${item.slug}`}
               key={item.id}
             >

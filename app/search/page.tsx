@@ -108,11 +108,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <div className="relative min-w-0">
           <p className="section-kicker">公共谷库 · 全站 SKU 图鉴</p>
           <h1 className="mt-3 text-[clamp(32px,4vw,48px)] leading-[1.12]">
-            每一件都看得见，拥有的才会亮。
+            整座图鉴，每一件都以原色陈列。
           </h1>
           <p className="text-muted-foreground mt-3 text-sm">
-            收进谷柜不会点亮缩略图；扫描现实中的谷子并确认
-            SKU，才会恢复它的颜色。
+            公共谷库只管浏览全站 SKU，所以每件都上色；点亮留给谷柜——扫描实物确认
+            SKU 后，那件才在你的收藏里由灰转彩。
           </p>
 
           <div className="mt-6 flex max-w-[680px] rounded-[18px] border border-[var(--rule)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-card)] focus-within:border-[var(--shu)]">

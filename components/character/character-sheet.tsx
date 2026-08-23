@@ -30,7 +30,7 @@ function SheetEntry({
   return (
     <Link
       aria-label={`${item.name}，${item.isLit ? '已点亮' : item.isInCabinet ? '已入柜，待点亮' : '未点亮'}`}
-      className={`goods-card group min-w-0 ${item.isLit ? 'goods-card--lit' : `goods-card--dormant ${item.isInCabinet ? 'goods-card--cabinet' : ''}`}`}
+      className="goods-card group min-w-0"
       href={`/goods/${item.slug}`}
     >
       <GoodsCardArt

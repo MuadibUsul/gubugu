@@ -19,14 +19,12 @@ function AccessionPlate({
   viewerState: GoodsCardViewerState;
 }) {
   const isInCabinet = viewerState.activeStatuses.includes('owned');
-  const stateClass = viewerState.isLit
-    ? 'goods-card--lit'
-    : `goods-card--dormant ${isInCabinet ? 'goods-card--cabinet' : ''}`;
 
+  // 公共浏览页统一原色，不做明暗区分；点亮态只在谷柜表达，这里用文字徽标传达。
   return (
     <Link
       aria-label={`${item.name}，${viewerState.isLit ? '已点亮' : isInCabinet ? '已入柜，待点亮' : '未点亮'}`}
-      className={`goods-card group min-w-0 ${stateClass}`}
+      className="goods-card group min-w-0"
       href={`/goods/${item.slug}`}
     >
       <GoodsCardArt
