@@ -54,6 +54,17 @@ export default async function CrawlerDraftPage({
     data.initialGoods.images[0] ??
     null;
 
+  const enrichment = ((data.initialGoods.metadata as Record<string, unknown>)
+    ?.enrichment ?? null) as {
+    status?: string;
+    model?: string;
+    ipName?: string | null;
+    seriesName?: string | null;
+    characterNames?: string[];
+    originalName?: string | null;
+    reason?: string;
+  } | null;
+
   return (
     <main className="relative isolate overflow-hidden">
       <div className="mx-auto flex min-h-screen w-full max-w-[1180px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
@@ -179,6 +190,69 @@ export default async function CrawlerDraftPage({
             </details>
           </div>
         </section>
+
+        {enrichment ? (
+          <section className="collection-panel p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
+                LLM 识别结果 · 供核对
+              </p>
+              <span
+                className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                  enrichment.status === 'enriched'
+                    ? 'border-emerald-500/25 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300'
+                    : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                }`}
+              >
+                {enrichment.status === 'enriched'
+                  ? `已校对 · ${enrichment.model ?? 'LLM'}`
+                  : `未经 LLM 校对${enrichment.reason ? ` · ${enrichment.reason}` : ''}`}
+              </span>
+            </div>
+
+            {enrichment.status === 'enriched' ? (
+              <>
+                <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <dt className="text-muted-foreground text-xs">建议 IP</dt>
+                    <dd className="text-foreground mt-1 text-sm font-semibold">
+                      {enrichment.ipName || '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground text-xs">建议系列</dt>
+                    <dd className="text-foreground mt-1 text-sm font-semibold">
+                      {enrichment.seriesName || '（未识别，将沿用 IP 名）'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground text-xs">角色</dt>
+                    <dd className="text-foreground mt-1 text-sm">
+                      {enrichment.characterNames &&
+                      enrichment.characterNames.length > 0
+                        ? enrichment.characterNames.join('、')
+                        : '—'}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="text-muted-foreground mt-4 text-xs leading-6">
+                  发布时会按上面的 IP / 系列<b>自动匹配现有、没有就新建</b>
+                  （下方「系列」默认为「自动」）。要手动归属就在下方改选系列。
+                  {enrichment.originalName
+                    ? ` 原文：${enrichment.originalName}`
+                    : ''}
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground mt-3 text-sm leading-6">
+                这条没走通 LLM，下方文字为抓取原文，请人工核对翻译，并手动选择系列。
+                {enrichment.originalName
+                  ? ` 原文：${enrichment.originalName}`
+                  : ''}
+              </p>
+            )}
+          </section>
+        ) : null}
 
         <AdminGoodsEditorForm
           crawlerDraftId={data.draft.id}

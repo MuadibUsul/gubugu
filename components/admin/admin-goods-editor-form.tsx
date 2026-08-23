@@ -303,7 +303,7 @@ export function AdminGoodsEditorForm({
                   className={inputClassName}
                   defaultValue={
                     crawlerDraftId
-                      ? ''
+                      ? 'auto'
                       : (initialGoods?.seriesId ??
                         filters.seriesId ??
                         seriesOptions[0]?.id ??
@@ -314,8 +314,8 @@ export function AdminGoodsEditorForm({
                   required
                 >
                   {crawlerDraftId ? (
-                    <option disabled value="">
-                      请先确认归属 IP / 系列
+                    <option value="auto">
+                      🤖 自动匹配 / 新建（按 LLM 识别的 IP · 系列）
                     </option>
                   ) : null}
                   {seriesOptions.map((option) => (

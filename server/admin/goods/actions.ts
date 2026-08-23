@@ -1,5 +1,7 @@
 'use server';
 
+import { createHash } from 'node:crypto';
+
 import { and, eq, inArray, ne, or } from 'drizzle-orm';
 import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -10,6 +12,7 @@ import {
   goods,
   goodsImages,
   goodsTags,
+  ips,
   series,
   tags,
 } from '@/drizzle/schema';
@@ -118,7 +121,8 @@ const saveAdminGoodsInputSchema = z
       .transform((value) => (value.length > 0 ? value : undefined)),
     returnStatus: optionalStatusFormSchema,
     returnSeriesId: optionalUuidFormSchema,
-    seriesId: z.string().uuid('必须选择系列。'),
+    // 'auto'：采集草稿发布时按 LLM 识别的 IP/系列自动匹配或新建。
+    seriesId: z.union([z.literal('auto'), z.string().uuid('必须选择系列。')]),
     skuCode: requiredTextFieldSchema('SKU 编号', 128),
     slug: requiredTextFieldSchema('Slug', 160)
       .transform((value) => slugifyText(value))
@@ -158,6 +162,14 @@ const saveAdminGoodsInputSchema = z
         code: z.ZodIssueCode.custom,
         message: '审核通过的采集草稿必须以已发布状态进入谷库。',
         path: ['status'],
+      });
+    }
+
+    if (value.seriesId === 'auto' && !value.crawlerDraftId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '自动系列仅用于采集草稿发布。',
+        path: ['seriesId'],
       });
     }
 
@@ -572,6 +584,20 @@ function mapDatabaseError(error: unknown): SaveAdminGoodsActionState {
       };
     }
 
+    if (error.message.includes('AUTO_SERIES_NO_IP')) {
+      return {
+        status: 'error',
+        message: 'LLM 未识别到 IP，无法自动归属系列，请手动选择系列后再发布。',
+      };
+    }
+
+    if (error.message.includes('AUTO_SERIES_FAILED')) {
+      return {
+        status: 'error',
+        message: '自动匹配 / 新建系列失败，请手动选择系列后再发布。',
+      };
+    }
+
     if (error.message.includes('goods_sku_code_unique')) {
       return {
         status: 'error',
@@ -684,14 +710,15 @@ export async function saveAdminGoodsAction(
     };
   }
 
+  const isAutoSeries = parsed.data.seriesId === 'auto';
   const [seriesRows, existingGoodsRows, conflictRows] = await Promise.all([
-    db
-      .select({
-        id: series.id,
-      })
-      .from(series)
-      .where(eq(series.id, parsed.data.seriesId))
-      .limit(1),
+    isAutoSeries
+      ? Promise.resolve([{ id: 'auto' }])
+      : db
+          .select({ id: series.id })
+          .from(series)
+          .where(eq(series.id, parsed.data.seriesId))
+          .limit(1),
     parsed.data.goodsId
       ? db
           .select({
@@ -763,9 +790,15 @@ export async function saveAdminGoodsAction(
 
   try {
     await db.transaction(async (tx) => {
+      let effectiveSeriesId = parsed.data.seriesId;
+
       if (parsed.data.crawlerDraftId) {
         const draftRows = await tx
-          .select({ id: crawlerDrafts.id, status: crawlerDrafts.status })
+          .select({
+            id: crawlerDrafts.id,
+            status: crawlerDrafts.status,
+            payload: crawlerDrafts.payload,
+          })
           .from(crawlerDrafts)
           .where(eq(crawlerDrafts.id, parsed.data.crawlerDraftId))
           .limit(1)
@@ -774,13 +807,90 @@ export async function saveAdminGoodsAction(
         if (!draftRows[0] || draftRows[0].status !== 'pending') {
           throw new Error('CRAWLER_DRAFT_NOT_PENDING');
         }
+
+        if (isAutoSeries) {
+          // 按 LLM 识别的 IP/系列名，先匹配现有、没有就新建（已发布，SKU 才可见）。
+          const enrichment = (
+            draftRows[0].payload as {
+              goods?: {
+                metadata?: {
+                  enrichment?: {
+                    ipName?: string | null;
+                    seriesName?: string | null;
+                  };
+                };
+              };
+            }
+          ).goods?.metadata?.enrichment;
+          const ipName = enrichment?.ipName?.trim();
+          if (!ipName) throw new Error('AUTO_SERIES_NO_IP');
+          const seriesName = enrichment?.seriesName?.trim() || ipName;
+
+          const hashSlug = (prefix: string, key: string) =>
+            `${prefix}-${createHash('sha256').update(key).digest('hex').slice(0, 8)}`;
+
+          let [ip] = await tx
+            .select({ id: ips.id })
+            .from(ips)
+            .where(eq(ips.name, ipName))
+            .limit(1);
+          if (!ip) {
+            [ip] = await tx
+              .insert(ips)
+              .values({
+                slug: slugifyText(ipName) || hashSlug('ip', ipName),
+                name: ipName,
+                status: 'published',
+              })
+              .onConflictDoNothing()
+              .returning({ id: ips.id });
+            if (!ip) {
+              [ip] = await tx
+                .select({ id: ips.id })
+                .from(ips)
+                .where(eq(ips.name, ipName))
+                .limit(1);
+            }
+          }
+          if (!ip) throw new Error('AUTO_SERIES_FAILED');
+
+          let [ser] = await tx
+            .select({ id: series.id })
+            .from(series)
+            .where(and(eq(series.ipId, ip.id), eq(series.name, seriesName)))
+            .limit(1);
+          if (!ser) {
+            [ser] = await tx
+              .insert(series)
+              .values({
+                ipId: ip.id,
+                slug:
+                  slugifyText(seriesName) ||
+                  hashSlug('series', `${ip.id}:${seriesName}`),
+                name: seriesName,
+                status: 'published',
+              })
+              .onConflictDoNothing()
+              .returning({ id: series.id });
+            if (!ser) {
+              [ser] = await tx
+                .select({ id: series.id })
+                .from(series)
+                .where(and(eq(series.ipId, ip.id), eq(series.name, seriesName)))
+                .limit(1);
+            }
+          }
+          if (!ser) throw new Error('AUTO_SERIES_FAILED');
+
+          effectiveSeriesId = ser.id;
+        }
       }
 
       if (parsed.data.goodsId) {
         await tx
           .update(goods)
           .set({
-            seriesId: parsed.data.seriesId,
+            seriesId: effectiveSeriesId,
             skuCode: parsed.data.skuCode,
             slug: parsed.data.slug,
             name: parsed.data.name,
@@ -804,7 +914,7 @@ export async function saveAdminGoodsAction(
       } else {
         await tx.insert(goods).values({
           id: goodsId,
-          seriesId: parsed.data.seriesId,
+          seriesId: effectiveSeriesId,
           skuCode: parsed.data.skuCode,
           slug: parsed.data.slug,
           name: parsed.data.name,
