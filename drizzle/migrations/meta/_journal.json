@@ -169,6 +169,13 @@
       "when": 1787409310293,
       "tag": "0023_marvelous_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1787424791039,
+      "tag": "0024_nervous_taskmaster",
+      "breakpoints": true
     }
   ]
 }

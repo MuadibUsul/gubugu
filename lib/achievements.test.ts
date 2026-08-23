@@ -123,6 +123,55 @@ describe('evaluateAchievements — 累计件数', () => {
   });
 });
 
+describe('evaluateAchievements — 品类广度', () => {
+  const breadthThree: AchievementDefinition = {
+    id: 'a-breadth-3',
+    code: 'breadth-3',
+    name: '博采三类',
+    description: '已点亮收藏覆盖 3 种品类',
+    kind: 'type_breadth',
+    threshold: 3,
+  };
+
+  it('unlocks on the distinct-type count, not the owned count', () => {
+    expect(
+      evaluateAchievements({
+        definitions: [breadthThree],
+        ownedTotal: 1,
+        typeBreadthTotal: 3,
+        scopes: [],
+        alreadyUnlocked: empty,
+      }),
+    ).toEqual([{ achievementId: 'a-breadth-3', scopeId: null }]);
+  });
+
+  it('does not unlock below the breadth threshold', () => {
+    expect(
+      evaluateAchievements({
+        definitions: [breadthThree],
+        ownedTotal: 99,
+        typeBreadthTotal: 2,
+        scopes: [],
+        alreadyUnlocked: empty,
+      }),
+    ).toEqual([]);
+  });
+
+  // owned_count and type_breadth are both global, so they must not read each
+  // other's total. A big owned count with narrow breadth clears count only.
+  it('keeps owned_count and type_breadth on their own totals', () => {
+    const unlocks = evaluateAchievements({
+      definitions: [countFive, breadthThree],
+      ownedTotal: 5,
+      typeBreadthTotal: 1,
+      scopes: [],
+      alreadyUnlocked: empty,
+    });
+
+    expect(unlocks.map((u) => u.achievementId)).toEqual(['a-five']);
+  });
+});
+
 describe('evaluateAchievements — 作用域补全', () => {
   const fullCharacter: ScopeProgress = {
     kind: 'character_complete',

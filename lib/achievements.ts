@@ -5,11 +5,26 @@ export const achievementKindValues = [
   'character_complete',
   'series_complete',
   'ip_complete',
+  'type_breadth',
 ] as const;
 
 export const achievementKindSchema = z.enum(achievementKindValues);
 
 export type AchievementKind = (typeof achievementKindValues)[number];
+
+/**
+ * 全局阈值型成就：按一个累计数字达成，不绑定作用域（scopeId 恒为 null）。
+ * `owned_count` 比累计已点亮件数，`type_breadth` 比覆盖的谷子类型数。
+ */
+export const globalThresholdKinds = [
+  'owned_count',
+  'type_breadth',
+] as const satisfies readonly AchievementKind[];
+
+export type GlobalThresholdKind = (typeof globalThresholdKinds)[number];
+
+/** 作用域型成就：在角色 / 系列 / 作品这类集合上补全达成。 */
+export type ScopeKind = Exclude<AchievementKind, GlobalThresholdKind>;
 
 export type AchievementDefinition = {
   id: string;
@@ -28,7 +43,7 @@ export type AchievementUnlock = {
 
 /** 某个作用域（角色、系列或作品）下的收录进度。 */
 export type ScopeProgress = {
-  kind: Exclude<AchievementKind, 'owned_count'>;
+  kind: ScopeKind;
   scopeId: string;
   ownedCount: number;
   totalCount: number;
@@ -36,13 +51,29 @@ export type ScopeProgress = {
 
 type EvaluateInput = {
   definitions: readonly AchievementDefinition[];
-  /** 全站累计已收录件数。 */
+  /** 全站累计已点亮件数。 */
   ownedTotal: number;
+  /** 已点亮收藏覆盖的不同谷子类型数。省略按 0 计。 */
+  typeBreadthTotal?: number;
   /** 本次操作触及的作用域进度。只算被触及的，不是全部。 */
   scopes: readonly ScopeProgress[];
   /** 已经解锁过的，避免重复。 */
   alreadyUnlocked: ReadonlySet<string>;
 };
+
+/** 全局阈值型成就当前对应的累计值。 */
+export function globalThresholdValue(
+  kind: GlobalThresholdKind,
+  totals: { ownedTotal: number; typeBreadthTotal: number },
+): number {
+  return kind === 'owned_count' ? totals.ownedTotal : totals.typeBreadthTotal;
+}
+
+function isGlobalThresholdKind(
+  kind: AchievementKind,
+): kind is GlobalThresholdKind {
+  return (globalThresholdKinds as readonly AchievementKind[]).includes(kind);
+}
 
 /**
  * 拼出解锁记录的去重键。scope 为 null 时也要有稳定的键，否则全局成就无法
@@ -60,6 +91,7 @@ export function unlockKey(achievementId: string, scopeId: string | null) {
 export function evaluateAchievements({
   definitions,
   ownedTotal,
+  typeBreadthTotal = 0,
   scopes,
   alreadyUnlocked,
 }: EvaluateInput): AchievementUnlock[] {
@@ -67,13 +99,18 @@ export function evaluateAchievements({
   const seen = new Set(alreadyUnlocked);
 
   for (const definition of definitions) {
-    if (definition.kind === 'owned_count') {
-      // 阈值缺失的定义是坏数据，跳过而不是当成 0 件即达成。
+    if (isGlobalThresholdKind(definition.kind)) {
+      // 阈值缺失的定义是坏数据，跳过而不是当成 0 即达成。
       if (definition.threshold === null || definition.threshold <= 0) {
         continue;
       }
 
-      if (ownedTotal < definition.threshold) {
+      const total = globalThresholdValue(definition.kind, {
+        ownedTotal,
+        typeBreadthTotal,
+      });
+
+      if (total < definition.threshold) {
         continue;
       }
 

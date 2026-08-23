@@ -185,7 +185,11 @@ export async function recordAchievementsForGoods({
   const definitions: AchievementDefinition[] = definitionRows;
 
   const [ownedRow] = await db
-    .select({ total: sql<number>`count(*)::int` })
+    .select({
+      total: sql<number>`count(*)::int`,
+      // 品类广度：已点亮收藏覆盖的不同 goods_type 数量。
+      typeBreadth: sql<number>`count(distinct ${goods.goodsType})::int`,
+    })
     .from(userGoods)
     .innerJoin(goods, eq(goods.id, userGoods.goodsId))
     .innerJoin(series, eq(series.id, goods.seriesId))
@@ -216,6 +220,7 @@ export async function recordAchievementsForGoods({
   const unlocks = evaluateAchievements({
     definitions,
     ownedTotal: ownedRow?.total ?? 0,
+    typeBreadthTotal: ownedRow?.typeBreadth ?? 0,
     scopes,
     alreadyUnlocked,
   });

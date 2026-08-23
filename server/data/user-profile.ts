@@ -44,6 +44,7 @@ export type UserProfilePageData = {
     trackedGoodsCount: number;
     cabinetCount: number;
     litCount: number;
+    typeBreadth: number;
     wantedCount: number;
     exchangeCount: number;
     litProgressPercentage: number;
@@ -71,6 +72,7 @@ function createFallbackUserProfilePageData(
       trackedGoodsCount: 0,
       cabinetCount: 0,
       litCount: 0,
+      typeBreadth: 0,
       wantedCount: 0,
       exchangeCount: 0,
       litProgressPercentage: 0,
@@ -147,6 +149,7 @@ export async function getUserProfilePageData(
         db
           .select({
             goodsId: userGoods.goodsId,
+            goodsType: goods.goodsType,
             status: userGoods.status,
             note: userGoods.note,
             litAt: userGoods.litAt,
@@ -275,12 +278,17 @@ export async function getUserProfilePageData(
     const litCount = litAtByGoodsId.size;
     const wantedCount = wantedRows.length;
     const exchangeCount = exchangeRows.length;
+    // 品类广度：只算已点亮收藏覆盖的不同谷子类型数，与成就 type_breadth 同源。
+    const typeBreadth = new Set(
+      ownedRows.flatMap((row) => (row.litAt ? [row.goodsType] : [])),
+    ).size;
 
     return {
       summary: {
         trackedGoodsCount: goodsIds.length,
         cabinetCount,
         litCount,
+        typeBreadth,
         wantedCount,
         exchangeCount,
         litProgressPercentage:

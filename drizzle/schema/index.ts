@@ -249,6 +249,9 @@ export const achievementKindEnum = pgEnum('achievement_kind', [
   'character_complete',
   'series_complete',
   'ip_complete',
+  // 品类广度：已点亮收藏覆盖了多少种不同的谷子类型（goods_type）。与 owned_count
+  // 一样是全局阈值型，不绑定具体作用域。
+  'type_breadth',
 ]);
 
 export const ips = pgTable(
@@ -1792,11 +1795,13 @@ export const achievements = pgTable(
   (table) => [
     uniqueIndex('achievements_code_unique').on(table.code),
     index('achievements_kind_idx').on(table.kind),
-    // owned_count 必须有阈值，其余种类不该有 —— 让数据库挡住定义错误的记录。
+    // 阈值型（owned_count / type_breadth）必须有正阈值，其余种类不该有 ——
+    // 让数据库挡住定义错误的记录。用 kind::text 比较，避免约束在「同一迁移里
+    // 刚 ADD 的枚举值」上触发 Postgres 的 unsafe-use-of-new-value 限制。
     check(
       'achievements_threshold_matches_kind_check',
-      sql`(kind = 'owned_count' and threshold is not null and threshold > 0)
-          or (kind <> 'owned_count' and threshold is null)`,
+      sql`(kind::text in ('owned_count', 'type_breadth') and threshold is not null and threshold > 0)
+          or (kind::text not in ('owned_count', 'type_breadth') and threshold is null)`,
     ),
   ],
 );

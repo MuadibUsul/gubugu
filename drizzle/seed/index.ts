@@ -1,5 +1,5 @@
 import { config as loadEnv } from 'dotenv';
-import { inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { z } from 'zod';
@@ -29,8 +29,10 @@ import {
   series,
   achievements,
   tags,
+  userAchievements,
   userGoods,
 } from '../schema';
+import { evaluateAchievements } from '../../lib/achievements';
 import { localDemoAuthEmailByKey } from '../../lib/auth/local-demo';
 import { hashPassword } from '../../lib/auth/password';
 import {
@@ -817,6 +819,72 @@ async function seed() {
         .onConflictDoNothing({
           target: [follows.followerId, follows.followingId],
         });
+    }
+
+    // 収蔵記録回填：种子的已点亮收藏是直接写入的，不会像真实点亮那样触发成就
+    // 判定。这里按最终状态补记每位用户已达成的「数量 / 品类广度」全局徽章，让
+    // 演示与验收看到真实解锁；成套补全类会在用户下一次真实点亮时按现有流程记录，
+    // 种子不制造满套集合，所以这里不回填作用域类。
+    const achievementDefs = await tx
+      .select({
+        id: achievements.id,
+        code: achievements.code,
+        name: achievements.name,
+        description: achievements.description,
+        kind: achievements.kind,
+        threshold: achievements.threshold,
+      })
+      .from(achievements);
+
+    if (achievementDefs.length > 0) {
+      const perUserTotals = await tx
+        .select({
+          userId: userGoods.userId,
+          owned: sql<number>`count(*)::int`,
+          breadth: sql<number>`count(distinct ${goods.goodsType})::int`,
+        })
+        .from(userGoods)
+        .innerJoin(goods, eq(goods.id, userGoods.goodsId))
+        .innerJoin(series, eq(series.id, goods.seriesId))
+        .innerJoin(ips, eq(ips.id, series.ipId))
+        .where(
+          and(
+            eq(userGoods.status, 'owned'),
+            isNotNull(userGoods.litAt),
+            eq(goods.status, 'published'),
+            eq(series.status, 'published'),
+            eq(ips.status, 'published'),
+          ),
+        )
+        .groupBy(userGoods.userId);
+
+      for (const totals of perUserTotals) {
+        const unlocks = evaluateAchievements({
+          definitions: achievementDefs,
+          ownedTotal: totals.owned,
+          typeBreadthTotal: totals.breadth,
+          scopes: [],
+          alreadyUnlocked: new Set<string>(),
+        });
+
+        if (unlocks.length === 0) {
+          continue;
+        }
+
+        await tx
+          .insert(userAchievements)
+          .values(
+            unlocks.map((unlock) => ({
+              userId: totals.userId,
+              achievementId: unlock.achievementId,
+              scopeId: unlock.scopeId,
+              achievedAt: now,
+              createdAt: now,
+              updatedAt: now,
+            })),
+          )
+          .onConflictDoNothing();
+      }
     }
   });
 

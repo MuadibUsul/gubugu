@@ -69,6 +69,7 @@ export default async function MyCollectionPage({
       <UserAchievementLedger
         entries={ledger}
         ownedTotal={data.summary.litCount}
+        typeBreadthTotal={data.summary.typeBreadth}
       />
 
       <UserPhotoStrip items={data.recentPhotoEntries} />
