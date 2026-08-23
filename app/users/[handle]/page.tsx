@@ -62,7 +62,7 @@ function StatTile({
   tone: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/25 bg-white/12 px-3 py-3.5 text-center backdrop-blur-sm">
+    <div className="rounded-[14px] border border-white/20 bg-white/[0.08] px-3 py-3.5 text-center">
       <span className={`num block text-[26px] leading-none font-extrabold ${tone}`}>
         {value}
       </span>
@@ -119,20 +119,19 @@ export default async function UserPage({
   return (
     <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
       {/* 二次元橱窗式主页头图：饱和渐变 + 光晕，展陈这位收藏者的身份与战绩。 */}
-      <section className="relative isolate overflow-hidden rounded-[30px] p-6 text-white shadow-[var(--shadow-card)] sm:p-9 lg:p-11">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(135deg,var(--shu),var(--violet)_58%,var(--sky))]" />
-        <span className="absolute -top-24 -left-16 -z-10 size-72 rounded-full bg-white/25 blur-3xl" />
-        <span className="absolute -right-20 -bottom-24 -z-10 size-80 rounded-full bg-[var(--kin)]/30 blur-3xl" />
-        <span className="absolute inset-0 -z-10 opacity-[0.15] [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:22px_22px]" />
+      <section className="relative isolate overflow-hidden rounded-[22px] p-6 text-[var(--paper)] shadow-[var(--shadow-card)] sm:p-9 lg:p-11">
+        {/* 青黛档案封面：深靛底、亚光，不用发光与强渐变。 */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(155deg,var(--violet),color-mix(in_oklab,var(--violet)_60%,var(--ink)))]" />
+        <div className="absolute inset-0 -z-10 border border-white/10" />
 
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-          <div className="grid size-24 shrink-0 place-items-center rounded-[26px] bg-white/20 text-[44px] font-black backdrop-blur-sm ring-2 ring-white/40 sm:size-28">
+          <div className="font-heading grid size-24 shrink-0 place-items-center rounded-[20px] bg-white/12 text-[44px] font-black ring-1 ring-white/30 sm:size-28">
             {initial}
           </div>
 
           <div className="min-w-0 flex-1">
             {profile.accentTitle ? (
-              <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-[12px] font-bold tracking-wide backdrop-blur-sm">
+              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold tracking-wide">
                 ✦ {profile.accentTitle}
               </span>
             ) : null}
@@ -141,7 +140,7 @@ export default async function UserPage({
                 {profile.displayName}
               </h1>
               <Link
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-bold backdrop-blur-sm transition-colors hover:bg-white/30"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[12px] font-bold transition-colors hover:bg-white/20"
                 href={`/users/${profile.handle}/badges`}
               >
                 🏅 徽章 {badgeCount} →

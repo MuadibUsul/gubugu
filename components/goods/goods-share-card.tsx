@@ -191,7 +191,7 @@ export function GoodsShareCard({ goodsName, goodsSlug }: GoodsShareCardProps) {
       <dialog
         aria-describedby="goods-share-description"
         aria-labelledby="goods-share-title"
-        className="mt-auto mb-0 max-h-[96dvh] w-full max-w-[560px] overflow-hidden rounded-t-[28px] border border-[var(--rule)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_32px_100px_rgba(52,31,63,.3)] backdrop:bg-[rgba(38,25,45,.68)] backdrop:backdrop-blur-[3px] sm:m-auto sm:w-[min(92vw,560px)] sm:rounded-[28px]"
+        className="mt-auto mb-0 max-h-[96dvh] w-full max-w-[560px] overflow-hidden rounded-t-[28px] border border-[var(--rule)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_32px_100px_rgba(52,31,63,.3)] backdrop:bg-[rgba(30,26,20,.7)] sm:m-auto sm:w-[min(92vw,560px)] sm:rounded-[28px]"
         onClick={(event) => {
           if (event.target === event.currentTarget) closeDialog();
         }}

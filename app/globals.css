@@ -1,47 +1,65 @@
 @import 'tailwindcss';
 
-/* 櫻色收藏册：米白底色让商品图保持主角，樱粉、菫色和薄荷色负责导航与状态。 */
+/* 日系纸张博物馆：象牙纸底色让藏品图与档案信息作主角，墨黑作字，古典朱红作
+   印章式强调（御朱印），古铜金标记珍藏，青黛与雾蓝、樱粉、苔藓作克制的辅助
+   识别。材质取向亚光旧纸、轻微年代感，避免玻璃 / 金属 / 霓虹。 */
 
 :root {
   /* light-dark() 让每个 token 只声明一次，随 color-scheme 取值；
-     [data-theme] 只需翻转 color-scheme，不必重复整份调色板。 */
+     [data-theme] 只需翻转 color-scheme，不必重复整份调色板。
+     浅色用规格给定的确切色值；暗色是「宵 · 档案室」暖黑，承接同一套语义。 */
   color-scheme: light dark;
 
-  --paper: light-dark(oklch(0.982 0.012 315), oklch(0.16 0.018 292));
-  --surface: light-dark(oklch(0.998 0.004 310), oklch(0.205 0.021 292));
-  --sunken: light-dark(oklch(0.958 0.022 310), oklch(0.135 0.02 292));
+  /* 象牙纸 / 卡面 / 下沉层 */
+  --paper: light-dark(#f7f1e5, #201c16);
+  --surface: light-dark(#fcf8ee, #2a251d);
+  --sunken: light-dark(#ece4d3, #191510);
 
-  /* 墨 */
-  --ink: light-dark(oklch(0.235 0.035 292), oklch(0.95 0.012 310));
-  --ink-2: light-dark(oklch(0.47 0.035 292), oklch(0.73 0.022 305));
-  --ink-3: light-dark(oklch(0.52 0.03 292), oklch(0.68 0.02 305));
+  /* 墨黑 */
+  --ink: light-dark(#242424, #ede6d6);
+  --ink-2: light-dark(#5b554a, #b3ab98);
+  --ink-3: light-dark(#6f695c, #968d7b);
 
-  /* 线 */
-  --rule: light-dark(oklch(0.895 0.025 310), oklch(0.31 0.03 292));
-  --rule-2: light-dark(oklch(0.82 0.04 310), oklch(0.43 0.045 292));
-  --control-border: light-dark(oklch(0.68 0.045 310), oklch(0.52 0.045 292));
+  /* 纸灰：边界与分层 */
+  --rule: light-dark(#e4dbc8, #3a342a);
+  --rule-2: light-dark(#d2c6ad, #4e4738);
+  --control-border: light-dark(#b8ab8f, #5c5442);
 
-  /* 樱粉：主操作与当前状态 */
-  --shu: light-dark(oklch(0.58 0.19 8), oklch(0.72 0.17 8));
-  --shu-ink: light-dark(oklch(1 0 0), oklch(0.16 0.025 8));
-  --shu-soft: light-dark(oklch(0.955 0.045 5), oklch(0.27 0.065 5));
+  /* 古典朱红：品牌与印章式强调 */
+  --shu: light-dark(#c94b4b, #d96e6e);
+  --shu-ink: light-dark(#fbf6ec, #201c16);
+  --shu-soft: light-dark(#f0ddd9, #3a2723);
 
-  --kin: light-dark(oklch(0.76 0.12 80), oklch(0.79 0.12 80));
-  --kin-2: light-dark(oklch(0.69 0.13 72), oklch(0.72 0.11 80));
-  --kin-soft: light-dark(oklch(0.96 0.045 84), oklch(0.27 0.05 80));
+  /* 古铜金：珍藏 / 已点亮 / 徽章 */
+  --kin: light-dark(#b08d57, #c7a06a);
+  --kin-2: light-dark(#9c7b48, #b08d57);
+  --kin-soft: light-dark(#ede3ce, #342c1e);
 
-  --violet: light-dark(oklch(0.61 0.16 300), oklch(0.75 0.14 300));
-  --violet-soft: light-dark(oklch(0.95 0.04 300), oklch(0.27 0.06 300));
-  --sky: light-dark(oklch(0.68 0.105 230), oklch(0.76 0.1 230));
-  --sky-soft: light-dark(oklch(0.95 0.035 230), oklch(0.27 0.05 230));
+  /* 青黛：身份 / 收藏识别（辅助主色） */
+  --violet: light-dark(#486581, #7c95ae);
+  --violet-soft: light-dark(#dee4ea, #242c35);
 
-  /* 收藏语义色。色彩只负责状态识别，商品图仍是页面的视觉主角。 */
-  --want: light-dark(oklch(0.48 0.105 264), oklch(0.72 0.105 264));
-  --want-soft: light-dark(oklch(0.955 0.025 264), oklch(0.24 0.04 264));
-  --exchange: light-dark(oklch(0.47 0.09 163), oklch(0.72 0.09 163));
-  --exchange-soft: light-dark(oklch(0.955 0.025 163), oklch(0.24 0.04 163));
+  /* 浅雾蓝：柔和信息区域（暗色回到规格原值 #a8b8c8） */
+  --sky: light-dark(#5e7488, #a8b8c8);
+  --sky-soft: light-dark(#e6ebf0, #232a31);
 
-  --destructive: light-dark(oklch(0.52 0.2 25), oklch(0.68 0.17 25));
+  /* 收藏语义色。色彩只负责状态识别，藏品图仍是页面视觉主角。 */
+  /* 樱花灰粉：想要 / 柔和情绪。前景取略深值保证可读，底色用原灰粉族。 */
+  --want: light-dark(#b87676, #d9a7a7);
+  --want-soft: light-dark(#f1e4e2, #322624);
+  /* 苔藓绿：可换 / 自然治愈 / 限定系列 */
+  --exchange: light-dark(#6d7d64, #93a489);
+  --exchange-soft: light-dark(#e4e8de, #262b23);
+
+  /* 稀有度色阶：仅用于稀有度徽标，克制使用；两套主题同值。 */
+  --rarity-common: #9ca3af;
+  --rarity-rare: #4da3ff;
+  --rarity-epic: #8b5cf6;
+  --rarity-ssr: #d9b65d;
+  --rarity-limited: #c94b4b;
+  --rarity-legendary: #e6c875;
+
+  --destructive: light-dark(#a83a3a, #d97a6a);
 
   --font-heading-family:
     'Avenir Next', 'Segoe UI Variable Display', 'PingFang SC',
@@ -134,6 +152,19 @@
 
   html {
     background: var(--paper);
+  }
+
+  /* 纸张纹理：极轻的亚光颗粒，营造旧纸质感；overlay 在浅色与暗色上都成立，
+     不影响可读性，也不拦截交互。用 ::after 以避开已有的 body::before 氛围层。 */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   body {
