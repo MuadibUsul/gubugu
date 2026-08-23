@@ -99,3 +99,50 @@ describe('parseCatalogPage', () => {
     });
   });
 });
+
+describe('parseCatalogPage — neogate 站点适配器', () => {
+  // neogate 商品页只有 og:title / og:image，og:type 是 article，通用解析器会跳过；
+  // 适配器接住它，并只收与页面 slug 同名前缀的商品图，排除关联文章缩略图。
+  const html = `
+    <head>
+      <meta property="og:type" content="article">
+      <meta property="og:title" content="『コードギアス』ホロEYE缶バッジ《第3弾》が登場！ | NEO GATE">
+      <meta property="og:image" content="https://www.neogate.jp/wp-content/uploads/geass_holoeye3.webp">
+      <meta property="og:description" content="全8種のホロEYE缶バッジ">
+    </head>
+    <body>
+      <img src="https://www.neogate.jp/wp-content/uploads/neogate_rogo.png">
+      <img src="https://www.neogate.jp/wp-content/uploads/geass_holoeye3_image01.webp">
+      <img src="https://www.neogate.jp/wp-content/uploads/geass_babutans-150x150.webp">
+    </body>`;
+
+  it('accepts the article-typed product and keeps only slug-matched images', () => {
+    const { products } = parseCatalogPage(
+      html,
+      'https://www.neogate.jp/geass_holoeye3/',
+    );
+
+    expect(products).toHaveLength(1);
+    const product = products[0];
+    // 营销后缀「が登場！」与「| NEO GATE」被清掉。
+    expect(product.name).toBe('『コードギアス』ホロEYE缶バッジ《第3弾》');
+    expect(product.skuCode).toBe('GEASS_HOLOEYE3');
+    expect(product.externalId).toBe('geass_holoeye3');
+    // og:image + 同 slug 图片；logo 与 -150x150 关联缩略图被排除。
+    expect(product.imageUrls).toEqual([
+      'https://www.neogate.jp/wp-content/uploads/geass_holoeye3.webp',
+      'https://www.neogate.jp/wp-content/uploads/geass_holoeye3_image01.webp',
+    ]);
+    // 类型线索里含「缶バッジ」，供服务端推断为 can-badge。
+    expect(product.goodsType).toContain('缶バッジ');
+  });
+
+  it('does not apply the neogate adapter to other hosts', () => {
+    const { products } = parseCatalogPage(
+      html.replace(/neogate\.jp/g, 'example.com'),
+      'https://www.example.com/geass_holoeye3/',
+    );
+
+    expect(products).toHaveLength(0);
+  });
+});

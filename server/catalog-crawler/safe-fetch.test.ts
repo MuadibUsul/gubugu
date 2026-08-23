@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   assertSafeCrawlerUrl,
   isPublicIpAddress,
+  safeFetchBuffer,
   safeFetchText,
 } from './safe-fetch';
 
@@ -78,5 +79,34 @@ describe('crawler safe fetch', () => {
         maxBytes: 10,
       }),
     ).rejects.toThrow('exceeds');
+  });
+
+  it('sends a same-origin Referer for images (hotlink protection) but not for HTML', async () => {
+    const seen: Array<{ url: string; referer: string | undefined }> = [];
+    const fetchImpl = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = new URL(input instanceof Request ? input.url : input);
+        const headers = new Headers(init?.headers);
+        seen.push({ url: url.toString(), referer: headers.get('referer') ?? undefined });
+        const contentType = url.pathname.endsWith('.webp')
+          ? 'image/webp'
+          : 'text/html; charset=utf-8';
+        return new Response('x', { headers: { 'content-type': contentType } });
+      },
+    ) as unknown as typeof fetch;
+
+    await safeFetchBuffer('https://cdn.example.com/wp-content/a.webp', {
+      allowedHosts: ['cdn.example.com'],
+      fetchImpl,
+      resolveHost: publicResolver,
+    });
+    await safeFetchText('https://cdn.example.com/page', {
+      allowedHosts: ['cdn.example.com'],
+      fetchImpl,
+      resolveHost: publicResolver,
+    });
+
+    expect(seen[0].referer).toBe('https://cdn.example.com/');
+    expect(seen[1].referer).toBeUndefined();
   });
 });

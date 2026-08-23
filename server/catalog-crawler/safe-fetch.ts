@@ -254,15 +254,24 @@ export async function safeFetch(
         options.resolveHost,
       );
 
+      const headers: Record<string, string> = {
+        Accept:
+          kind === 'image'
+            ? 'image/avif,image/webp,image/png,image/jpeg,image/gif;q=0.8'
+            : 'text/html,application/xhtml+xml;q=0.9',
+        'User-Agent': 'GubuguCatalogCrawler/1.0',
+      };
+      // Image servers commonly use hotlink protection (a same-site Referer
+      // check) and 403 image requests without one. Send a same-origin Referer
+      // for images, mirroring how a browser loads an in-page image, so a
+      // page's own artwork is not rejected. HTML requests send none.
+      if (kind === 'image') {
+        headers.Referer = `${currentUrl.origin}/`;
+      }
+
       const response = await fetchImpl(currentUrl, {
         cache: 'no-store',
-        headers: {
-          Accept:
-            kind === 'image'
-              ? 'image/avif,image/webp,image/png,image/jpeg,image/gif;q=0.8'
-              : 'text/html,application/xhtml+xml;q=0.9',
-          'User-Agent': 'GubuguCatalogCrawler/1.0',
-        },
+        headers,
         redirect: 'manual',
         signal: controller.signal,
       });

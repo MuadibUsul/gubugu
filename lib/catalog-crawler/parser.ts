@@ -409,6 +409,83 @@ function collectMatchingAnchors(
   }
 }
 
+// ── 站点适配器 ───────────────────────────────────────────────
+// 有些白名单站点在商品页只放 og:title / og:image，但 og:type 是 article（典型
+// WordPress 商店），通用解析器会正确跳过。为这类站单独写小适配器，只解析它们
+// 的固定结构，不引入无头浏览器。仅对明确写过适配器的站点生效。
+
+/** NEO GATE（neogate.jp）：WordPress 商品页，og:title + 商品 slug 命名的图片。 */
+function parseNeogateProduct(
+  html: string,
+  pageUrl: URL,
+): ParsedCatalogProduct | null {
+  const meta = metaValues(html);
+  const rawTitle = firstMeta(meta, 'og:title', 'twitter:title');
+  if (!rawTitle) return null;
+
+  const name = rawTitle
+    .replace(/\s*[|｜]\s*NEO\s*GATE\s*$/i, '')
+    .replace(/が登場[！!]?\s*$/u, '')
+    .trim();
+  if (!name) return null;
+
+  const slug =
+    decodeURIComponent(pageUrl.pathname)
+      .replace(/\/+$/, '')
+      .split('/')
+      .filter(Boolean)
+      .pop() ?? '';
+
+  // 商品图与页面 slug 同名前缀；-150x150 的关联文章缩略图 slug 不同，自然被排除。
+  const productImages = new Set<string>();
+  const ogImage = resolveHttpUrl(firstMeta(meta, 'og:image'), pageUrl);
+  if (ogImage) productImages.add(ogImage);
+
+  for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+    const resolved = resolveHttpUrl(
+      parseAttributes(match[0]).get('src'),
+      pageUrl,
+    );
+    if (!resolved) continue;
+
+    const url = new URL(resolved);
+    if (url.hostname.replace(/^www\./, '') !== 'neogate.jp') continue;
+    if (!url.pathname.includes('/wp-content/uploads/')) continue;
+
+    const fileName = url.pathname.split('/').pop() ?? '';
+    if (slug && fileName.startsWith(slug)) productImages.add(resolved);
+  }
+
+  return {
+    sourceUrl: resolveHttpUrl(firstMeta(meta, 'og:url'), pageUrl) ?? pageUrl.toString(),
+    externalId: slug || null,
+    name,
+    description: firstMeta(meta, 'og:description', 'twitter:description'),
+    skuCode: slug ? slug.toUpperCase() : null,
+    // 把商品名作为类型推断的线索（缶バッジ → can-badge 等，在 service 侧完成）。
+    goodsType: name,
+    material: null,
+    sizeLabel: null,
+    edition: null,
+    releaseDate: null,
+    msrpAmount: null,
+    currencyCode: null,
+    manufacturer: null,
+    imageUrls: [...productImages],
+    rawPayload: { adapter: 'neogate', title: rawTitle },
+  } satisfies ParsedCatalogProduct;
+}
+
+/** 按主机名分派站点适配器；只有明确写过的站点返回结果。 */
+function parseWithSiteAdapter(
+  html: string,
+  pageUrl: URL,
+): ParsedCatalogProduct | null {
+  const host = pageUrl.hostname.replace(/^www\./, '');
+  if (host === 'neogate.jp') return parseNeogateProduct(html, pageUrl);
+  return null;
+}
+
 export function parseCatalogPage(
   html: string,
   pageUrl: string | URL,
@@ -423,6 +500,12 @@ export function parseCatalogPage(
   if (products.length === 0) {
     const openGraphProduct = parseOpenGraph(html, baseUrl);
     if (openGraphProduct) products.push(openGraphProduct);
+  }
+
+  // Site-specific adapters only run when generic structured data yielded nothing.
+  if (products.length === 0) {
+    const adapted = parseWithSiteAdapter(html, baseUrl);
+    if (adapted) products.push(adapted);
   }
 
   const detailPathPattern = options.detailPathPattern?.trim();
