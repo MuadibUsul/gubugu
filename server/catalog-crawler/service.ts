@@ -15,6 +15,7 @@ import {
   type ParsedCatalogProduct,
 } from '@/lib/catalog-crawler/parser';
 import { slugifyText } from '@/lib/slug';
+import { enrichCatalogProduct } from '@/server/catalog-crawler/enrich';
 import { normalizeAndStoreCatalogImage } from '@/server/catalog-crawler/image-store';
 import {
   safeFetchBuffer,
@@ -170,7 +171,13 @@ async function buildDraftPayload(
   const sourceKey = sourceKeyFor(product);
   const fallbackCode = `CRAWL-${sourceKey.slice(0, 12).toUpperCase()}`;
   const skuCode = trimText(product.skuCode, 128) ?? fallbackCode;
-  const name = trimText(product.name, 255) ?? fallbackCode;
+
+  // 代码基线已就绪；LLM 尽力做进一步中文化/校对/拆分。缺 key 或失败都回退到基线，
+  // 并把状态写进草稿，供人工审核时判断。
+  const enrichment = await enrichCatalogProduct(product);
+  const enriched = enrichment.status === 'enriched' ? enrichment.data : null;
+
+  const name = trimText(enriched?.name ?? product.name, 255) ?? fallbackCode;
   const slug =
     slugifyText(`${skuCode}-${name}`) || `crawl-${sourceKey.slice(0, 16)}`;
   const allowedImageHosts = Array.from(
@@ -212,8 +219,8 @@ async function buildDraftPayload(
       skuCode,
       slug: slug.slice(0, 160),
       name,
-      description: trimText(product.description, 4000),
-      goodsType: inferGoodsType(product.goodsType),
+      description: trimText(enriched?.description ?? product.description, 4000),
+      goodsType: inferGoodsType(enriched?.goodsType ?? product.goodsType),
       material: trimText(product.material, 128),
       sizeLabel: trimText(product.sizeLabel, 128),
       edition: trimText(product.edition, 128),
@@ -229,6 +236,22 @@ async function buildDraftPayload(
           fetchedAt: fetchedAt.toISOString(),
           manufacturer: trimText(product.manufacturer, 128),
         },
+        // 人工审核依据：LLM 是否跑过、抽出的 IP/系列/角色建议、以及原文。
+        enrichment:
+          enrichment.status === 'enriched'
+            ? {
+                status: 'enriched',
+                model: enrichment.model,
+                originalName: product.name,
+                ipName: enriched?.ipName ?? null,
+                seriesName: enriched?.seriesName ?? null,
+                characterNames: enriched?.characterNames ?? [],
+              }
+            : {
+                status: enrichment.status,
+                reason: enrichment.reason,
+                originalName: product.name,
+              },
       },
     },
     images,
