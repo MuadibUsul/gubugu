@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import {
+  ingestManualUrlAction,
   rejectCrawlerDraftAction,
   saveCrawlerSourceAction,
   scanAllCrawlerSourcesAction,
@@ -86,6 +87,29 @@ function StatusPill({
     >
       {label}
     </span>
+  );
+}
+
+function ManualIngestForm() {
+  return (
+    <form action={ingestManualUrlAction} className="space-y-3">
+      <div className="space-y-1.5">
+        <label className={labelClassName} htmlFor="manual-url">
+          商品链接
+        </label>
+        <input
+          className={inputClassName}
+          id="manual-url"
+          name="url"
+          placeholder="https://…/商品详情页"
+          required
+          type="url"
+        />
+      </div>
+      <Button className="w-full" size="sm" type="submit">
+        解析并加入审核
+      </Button>
+    </form>
   );
 }
 
@@ -291,20 +315,40 @@ function SourcesView({ data }: AdminCrawlerShellProps) {
         )}
       </section>
 
-      <aside className="collection-panel h-fit p-5 sm:p-6 xl:sticky xl:top-6">
-        <div className="space-y-2">
-          <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
-            新来源
-          </p>
-          <h2 className="font-heading text-foreground text-3xl leading-none">
-            加入白名单
-          </h2>
-          <p className="text-muted-foreground text-sm leading-7">
-            只添加你有权采集且结构稳定的公开页面。新增内容始终先进入人工审核。
-          </p>
+      <aside className="collection-panel h-fit space-y-8 p-5 sm:p-6 xl:sticky xl:top-6">
+        <div>
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
+              手动录入
+            </p>
+            <h2 className="font-heading text-foreground text-3xl leading-none">
+              粘贴链接
+            </h2>
+            <p className="text-muted-foreground text-sm leading-7">
+              贴一个商品详情页链接：抓取这一页 → 适配器解析 + LLM
+              中文化 → 生成一条待审草稿。逐条人工策展，不发现其它链接。
+            </p>
+          </div>
+          <div className="mt-5">
+            <ManualIngestForm />
+          </div>
         </div>
-        <div className="mt-5">
-          <SourceForm />
+
+        <div className="border-border/60 border-t pt-6">
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
+              新来源
+            </p>
+            <h2 className="font-heading text-foreground text-3xl leading-none">
+              加入白名单
+            </h2>
+            <p className="text-muted-foreground text-sm leading-7">
+              只添加你有权采集且结构稳定的公开页面。新增内容始终先进入人工审核。
+            </p>
+          </div>
+          <div className="mt-5">
+            <SourceForm />
+          </div>
         </div>
       </aside>
     </div>

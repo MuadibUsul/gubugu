@@ -167,6 +167,7 @@ async function buildDraftPayload(
   source: CrawlerSource,
   product: ParsedCatalogProduct,
   fetchedAt: Date,
+  imageHosts: readonly string[],
 ): Promise<DraftPayload> {
   const sourceKey = sourceKeyFor(product);
   const fallbackCode = `CRAWL-${sourceKey.slice(0, 12).toUpperCase()}`;
@@ -180,9 +181,7 @@ async function buildDraftPayload(
   const name = trimText(enriched?.name ?? product.name, 255) ?? fallbackCode;
   const slug =
     slugifyText(`${skuCode}-${name}`) || `crawl-${sourceKey.slice(0, 16)}`;
-  const allowedImageHosts = Array.from(
-    new Set([new URL(source.entryUrl).hostname, ...source.allowedImageHosts]),
-  );
+  const allowedImageHosts = Array.from(new Set(imageHosts));
   const images: DraftPayload['images'] = [];
 
   for (const imageUrl of product.imageUrls.slice(0, MAX_IMAGES_PER_DRAFT)) {
@@ -371,7 +370,10 @@ export async function runCrawlerSourceById(
 
       try {
         const now = new Date();
-        const payload = await buildDraftPayload(source, product, now);
+        const payload = await buildDraftPayload(source, product, now, [
+          new URL(source.entryUrl).hostname,
+          ...source.allowedImageHosts,
+        ]);
         const values = {
           sourceUrl: product.sourceUrl,
           contentHash,
@@ -498,4 +500,124 @@ export async function runManualCrawlerSweep() {
   }
 
   return results;
+}
+
+// 手动录入用的固定来源。entryUrl 必须满足 ^https?:// 约束，用占位主机；enabled=false
+// 所以它不参与定时扫描。所有手动单条录入的草稿都挂在它下面。
+export const MANUAL_SOURCE_ENTRY = 'https://manual-ingest.local/';
+const MANUAL_SOURCE_NAME = '手动录入';
+
+async function ensureManualSource(createdBy: string): Promise<CrawlerSource> {
+  const db = getDb();
+  const [existing] = await db
+    .select()
+    .from(crawlerSources)
+    .where(eq(crawlerSources.entryUrl, MANUAL_SOURCE_ENTRY))
+    .limit(1);
+  if (existing) return existing;
+
+  await db
+    .insert(crawlerSources)
+    .values({
+      name: MANUAL_SOURCE_NAME,
+      entryUrl: MANUAL_SOURCE_ENTRY,
+      detailPathPattern: null,
+      allowedImageHosts: [],
+      enabled: false,
+      createdBy,
+    })
+    .onConflictDoNothing({ target: crawlerSources.entryUrl });
+
+  const [row] = await db
+    .select()
+    .from(crawlerSources)
+    .where(eq(crawlerSources.entryUrl, MANUAL_SOURCE_ENTRY))
+    .limit(1);
+  return row;
+}
+
+export type ManualIngestResult =
+  | { status: 'created' | 'updated'; draftId: string; title: string }
+  | { status: 'empty' };
+
+/**
+ * 手动单条录入：抓取一个商品链接，走与爬虫相同的解析（含站点适配器）+ LLM 中文化，
+ * 落成一条待审草稿。逐条人工策展，不发现其它链接、不参与定时扫描。
+ * 找不到可识别商品返回 `empty`；抓取失败（如 WAF 403）会抛错，交由调用方提示。
+ */
+export async function ingestManualUrl(
+  rawUrl: string,
+  createdBy: string,
+): Promise<ManualIngestResult> {
+  const db = getDb();
+  const target = new URL(rawUrl);
+  if (target.protocol !== 'http:' && target.protocol !== 'https:') {
+    throw new Error('只支持 HTTP / HTTPS 链接。');
+  }
+  const pageHost = target.hostname;
+
+  const page = await safeFetchText(target.toString(), {
+    allowedHosts: [pageHost],
+  });
+  const product = parseCatalogPage(page.text, page.url).products[0];
+  if (!product) {
+    return { status: 'empty' };
+  }
+
+  const source = await ensureManualSource(createdBy);
+  const now = new Date();
+  // 允许下载本页引用的图片主机；safe-fetch 仍做私网 / 大小 / 类型校验。
+  const imageHosts = [
+    pageHost,
+    ...product.imageUrls.flatMap((value) => {
+      try {
+        return [new URL(value).hostname];
+      } catch {
+        return [];
+      }
+    }),
+  ];
+  const payload = await buildDraftPayload(source, product, now, imageHosts);
+
+  const sourceKey = sourceKeyFor(product);
+  const contentHash = contentHashFor(product);
+  const values = {
+    sourceUrl: product.sourceUrl,
+    contentHash,
+    title: payload.goods.name,
+    payload,
+    updatedAt: now,
+  };
+
+  const [existing] = await db
+    .select({ id: crawlerDrafts.id, status: crawlerDrafts.status })
+    .from(crawlerDrafts)
+    .where(
+      and(
+        eq(crawlerDrafts.sourceId, source.id),
+        eq(crawlerDrafts.sourceKey, sourceKey),
+      ),
+    )
+    .limit(1);
+
+  if (existing) {
+    // 已发布 / 已拒绝的不覆盖；待审的用最新解析更新。
+    if (existing.status === 'pending') {
+      await db
+        .update(crawlerDrafts)
+        .set(values)
+        .where(eq(crawlerDrafts.id, existing.id));
+    }
+    return {
+      status: 'updated',
+      draftId: existing.id,
+      title: payload.goods.name,
+    };
+  }
+
+  const id = crypto.randomUUID();
+  await db
+    .insert(crawlerDrafts)
+    .values({ id, sourceId: source.id, sourceKey, ...values });
+  return { status: 'created', draftId: id, title: payload.goods.name };
 }

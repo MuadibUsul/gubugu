@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { asc, desc, eq, sql } from 'drizzle-orm';
+import { asc, desc, eq, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import {
@@ -17,6 +17,7 @@ import type {
   AdminGoodsSeriesOption,
   AdminGoodsTagLibraryItem,
 } from '@/server/data/admin-goods';
+import { MANUAL_SOURCE_ENTRY } from '@/server/catalog-crawler/service';
 import { getDb } from '@/server/db/client';
 
 const crawlerViewSchema = z.enum(['sources', 'drafts', 'runs']);
@@ -135,6 +136,8 @@ export async function getAdminCrawlerPageData(input?: {
       })
       .from(crawlerSources)
       .leftJoin(crawlerDrafts, eq(crawlerDrafts.sourceId, crawlerSources.id))
+      // 手动录入用的占位来源不进白名单列表（它的草稿照常出现在审核队列）。
+      .where(ne(crawlerSources.entryUrl, MANUAL_SOURCE_ENTRY))
       .groupBy(crawlerSources.id)
       .orderBy(desc(crawlerSources.enabled), asc(crawlerSources.name)),
     db

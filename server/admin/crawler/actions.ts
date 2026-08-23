@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { crawlerDrafts, crawlerSources } from '@/drizzle/schema';
 import { requireAdminAccess } from '@/server/auth/admin';
 import {
+  ingestManualUrl,
   runCrawlerSourceById,
   runManualCrawlerSweep,
 } from '@/server/catalog-crawler/service';
@@ -197,6 +198,30 @@ export async function scanAllCrawlerSourcesAction() {
   await runManualCrawlerSweep();
   revalidatePath('/admin/crawler');
   redirect(crawlerPath({ view: 'runs', notice: 'scan-finished' }));
+}
+
+const manualUrlSchema = z.object({ url: z.string().trim().url().max(2000) });
+
+export async function ingestManualUrlAction(formData: FormData) {
+  const viewer = await requireAdminAccess('/admin/crawler');
+  const parsed = manualUrlSchema.safeParse({ url: formData.get('url') });
+  if (!parsed.success) {
+    redirect(crawlerPath({ view: 'sources', error: 'manual-invalid' }));
+  }
+
+  let result: Awaited<ReturnType<typeof ingestManualUrl>>;
+  try {
+    result = await ingestManualUrl(parsed.data.url, viewer.id);
+  } catch {
+    redirect(crawlerPath({ view: 'sources', error: 'manual-error' }));
+  }
+
+  if (result.status === 'empty') {
+    redirect(crawlerPath({ view: 'sources', error: 'manual-empty' }));
+  }
+
+  revalidatePath('/admin/crawler');
+  redirect(`/admin/crawler/drafts/${result.draftId}`);
 }
 
 export async function rejectCrawlerDraftAction(formData: FormData) {

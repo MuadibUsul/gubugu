@@ -55,6 +55,18 @@ export default async function AdminCrawlerPage({
       tone: 'error' as const,
       text: '这个入口 URL 已在白名单中。',
     },
+    'manual-empty': {
+      tone: 'error' as const,
+      text: '这一页没有可识别的商品结构，该站可能需要专用适配器。',
+    },
+    'manual-error': {
+      tone: 'error' as const,
+      text: '抓取失败（可能被站点拦截或超时），请稍后重试或改用手工填写。',
+    },
+    'manual-invalid': {
+      tone: 'error' as const,
+      text: '链接无效，仅支持标准 HTTP(S) 地址。',
+    },
   }[singleValue(query.notice) ?? singleValue(query.error) ?? ''];
 
   return <AdminCrawlerShell data={data} feedback={feedback} />;
