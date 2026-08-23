@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { unstable_cache } from 'next/cache';
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
 
 import {
@@ -38,6 +39,10 @@ export type LeaderboardEntry = Ranked<{
 
 const MOMENTUM_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
+// 排行榜是滞后视图：每次请求全量算所有公开用户的指标再排序，成本随用户增长。点亮 / 成就 /
+// 可见性会在多处 action 里变化，精确失效不划算，改用短窗口时间缓存——60 秒陈旧对榜单无感知。
+const LEADERBOARD_REVALIDATE_SECONDS = 60;
+
 /**
  * 某个维度的收藏排行榜。只有公开资料的用户参与（复用资料可见性）；点亮才计数。
  *
@@ -49,6 +54,18 @@ export async function getLeaderboard(
   options: { limit?: number } = {},
 ): Promise<LeaderboardEntry[]> {
   const limit = options.limit ?? 50;
+
+  return unstable_cache(
+    () => getLeaderboardUncached(dimension, limit),
+    ['leaderboard', dimension, `${limit}`],
+    { revalidate: LEADERBOARD_REVALIDATE_SECONDS },
+  )();
+}
+
+async function getLeaderboardUncached(
+  dimension: LeaderboardDimension,
+  limit: number,
+): Promise<LeaderboardEntry[]> {
   const db = getDb();
 
   const published = and(

@@ -1,8 +1,10 @@
 import 'server-only';
 
+import { unstable_cache } from 'next/cache';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { catalogCacheTag } from '@/lib/cache-tags';
 import {
   characters,
   goods,
@@ -337,8 +339,28 @@ export async function searchGoodsCatalog(input: GoodsSearchInput) {
   return goodsSearchProvider.searchGoods(params);
 }
 
+type GoodsSearchFilterOptionsParams = z.output<
+  typeof goodsSearchFilterOptionsInputSchema
+>;
+
+// 筛选项每次搜索都要算，但只依赖已发布图鉴（IP/角色/系列/标签及计数），与浏览者无关，
+// 可缓存。图鉴后台改动经 updateTag(catalogCacheTag) 精确失效，另有 5 分钟兜底窗口。
+const FILTER_OPTIONS_REVALIDATE_SECONDS = 300;
+
 export async function getGoodsSearchFilterOptions(
   input?: z.input<typeof goodsSearchFilterOptionsInputSchema>,
+) {
+  const params = goodsSearchFilterOptionsInputSchema.parse(input ?? {});
+
+  return unstable_cache(
+    () => getGoodsSearchFilterOptionsUncached(params),
+    ['goods-filter-options', JSON.stringify(params)],
+    { tags: [catalogCacheTag], revalidate: FILTER_OPTIONS_REVALIDATE_SECONDS },
+  )();
+}
+
+async function getGoodsSearchFilterOptionsUncached(
+  params: GoodsSearchFilterOptionsParams,
 ) {
   const db = getDb();
   const {
@@ -350,7 +372,7 @@ export async function getGoodsSearchFilterOptions(
     characterLimit,
     seriesLimit,
     tagLimit,
-  } = goodsSearchFilterOptionsInputSchema.parse(input ?? {});
+  } = params;
   const publishedGoodsWhereClause = and(
     eq(goods.status, 'published'),
     eq(series.status, 'published'),
