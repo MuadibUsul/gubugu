@@ -476,6 +476,143 @@ function parseNeogateProduct(
   } satisfies ParsedCatalogProduct;
 }
 
+/**
+ * animate オンラインショップ（animate-onlineshop.jp）：EC 商品页 og:type=article，无 Product
+ * JSON-LD，只有 BreadcrumbList。商品信息在页面内联脚本（jan_code / price / 商品コード _id2）
+ * 与 og:title 中；商品图是 resize_image.php?image=<JAN>_<序号>_… 前缀，促销 banner 走
+ * /upload/save_image/，关联商品用别的 JAN 前缀，都被 JAN 前缀过滤排除。
+ */
+function parseAnimateOnlineShopProduct(
+  html: string,
+  pageUrl: URL,
+): ParsedCatalogProduct | null {
+  const meta = metaValues(html);
+  const rawTitle = firstMeta(meta, 'og:title', 'twitter:title');
+  if (!rawTitle) return null;
+
+  // 站名后缀「| アニメイト」清掉；商品名含【分类】前缀，保留给后续中文化与类型推断。
+  const name = rawTitle.replace(/\s*[|｜]\s*アニメイト\s*$/u, '').trim();
+  if (!name) return null;
+
+  const jan = html.match(/jan_code:\s*'(\d+)'/)?.[1] ?? null;
+  const productCode = html.match(/_id2:\s*'([\w-]+)'/)?.[1] ?? null;
+  const pageId =
+    decodeURIComponent(pageUrl.pathname).match(/\/pd\/(\d+)/)?.[1] ?? null;
+  // new_price 不会误命中：其前一字符是 `_`（词字符），被 (?<![\w]) 排除。
+  const price = html.match(/(?<![\w])price:\s*(\d+)/)?.[1] ?? null;
+
+  // resize_image.php 的 width/height/square 只是缩放参数；归一到不带尺寸的原图 URL 再去重，
+  // 只保留以本商品 JAN 开头的图，排除关联商品与促销 banner。
+  const productImages = new Set<string>();
+  const candidateSources = [
+    firstMeta(meta, 'og:image'),
+    ...[...html.matchAll(/<img\b[^>]*>/gi)].map(
+      (match) => parseAttributes(match[0]).get('src') ?? null,
+    ),
+  ];
+  for (const candidate of candidateSources) {
+    const resolved = resolveHttpUrl(candidate, pageUrl);
+    if (!resolved) continue;
+
+    const url = new URL(resolved);
+    if (!url.pathname.endsWith('/resize_image.php')) continue;
+    const image = url.searchParams.get('image');
+    if (!image) continue;
+    if (jan && !image.startsWith(`${jan}_`)) continue;
+
+    url.search = '';
+    url.searchParams.set('image', image);
+    productImages.add(url.toString());
+  }
+
+  return {
+    sourceUrl:
+      resolveHttpUrl(firstMeta(meta, 'og:url'), pageUrl) ?? pageUrl.toString(),
+    externalId: jan ?? productCode ?? pageId,
+    name,
+    description: firstMeta(meta, 'og:description', 'twitter:description'),
+    skuCode: productCode ?? jan,
+    // 把商品名作为类型推断的线索（アクリルスタンド → acrylic-stand 等，在 service 侧完成）。
+    goodsType: name,
+    material: null,
+    sizeLabel: null,
+    edition: null,
+    releaseDate: null,
+    msrpAmount: price,
+    currencyCode: price ? 'JPY' : null,
+    manufacturer: null,
+    imageUrls: [...productImages],
+    rawPayload: { adapter: 'animate-onlineshop', title: rawTitle, jan, productCode },
+  } satisfies ParsedCatalogProduct;
+}
+
+export type CatalogListing = {
+  /** 商品详情页 URL（同源、去重）。只收站点认定的商品卡，不含导航 / 分页 / wp 链接。 */
+  productUrls: string[];
+  /** 下一页列表 URL；到末页为 null。 */
+  nextPageUrl: string | null;
+};
+
+// NEO GATE 列表页路径：/products/ 与 /products/page/N/。用路径门控，避免商品页里的
+// 「相关商品」card-intext-inner 卡被误当成列表（商品页也带该 class）。
+function isNeogateListingPath(pathname: string) {
+  const path = decodeURIComponent(pathname);
+  const normalized = path.endsWith('/') ? path : `${path}/`;
+  return (
+    normalized === '/products/' || /^\/products\/page\/\d+\/$/.test(normalized)
+  );
+}
+
+/**
+ * NEO GATE（neogate.jp）商品列表页：商品卡是 <a class="card-intext-inner" href="/{slug}/">，
+ * 分页是 <a class="next page-numbers" href="/products/page/N/">。只认这两类同源链接，
+ * 天然排除导航、wp-json、feed、promo 等页面脏数据。
+ */
+function discoverNeogateListing(
+  html: string,
+  pageUrl: URL,
+): CatalogListing | null {
+  if (!isNeogateListingPath(pageUrl.pathname)) return null;
+
+  const productUrls = new Set<string>();
+  let nextPageUrl: string | null = null;
+
+  for (const match of html.matchAll(/<a\b([^>]*)>/gi)) {
+    const attributes = parseAttributes(match[1]);
+    const className = attributes.get('class') ?? '';
+    const resolved = resolveHttpUrl(attributes.get('href'), pageUrl);
+    if (!resolved) continue;
+
+    const url = new URL(resolved);
+    if (url.hostname.replace(/^www\./, '') !== 'neogate.jp') continue;
+
+    if (/(^|\s)card-intext-inner(\s|$)/.test(className)) {
+      // 商品卡指向根路径 slug；排除列表页 / 分页自身。
+      if (!isNeogateListingPath(url.pathname)) productUrls.add(url.toString());
+    } else if (
+      !nextPageUrl &&
+      /(^|\s)next(\s|$)/.test(className) &&
+      /(^|\s)page-numbers(\s|$)/.test(className)
+    ) {
+      nextPageUrl = url.toString();
+    }
+  }
+
+  if (productUrls.size === 0) return null;
+  return { productUrls: [...productUrls], nextPageUrl };
+}
+
+/** 按主机名分派「列表页发现」；只有写过列表适配器的站点返回结果。 */
+export function parseCatalogListing(
+  html: string,
+  pageUrl: string | URL,
+): CatalogListing | null {
+  const url = new URL(pageUrl);
+  const host = url.hostname.replace(/^www\./, '');
+  if (host === 'neogate.jp') return discoverNeogateListing(html, url);
+  return null;
+}
+
 /** 按主机名分派站点适配器；只有明确写过的站点返回结果。 */
 function parseWithSiteAdapter(
   html: string,
@@ -483,6 +620,9 @@ function parseWithSiteAdapter(
 ): ParsedCatalogProduct | null {
   const host = pageUrl.hostname.replace(/^www\./, '');
   if (host === 'neogate.jp') return parseNeogateProduct(html, pageUrl);
+  if (host === 'animate-onlineshop.jp') {
+    return parseAnimateOnlineShopProduct(html, pageUrl);
+  }
   return null;
 }
 

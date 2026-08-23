@@ -11,7 +11,9 @@ import {
   type CrawlerSource,
 } from '@/drizzle/schema';
 import {
+  parseCatalogListing,
   parseCatalogPage,
+  type CatalogListing,
   type ParsedCatalogProduct,
 } from '@/lib/catalog-crawler/parser';
 import { slugifyText } from '@/lib/slug';
@@ -24,8 +26,28 @@ import {
 import { getDb } from '@/server/db/client';
 
 const MAX_DETAIL_PAGES = 24;
+// 列表爬取（如 neogate /products/）：跟分页的页数上限与商品总数硬上限，防止失控。
+const MAX_LISTING_PAGES = 60;
+const MAX_LISTING_PRODUCTS = 800;
+// 单站连续请求之间的礼貌间隔：基础间隔 + 随机抖动。全量爬会打很多请求，节流保守一些，
+// 避免固定节奏被小站的频率风控识别、把 IP 封掉。抖动让节奏不那么机械。
+const CRAWL_POLITE_DELAY_MS = 1500;
+const CRAWL_POLITE_JITTER_MS = 1500;
 const MAX_IMAGES_PER_DRAFT = 4;
-const STALE_RUN_AFTER_MS = 30 * 60 * 1000;
+// 全量礼貌爬取本就慢（几百页 × 秒级间隔 + 中文化 + 存图），把陈旧接管窗口放宽到 120 分钟，
+// 免得一次正常的慢速全量爬被误判成卡死而被后续任务重复触发。
+const STALE_RUN_AFTER_MS = 120 * 60 * 1000;
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// 基础间隔上叠加 0–JITTER 的随机抖动，节奏更像人、更不易触发频率风控。
+function politeCrawlDelay() {
+  return delay(
+    CRAWL_POLITE_DELAY_MS + Math.floor(Math.random() * CRAWL_POLITE_JITTER_MS),
+  );
+}
 
 export type CrawlerRunOptions = {
   trigger: 'scheduled' | 'manual';
@@ -131,11 +153,39 @@ function isUniqueConflict(error: unknown, indexName: string) {
   );
 }
 
+function sameHostOrNull(url: string | null, host: string) {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname === host ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+function dedupeProducts(
+  products: ParsedCatalogProduct[],
+  failedPages: number,
+) {
+  const unique = new Map<string, ParsedCatalogProduct>();
+  for (const product of products) {
+    unique.set(sourceKeyFor(product), product);
+  }
+  return { products: [...unique.values()], failedPages };
+}
+
 async function loadProducts(source: CrawlerSource) {
   const sourceHost = new URL(source.entryUrl).hostname;
   const entry = await safeFetchText(source.entryUrl, {
     allowedHosts: [sourceHost],
   });
+
+  // 入口页是商品列表页（有站点列表适配器且发现了商品卡）→ 跟分页把全部商品抓回来。
+  const entryListing = parseCatalogListing(entry.text, entry.url);
+  if (entryListing) {
+    return loadProductsFromListing(sourceHost, entryListing);
+  }
+
+  // 回退：入口页即详情 / 靠 detailPathPattern 发现少量详情页的旧行为。
   const entryPage = parseCatalogPage(entry.text, entry.url, {
     detailPathPattern: source.detailPathPattern,
   });
@@ -155,12 +205,60 @@ async function loadProducts(source: CrawlerSource) {
     }
   }
 
-  const unique = new Map<string, ParsedCatalogProduct>();
-  for (const product of products) {
-    unique.set(sourceKeyFor(product), product);
+  return dedupeProducts(products, failedPages);
+}
+
+/**
+ * 列表爬取：从入口列表页跟「下一页」翻完所有分页，收集每页商品卡链接，再逐个抓详情页
+ * 用站点适配器解析。发现阶段只认商品卡链接、详情阶段只认适配器解得出的结构化商品，
+ * 导航 / 分页 / promo 等页面脏数据都不会变成草稿。请求间加礼貌间隔，分页与商品数有硬上限。
+ */
+async function loadProductsFromListing(
+  sourceHost: string,
+  firstListing: CatalogListing,
+) {
+  const detailUrls = new Set(firstListing.productUrls);
+  let nextUrl = sameHostOrNull(firstListing.nextPageUrl, sourceHost);
+  let listingPages = 1;
+  let failedPages = 0;
+
+  while (
+    nextUrl &&
+    listingPages < MAX_LISTING_PAGES &&
+    detailUrls.size < MAX_LISTING_PRODUCTS
+  ) {
+    await politeCrawlDelay();
+
+    let listing: CatalogListing | null = null;
+    try {
+      const page = await safeFetchText(nextUrl, { allowedHosts: [sourceHost] });
+      listing = parseCatalogListing(page.text, page.url);
+    } catch {
+      failedPages += 1;
+      break;
+    }
+    if (!listing) break;
+
+    listingPages += 1;
+    for (const url of listing.productUrls) detailUrls.add(url);
+    nextUrl = sameHostOrNull(listing.nextPageUrl, sourceHost);
   }
 
-  return { products: [...unique.values()], failedPages };
+  const products: ParsedCatalogProduct[] = [];
+  for (const detailUrl of [...detailUrls].slice(0, MAX_LISTING_PRODUCTS)) {
+    await politeCrawlDelay();
+
+    try {
+      const detail = await safeFetchText(detailUrl, {
+        allowedHosts: [sourceHost],
+      });
+      products.push(...parseCatalogPage(detail.text, detail.url).products);
+    } catch {
+      failedPages += 1;
+    }
+  }
+
+  return dedupeProducts(products, failedPages);
 }
 
 async function buildDraftPayload(
@@ -367,6 +465,10 @@ export async function runCrawlerSourceById(
         skippedCount += 1;
         continue;
       }
+
+      // 只有真正要抓图 / 中文化的产品才等一下，给图片主机同样的礼貌间隔；未变更被跳过的
+      // 产品不等，重爬不会被拖慢。
+      await politeCrawlDelay();
 
       try {
         const now = new Date();
