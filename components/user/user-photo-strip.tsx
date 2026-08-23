@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { CollapsibleSection } from '@/components/layout/collapsible-section';
 import { RemoteImage } from '@/components/ui/remote-image';
 import { formatCatalogDate } from '@/lib/formatters';
 import type { UserPhotoEntry } from '@/server/data';
@@ -11,8 +12,8 @@ type UserPhotoStripProps = {
 /**
  * 写真 —— 用户自己拍的实物图。
  *
- * 旧版把每条记录做成一张带标题和正文的大卡，图反而挤在角落。这里反过来：
- * 图占满，文字退成一行说明 —— 这一段的主角是照片。
+ * 是主页里靠后的次要内容，默认折叠，按需展开，避免把主页拉得太长；
+ * 展开后图占满，文字退成一行说明 —— 这一段的主角是照片。
  */
 export function UserPhotoStrip({ items }: UserPhotoStripProps) {
   if (items.length === 0) {
@@ -20,17 +21,13 @@ export function UserPhotoStrip({ items }: UserPhotoStripProps) {
   }
 
   return (
-    <section className="spread border-border border-t py-14">
-      <div>
-        <p className="lbl">写真</p>
-        <div className="rail-jp">实物记录</div>
-      </div>
-
-      <div className="min-w-0">
-        <h2 className="text-[26px]">实物记录</h2>
-        <div className="rule-kin mt-3" />
-
-        <div className="mt-6 space-y-8">
+    <section className="border-border mt-14 border-t pt-10">
+      <CollapsibleSection
+        badge={`${items.length} 组`}
+        kicker="写真"
+        title="实物记录"
+      >
+        <div className="space-y-8">
           {items.map((item) => (
             <article key={item.postId}>
               <div className="flex items-baseline justify-between gap-4">
@@ -73,7 +70,7 @@ export function UserPhotoStrip({ items }: UserPhotoStripProps) {
             </article>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </section>
   );
 }

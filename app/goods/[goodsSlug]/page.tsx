@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
+import { CollapsibleSection } from '@/components/layout/collapsible-section';
 import { GoodsCommunityPanel } from '@/components/goods/goods-community-panel';
 import { GoodsGallery } from '@/components/goods/goods-gallery';
 import { GoodsShareCard } from '@/components/goods/goods-share-card';
@@ -173,23 +174,22 @@ export default async function GoodsDetailPage({
         </div>
       </section>
 
-      <section className="py-14">
-        <div className="mb-7">
-          <p className="section-kicker">收藏者社区</p>
-          <h2 className="mt-3 text-[clamp(28px,3.4vw,40px)]">评分与收藏笔记</h2>
-          <p className="text-muted-foreground mt-2 text-sm">
-            真实体验都和当前 SKU 绑定，不混入系列或相似款。
-          </p>
-        </div>
-        <div className="min-w-0">
-          <GoodsCommunityPanel
-            data={data}
-            hasPendingSubmission={
-              submissionState.communitySubmission === 'pending'
-            }
-            viewerLabel={authUser?.displayLabel ?? null}
-          />
-        </div>
+      <section className="border-border border-t py-10">
+        <CollapsibleSection
+          hint="真实体验都和当前 SKU 绑定，不混入系列或相似款。"
+          kicker="收藏者社区"
+          title="评分与收藏笔记"
+        >
+          <div className="min-w-0">
+            <GoodsCommunityPanel
+              data={data}
+              hasPendingSubmission={
+                submissionState.communitySubmission === 'pending'
+              }
+              viewerLabel={authUser?.displayLabel ?? null}
+            />
+          </div>
+        </CollapsibleSection>
       </section>
     </main>
   );
