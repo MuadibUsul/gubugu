@@ -12,6 +12,7 @@ export async function SiteNavigation() {
     // route itself 404s, so listing it here would be a dead link.
     ...(canScan ? [{ href: '/recognition', label: '点亮' }] : []),
     { href: '/matches', label: '换谷' },
+    { href: '/leaderboard', label: '排行' },
     user
       ? { href: '/me', label: '我的' }
       : { href: '/login?next=%2Fme', label: '登录' },
