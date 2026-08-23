@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { SlotStrip } from '@/components/collection/slot-strip';
 import type { UserProfilePageData } from '@/server/data';
 
@@ -7,6 +9,9 @@ type UserCollectionHeaderProps = {
   handle: string | null;
   eyebrow: string;
   railLabel: string;
+  /** 徽章陈列柜页入口；不传则不显示。 */
+  badgesHref?: string;
+  badgeCount?: number;
 };
 
 export function UserCollectionHeader({
@@ -15,6 +20,8 @@ export function UserCollectionHeader({
   handle,
   eyebrow,
   railLabel,
+  badgesHref,
+  badgeCount,
 }: UserCollectionHeaderProps) {
   const { summary } = data;
   const metrics = [
@@ -39,9 +46,19 @@ export function UserCollectionHeader({
         <p className="section-kicker">
           {eyebrow} · {railLabel}
         </p>
-        <h1 className="mt-4 text-[clamp(32px,4vw,48px)] leading-[1.12]">
-          {displayName}
-        </h1>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="text-[clamp(32px,4vw,48px)] leading-[1.12]">
+            {displayName}
+          </h1>
+          {badgesHref ? (
+            <Link
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--kin)] bg-[var(--kin-soft)] px-3 py-1.5 text-[12px] font-bold text-[var(--ink)] transition-colors hover:bg-[var(--kin)]/25"
+              href={badgesHref}
+            >
+              🏅 徽章 {badgeCount ?? 0} →
+            </Link>
+          ) : null}
+        </div>
         {handle ? <p className="accession mt-2">{handle}</p> : null}
 
         <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4">

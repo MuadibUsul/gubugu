@@ -258,6 +258,23 @@ export async function recordAchievementsForGoods({
     }));
 }
 
+/** 某位用户已解锁的徽章总数（含各作用域各自达成的计次）。 */
+export async function countUnlockedAchievements(
+  userId: string | null,
+): Promise<number> {
+  if (!userId) {
+    return 0;
+  }
+
+  const db = getDb();
+  const [row] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(userAchievements)
+    .where(eq(userAchievements.userId, userId));
+
+  return row?.total ?? 0;
+}
+
 export type LedgerEntry = {
   code: string;
   name: string;

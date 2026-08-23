@@ -6,26 +6,19 @@ import { z } from 'zod';
 import { TradeListingCard } from '@/components/exchange/trade-listing-card';
 import { FollowButton } from '@/components/user/follow-button';
 import { Button } from '@/components/ui/button';
-import { UserAchievementLedger } from '@/components/user/user-achievement-ledger';
 import {
   UserCollectionSheet,
   type CollectionStatusFilter,
 } from '@/components/user/user-collection-sheet';
 import { UserPhotoStrip } from '@/components/user/user-photo-strip';
-import { demoViewers } from '@/lib/config/demo-viewers';
-import { canViewProfile } from '@/lib/profile-visibility';
 import { getUserProfilePageData } from '@/server/data';
-import { listAchievementLedger } from '@/server/data/achievements';
+import { countUnlockedAchievements } from '@/server/data/achievements';
 import { getFollowCounts, isFollowing } from '@/server/data/follows';
 import { getUserReputation } from '@/server/data/reputation';
+import { resolveBrowsableProfile } from '@/server/data/profile-access';
 import { listOpenTradeListings } from '@/server/data/trade';
 import { getAuthUser } from '@/server/auth/session';
-import {
-  formatProfileHandle,
-  getProfileByHandle,
-  type ProfileDetail,
-} from '@/server/data/profiles';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { formatProfileHandle } from '@/server/data/profiles';
 import { startConversationAction } from '@/server/messages/actions';
 
 type UserPageProps = {
@@ -40,67 +33,6 @@ const userPageSearchSchema = z.object({
     .enum(['owned', 'wanted', 'exchange'])
     .default('owned') satisfies z.ZodType<CollectionStatusFilter>,
 });
-
-// Before profiles existed these pages were addressed by demo viewer key
-// (/users/collector). Those URLs still resolve so existing links do not break,
-// but the handle is the canonical address.
-function resolveDemoViewerFallback(handle: string): ProfileDetail | null {
-  const viewer =
-    handle in demoViewers
-      ? demoViewers[handle as keyof typeof demoViewers]
-      : Object.values(demoViewers).find(
-          (candidate) => candidate.handle.replace(/^@/, '') === handle,
-        );
-
-  if (!viewer) {
-    return null;
-  }
-
-  return {
-    userId: viewer.userId,
-    handle: viewer.handle.replace(/^@/, ''),
-    displayName: viewer.displayName,
-    avatarImageUrl: null,
-    bio: viewer.bio,
-    city: viewer.city,
-    accentTitle: viewer.accentTitle,
-    visibility: 'public',
-  };
-}
-
-/**
- * Returns a profile only when it is publicly browsable, so a non-public row
- * never enters the component scope and cannot leak through the document title
- * or the RSC payload.
- *
- * followers 资料仅对关注者与本人可见；private 只对本人进入页面组件范围。
- */
-async function resolveBrowsableProfile(
-  handle: string,
-  viewerId: string | null,
-) {
-  let profile: ProfileDetail | null = null;
-
-  try {
-    profile = await getProfileByHandle(handle);
-  } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) {
-      throw error;
-    }
-  }
-
-  profile ??= resolveDemoViewerFallback(handle.replace(/^@/, '').toLowerCase());
-
-  if (!profile) return null;
-  const isSelf = profile.userId === viewerId;
-  const isFollower = isSelf
-    ? false
-    : await isFollowing(viewerId, profile.userId);
-
-  return canViewProfile(profile.visibility, { isSelf, isFollower })
-    ? profile
-    : null;
-}
 
 function getSingleValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -158,18 +90,17 @@ export default async function UserPage({
     status: getSingleValue(resolvedSearchParams.status),
   }).status;
 
-  const [data, following, reputation, followCounts, ledger, listings] =
+  const [data, following, reputation, followCounts, badgeCount, listings] =
     await Promise.all([
       getUserProfilePageData({ userId: profile.userId }),
       isFollowing(viewer?.id ?? null, profile.userId),
       getUserReputation(profile.userId),
       getFollowCounts(profile.userId),
-      listAchievementLedger(profile.userId),
+      countUnlockedAchievements(profile.userId),
       listOpenTradeListings({ ownerId: profile.userId, limit: 6 }),
     ]);
 
   const { summary } = data;
-  const badgeCount = ledger.filter((entry) => entry.achievedCount > 0).length;
   const isSelf = viewer?.id === profile.userId;
   const initial = profile.displayName.slice(0, 1);
 
@@ -205,9 +136,17 @@ export default async function UserPage({
                 ✦ {profile.accentTitle}
               </span>
             ) : null}
-            <h1 className="font-heading mt-2 text-[clamp(30px,4.4vw,50px)] leading-[1.06] font-black">
-              {profile.displayName}
-            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="font-heading text-[clamp(30px,4.4vw,50px)] leading-[1.06] font-black">
+                {profile.displayName}
+              </h1>
+              <Link
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-bold backdrop-blur-sm transition-colors hover:bg-white/30"
+                href={`/users/${profile.handle}/badges`}
+              >
+                🏅 徽章 {badgeCount} →
+              </Link>
+            </div>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-white/85">
               <span className="num">{formatProfileHandle(profile.handle)}</span>
               {profile.city ? <span>· {profile.city}</span> : null}
@@ -287,13 +226,6 @@ export default async function UserPage({
           </div>
         </section>
       ) : null}
-
-      {/* 徽章陈列柜：公开展示 TA 的收藏成就。 */}
-      <UserAchievementLedger
-        entries={ledger}
-        ownedTotal={summary.litCount}
-        typeBreadthTotal={summary.typeBreadth}
-      />
 
       <section className="mt-14">
         <div className="min-w-0">

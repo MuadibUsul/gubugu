@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { z } from 'zod';
 
-import { UserAchievementLedger } from '@/components/user/user-achievement-ledger';
 import { UserCollectionHeader } from '@/components/user/user-collection-header';
 import {
   UserCollectionSheet,
@@ -11,7 +10,7 @@ import { UserPhotoStrip } from '@/components/user/user-photo-strip';
 import { getSingleSearchParamValue } from '@/lib/search-params';
 import { requireAuthUser } from '@/server/auth/session';
 import { getUserProfilePageData } from '@/server/data';
-import { listAchievementLedger } from '@/server/data/achievements';
+import { countUnlockedAchievements } from '@/server/data/achievements';
 
 export const metadata: Metadata = {
   title: '我的收藏',
@@ -37,14 +36,16 @@ export default async function MyCollectionPage({
     getSingleSearchParamValue(resolved.status) ?? undefined,
   );
 
-  const [data, ledger] = await Promise.all([
+  const [data, badgeCount] = await Promise.all([
     getUserProfilePageData({ userId: user.id, viewerMode: 'self' }),
-    listAchievementLedger(user.id),
+    countUnlockedAchievements(user.id),
   ]);
 
   return (
     <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
       <UserCollectionHeader
+        badgeCount={badgeCount}
+        badgesHref={user.handle ? `/users/${user.handle}/badges` : undefined}
         data={data}
         displayName={user.displayLabel}
         eyebrow="收集册"
@@ -65,12 +66,6 @@ export default async function MyCollectionPage({
           />
         </div>
       </section>
-
-      <UserAchievementLedger
-        entries={ledger}
-        ownedTotal={data.summary.litCount}
-        typeBreadthTotal={data.summary.typeBreadth}
-      />
 
       <UserPhotoStrip items={data.recentPhotoEntries} />
     </main>
