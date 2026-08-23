@@ -70,7 +70,12 @@ function LeaderboardRow({
       <div className="min-w-0 flex-1">
         <Link
           className="block truncate text-[15px] font-bold hover:text-[var(--shu)]"
-          href={`/users/${entry.handle}`}
+          // 徽章榜上点名字直接进徽章陈列柜，其余榜进主页。
+          href={
+            dimension === 'badges'
+              ? `/users/${entry.handle}/badges`
+              : `/users/${entry.handle}`
+          }
         >
           {entry.displayName}
         </Link>
