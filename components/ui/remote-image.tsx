@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Image from 'next/image';
 
 import { isOptimizableImageUrl } from '@/lib/goods-image';
@@ -8,6 +9,8 @@ type RemoteImageProps = {
   /** Rendered width at each breakpoint, used to pick a srcset entry. */
   sizes: string;
   className?: string;
+  /** Inline overrides (e.g. object-fit) that must beat the .goods-card CSS. */
+  style?: CSSProperties;
   /** Set on art above the fold; opts out of lazy loading. */
   priority?: boolean;
 };
@@ -26,6 +29,7 @@ export function RemoteImage({
   alt,
   sizes,
   className = '',
+  style,
   priority = false,
 }: RemoteImageProps) {
   if (isOptimizableImageUrl(src)) {
@@ -37,6 +41,7 @@ export function RemoteImage({
         priority={priority}
         sizes={sizes}
         src={src}
+        style={style}
       />
     );
   }
@@ -49,6 +54,7 @@ export function RemoteImage({
       decoding="async"
       loading={priority ? 'eager' : 'lazy'}
       src={src}
+      style={style}
     />
   );
 }

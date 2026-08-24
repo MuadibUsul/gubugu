@@ -440,10 +440,6 @@ async function buildDraftPayload(
         allowedHosts: allowedImageHosts,
       });
       const stored = await normalizeAndStoreCatalogImage(response.buffer, {
-        appUrl:
-          process.env.APP_URL ??
-          process.env.NEXT_PUBLIC_APP_URL ??
-          'http://127.0.0.1:3000',
         directory: process.env.CATALOG_ASSET_DIR,
       });
       images.push({

@@ -123,6 +123,17 @@ export function toAbsoluteImageUrl(url: string | null | undefined) {
   }
 }
 
+/**
+ * True for crawler-stored catalog images (`/catalog-assets/…`). These are saved
+ * at their native aspect ratio (image-store trims to content, no fixed canvas),
+ * so cards display them with object-fit: contain to show the whole product
+ * sharply without cropping, rather than the cover treatment used for full-bleed
+ * seeded/uploaded art.
+ */
+export function isCatalogAssetUrl(url: string | null | undefined) {
+  return typeof url === 'string' && url.includes('/catalog-assets/');
+}
+
 export function isOptimizableImageUrl(url: string | null | undefined) {
   if (!url) {
     return false;
