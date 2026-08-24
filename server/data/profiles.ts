@@ -20,6 +20,7 @@ export type ProfileDetail = ProfileSummary & {
   city: string | null;
   accentTitle: string | null;
   visibility: ProfileVisibility;
+  collectionFramesPublic: boolean;
 };
 
 // Handles are stored lowercase and without the leading @, which is display
@@ -40,6 +41,7 @@ const profileColumns = {
   city: profiles.city,
   accentTitle: profiles.accentTitle,
   visibility: profiles.visibility,
+  collectionFramesPublic: profiles.collectionFramesPublic,
 };
 
 export function formatProfileHandle(handle: string) {

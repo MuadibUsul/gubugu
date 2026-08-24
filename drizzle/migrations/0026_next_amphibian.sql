@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "collection_frames_public" boolean DEFAULT true NOT NULL;

@@ -183,6 +183,13 @@
       "when": 1787545661043,
       "tag": "0025_heavy_sandman",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1787570333389,
+      "tag": "0026_next_amphibian",
+      "breakpoints": true
     }
   ]
 }

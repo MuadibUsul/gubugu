@@ -30,6 +30,7 @@ export function resolveDemoViewerFallback(handle: string): ProfileDetail | null 
     city: viewer.city,
     accentTitle: viewer.accentTitle,
     visibility: 'public',
+    collectionFramesPublic: true,
   };
 }
 

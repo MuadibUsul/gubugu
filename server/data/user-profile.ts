@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { goods, postImages, posts, ratings, userGoods } from '@/drizzle/schema';
@@ -22,6 +22,8 @@ export type UserProfileGoodsCard = Awaited<
   note: string | null;
   litAt: Date | null;
   updatedAt: Date;
+  /** 社区「稀有度」评分（rarityScore 1-5）的平均值；无人评分为 null。收藏相框据此分档。 */
+  rarityAverage: number | null;
 };
 
 export type UserPhotoEntry = {
@@ -103,6 +105,7 @@ function buildStatusCards({
   rows,
   cardsByGoodsId,
   litAtByGoodsId,
+  rarityByGoodsId,
 }: {
   rows: Array<{
     goodsId: string;
@@ -116,6 +119,7 @@ function buildStatusCards({
     Awaited<ReturnType<typeof getPublishedGoodsCardsByIds>>[number]
   >;
   litAtByGoodsId: Map<string, Date>;
+  rarityByGoodsId: Map<string, number>;
 }) {
   return rows
     .map((row) => {
@@ -131,6 +135,7 @@ function buildStatusCards({
         note: row.note,
         litAt: litAtByGoodsId.get(row.goodsId) ?? null,
         updatedAt: row.updatedAt,
+        rarityAverage: rarityByGoodsId.get(row.goodsId) ?? null,
       } satisfies UserProfileGoodsCard;
     })
     .filter((item): item is UserProfileGoodsCard => Boolean(item));
@@ -228,6 +233,26 @@ export async function getUserProfilePageData(
     const goodsCards = await getPublishedGoodsCardsByIds(goodsIds);
     const cardsByGoodsId = mapGoodsCardsById(goodsCards);
 
+    // 每件谷子的社区平均稀有度评分（1-5），收藏相框据此分档。
+    const rarityRows =
+      goodsIds.length > 0
+        ? await db
+            .select({
+              goodsId: ratings.goodsId,
+              average: sql<string | null>`avg(${ratings.rarityScore})`,
+            })
+            .from(ratings)
+            .where(inArray(ratings.goodsId, goodsIds))
+            .groupBy(ratings.goodsId)
+        : [];
+    const rarityByGoodsId = new Map(
+      rarityRows.flatMap((row) =>
+        row.average != null
+          ? ([[row.goodsId, Number(row.average)]] as const)
+          : [],
+      ),
+    );
+
     const ownedRows = statusRows.filter((row) => row.status === 'owned');
     const wantedRows = statusRows.filter((row) => row.status === 'wanted');
     const exchangeRows = statusRows.filter((row) => row.status === 'exchange');
@@ -302,16 +327,19 @@ export async function getUserProfilePageData(
           rows: ownedRows,
           cardsByGoodsId,
           litAtByGoodsId,
+          rarityByGoodsId,
         }),
         wanted: buildStatusCards({
           rows: wantedRows,
           cardsByGoodsId,
           litAtByGoodsId,
+          rarityByGoodsId,
         }),
         exchange: buildStatusCards({
           rows: exchangeRows,
           cardsByGoodsId,
           litAtByGoodsId,
+          rarityByGoodsId,
         }),
       },
       recentPhotoEntries: postRows.map((row) => ({

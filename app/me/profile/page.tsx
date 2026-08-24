@@ -61,6 +61,20 @@ export default async function ProfileSettingsPage({
             <option value="private">仅自己</option>
           </select>
         </label>
+        <label className="flex items-start gap-3 text-sm">
+          <input
+            className="border-input mt-0.5 size-4 rounded"
+            defaultChecked={profile.collectionFramesPublic}
+            name="collectionFramesPublic"
+            type="checkbox"
+          />
+          <span>
+            在社交主页显示收藏相框
+            <span className="text-muted-foreground mt-0.5 block text-[12.5px]">
+              开启后，别人访问你的主页时，已点亮的藏品会按稀有度套上收藏相框。你自己的谷柜始终显示。
+            </span>
+          </span>
+        </label>
         <button
           className="rounded-[var(--radius)] bg-[var(--shu)] px-5 py-2.5 text-sm text-[var(--shu-ink)]"
           type="submit"

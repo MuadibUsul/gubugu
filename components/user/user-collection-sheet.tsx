@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { FramedCollectible } from '@/components/collection/framed-collectible';
 import { GoodsCardArt } from '@/components/goods/goods-card-art';
 import { formatCatalogDate } from '@/lib/formatters';
 import type { UserProfileGoodsCard, UserProfilePageData } from '@/server/data';
@@ -11,6 +12,8 @@ type UserCollectionSheetProps = {
   status: CollectionStatusFilter;
   /** 切换状态时保留的基础路径。 */
   basePath: string;
+  /** 是否给已点亮藏品套收藏相框。自己的谷柜恒为 true；社交主页按资料设置传入。 */
+  showFrames?: boolean;
 };
 
 const statusMeta = {
@@ -27,30 +30,48 @@ function SheetEntry({
   index,
   status,
   isInCabinet,
+  showFrames,
 }: {
   item: UserProfileGoodsCard;
   index: number;
   status: CollectionStatusFilter;
   isInCabinet: boolean;
+  showFrames: boolean;
 }) {
   const lit = Boolean(item.litAt);
+  // 已点亮的已拥有藏品 → 按稀有度装裱进收藏相框（私人展柜）。其余保持原样。
+  const framed = showFrames && status === 'owned' && lit;
+  const cardStateClass = framed
+    ? ''
+    : lit
+      ? 'goods-card--lit'
+      : `goods-card--dormant ${isInCabinet ? 'goods-card--cabinet' : ''}`;
 
   return (
     <Link
       aria-label={`${item.name}，${lit ? '已点亮' : isInCabinet ? '已入柜，待点亮' : '未点亮'}`}
-      className={`goods-card group min-w-0 ${lit ? 'goods-card--lit' : `goods-card--dormant ${isInCabinet ? 'goods-card--cabinet' : ''}`}`}
+      className={`goods-card group min-w-0 ${cardStateClass}`}
       href={`/goods/${item.slug}`}
     >
-      <GoodsCardArt
-        alt={item.name}
-        className="aspect-[3/4]"
-        imageUrl={item.primaryImageUrl}
-        sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 22vw"
-      >
-        <span className="goods-card__no">
-          {String(index + 1).padStart(3, '0')}
-        </span>
-      </GoodsCardArt>
+      {framed ? (
+        <FramedCollectible
+          alt={item.name}
+          imageUrl={item.primaryImageUrl}
+          rarityAverage={item.rarityAverage}
+          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 22vw"
+        />
+      ) : (
+        <GoodsCardArt
+          alt={item.name}
+          className="aspect-[3/4]"
+          imageUrl={item.primaryImageUrl}
+          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 22vw"
+        >
+          <span className="goods-card__no">
+            {String(index + 1).padStart(3, '0')}
+          </span>
+        </GoodsCardArt>
+      )}
 
       <div className="flex flex-1 flex-col gap-1.5 px-1 pt-3 pb-1">
         <h3 className="line-clamp-2 text-[13px] leading-5 transition-colors group-hover:text-[var(--shu)] sm:text-[14.5px]">
@@ -94,6 +115,7 @@ export function UserCollectionSheet({
   data,
   status,
   basePath,
+  showFrames = true,
 }: UserCollectionSheetProps) {
   const items = data.goods[status];
   const cabinetGoodsIds = new Set(data.goods.owned.map((item) => item.id));
@@ -139,6 +161,7 @@ export function UserCollectionSheet({
               isInCabinet={cabinetGoodsIds.has(item.id)}
               item={item}
               key={item.id}
+              showFrames={showFrames}
               status={status}
             />
           ))}

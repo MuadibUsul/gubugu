@@ -552,6 +552,10 @@ export const profiles = pgTable(
     // 卖家身份。经营 / 企业卖家的鉴定与信誉体系在此之上扩展；实名与评分等
     // 派生数据从订单与评价推导，不在这里冗余存储。
     sellerType: sellerTypeEnum('seller_type').notNull().default('individual'),
+    // 收藏相框是否在社交主页对外显示。自己的谷柜始终显示；这里只控制他人访问主页时是否可见。
+    collectionFramesPublic: boolean('collection_frames_public')
+      .notNull()
+      .default(true),
     ...timestamps,
   },
   (table) => [

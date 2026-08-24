@@ -27,12 +27,15 @@ export async function updateProfileAction(formData: FormData) {
   if (!parsed.success) return;
   const user = await requireAuthUser('/me/profile');
   const value = parsed.data;
+  // 复选框：勾选时 FormData 里存在该字段，否则缺席。控制收藏相框是否在社交主页对外显示。
+  const collectionFramesPublic = formData.get('collectionFramesPublic') != null;
   await getDb()
     .update(profiles)
     .set({
       ...value,
       bio: value.bio || null,
       city: value.city || null,
+      collectionFramesPublic,
       updatedAt: new Date(),
     })
     .where(eq(profiles.id, user.id));

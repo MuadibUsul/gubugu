@@ -233,6 +233,7 @@ export default async function UserPage({
           <UserCollectionSheet
             basePath={`/users/${profile.handle}`}
             data={data}
+            showFrames={profile.collectionFramesPublic}
             status={status}
           />
         </div>
