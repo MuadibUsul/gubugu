@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { and, eq, lt } from 'drizzle-orm';
 
 import {
+  crawlerCrawlProgress,
   crawlerDrafts,
   crawlerRuns,
   crawlerSources,
@@ -162,38 +163,148 @@ function sameHostOrNull(url: string | null, host: string) {
   }
 }
 
-function dedupeProducts(
-  products: ParsedCatalogProduct[],
-  failedPages: number,
-) {
-  const unique = new Map<string, ParsedCatalogProduct>();
-  for (const product of products) {
-    unique.set(sourceKeyFor(product), product);
-  }
-  return { products: [...unique.values()], failedPages };
+type CrawlTally = {
+  discovered: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+};
+
+type DraftOutcome = 'created' | 'updated' | 'skipped' | 'failed';
+
+function emptyTally(): CrawlTally {
+  return { discovered: 0, created: 0, updated: 0, skipped: 0, failed: 0 };
 }
 
-async function loadProducts(source: CrawlerSource) {
+// ── 断点续爬检查点 ────────────────────────────────────────────
+// 一行 = 本轮会话已抓完并落好草稿的一个详情页 URL。进程中途终止时这些行留存，重启后跳过
+// 它们、只补未完成的；整轮跑到底再整体删除，让下一次全量爬重新检查更新。
+
+async function loadProcessedDetailUrls(sourceId: string) {
+  const db = getDb();
+  const rows = await db
+    .select({ url: crawlerCrawlProgress.detailUrl })
+    .from(crawlerCrawlProgress)
+    .where(eq(crawlerCrawlProgress.sourceId, sourceId));
+  return new Set(rows.map((row) => row.url));
+}
+
+async function markDetailUrlProcessed(sourceId: string, detailUrl: string) {
+  const db = getDb();
+  await db
+    .insert(crawlerCrawlProgress)
+    .values({ sourceId, detailUrl })
+    .onConflictDoNothing();
+}
+
+async function clearProcessedDetailUrls(sourceId: string) {
+  const db = getDb();
+  await db
+    .delete(crawlerCrawlProgress)
+    .where(eq(crawlerCrawlProgress.sourceId, sourceId));
+}
+
+// 落一个产品草稿：按来源商品键去重，已发布 / 已拒绝或内容未变的跳过，否则新建或更新待审草稿。
+async function upsertProductDraft(
+  source: CrawlerSource,
+  product: ParsedCatalogProduct,
+): Promise<DraftOutcome> {
+  const db = getDb();
+  const sourceKey = sourceKeyFor(product);
+  const contentHash = contentHashFor(product);
+
+  const existingRows = await db
+    .select({
+      id: crawlerDrafts.id,
+      contentHash: crawlerDrafts.contentHash,
+      status: crawlerDrafts.status,
+    })
+    .from(crawlerDrafts)
+    .where(
+      and(
+        eq(crawlerDrafts.sourceId, source.id),
+        eq(crawlerDrafts.sourceKey, sourceKey),
+      ),
+    )
+    .limit(1);
+  const existing = existingRows[0];
+
+  if (
+    existing &&
+    (existing.status !== 'pending' || existing.contentHash === contentHash)
+  ) {
+    return 'skipped';
+  }
+
+  try {
+    const now = new Date();
+    const payload = await buildDraftPayload(source, product, now, [
+      new URL(source.entryUrl).hostname,
+      ...source.allowedImageHosts,
+    ]);
+    const values = {
+      sourceUrl: product.sourceUrl,
+      contentHash,
+      title: payload.goods.name,
+      payload,
+      updatedAt: now,
+    };
+
+    if (existing) {
+      await db
+        .update(crawlerDrafts)
+        .set(values)
+        .where(
+          and(
+            eq(crawlerDrafts.id, existing.id),
+            eq(crawlerDrafts.status, 'pending'),
+          ),
+        );
+      return 'updated';
+    }
+
+    await db.insert(crawlerDrafts).values({
+      id: crypto.randomUUID(),
+      sourceId: source.id,
+      sourceKey,
+      ...values,
+    });
+    return 'created';
+  } catch {
+    return 'failed';
+  }
+}
+
+async function crawlSourceIntoDrafts(source: CrawlerSource): Promise<CrawlTally> {
   const sourceHost = new URL(source.entryUrl).hostname;
   const entry = await safeFetchText(source.entryUrl, {
     allowedHosts: [sourceHost],
   });
 
-  // 入口页是商品列表页（有站点列表适配器且发现了商品卡）→ 跟分页把全部商品抓回来。
+  // 入口页是商品列表页（有站点列表适配器且发现了商品卡）→ 走可断点续爬的列表爬取。
   const entryListing = parseCatalogListing(entry.text, entry.url);
   if (entryListing) {
-    return loadProductsFromListing(sourceHost, entryListing);
+    return crawlListingIntoDrafts(source, sourceHost, entryListing);
   }
+  return crawlEntryIntoDrafts(source, sourceHost, entry);
+}
 
-  // 回退：入口页即详情 / 靠 detailPathPattern 发现少量详情页的旧行为。
+// 回退路径：入口页即详情 / 靠 detailPathPattern 发现少量详情页的旧行为。目录小，不做断点。
+async function crawlEntryIntoDrafts(
+  source: CrawlerSource,
+  sourceHost: string,
+  entry: { text: string; url: string },
+): Promise<CrawlTally> {
   const entryPage = parseCatalogPage(entry.text, entry.url, {
     detailPathPattern: source.detailPathPattern,
   });
   const products = [...entryPage.products];
-  let failedPages = 0;
+  const tally = emptyTally();
 
   for (const detailUrl of entryPage.detailUrls.slice(0, MAX_DETAIL_PAGES)) {
     if (detailUrl === entry.url) continue;
+    await politeCrawlDelay();
 
     try {
       const detail = await safeFetchText(detailUrl, {
@@ -201,26 +312,40 @@ async function loadProducts(source: CrawlerSource) {
       });
       products.push(...parseCatalogPage(detail.text, detail.url).products);
     } catch {
-      failedPages += 1;
+      tally.failed += 1;
     }
   }
 
-  return dedupeProducts(products, failedPages);
+  const unique = new Map<string, ParsedCatalogProduct>();
+  for (const product of products) unique.set(sourceKeyFor(product), product);
+  const deduped = [...unique.values()];
+  tally.discovered = deduped.length;
+
+  for (const product of deduped) {
+    tally[await upsertProductDraft(source, product)] += 1;
+  }
+
+  return tally;
 }
 
 /**
- * 列表爬取：从入口列表页跟「下一页」翻完所有分页，收集每页商品卡链接，再逐个抓详情页
- * 用站点适配器解析。发现阶段只认商品卡链接、详情阶段只认适配器解得出的结构化商品，
- * 导航 / 分页 / promo 等页面脏数据都不会变成草稿。请求间加礼貌间隔，分页与商品数有硬上限。
+ * 列表爬取（可断点续爬）：从入口列表页跟「下一页」翻完所有分页收集商品卡链接，再逐个
+ * 「抓详情 → 解析 → 落草稿 → 记检查点」。发现只认商品卡链接、详情只认适配器解得出的
+ * 结构化产品，页面脏数据不会成为草稿。已在早前会话完成的 URL 直接跳过；整轮跑到底就清空
+ * 检查点，让下一次全量爬重新检查更新——进程若被中途终止，检查点留存，下次从断点继续。
  */
-async function loadProductsFromListing(
+async function crawlListingIntoDrafts(
+  source: CrawlerSource,
   sourceHost: string,
   firstListing: CatalogListing,
-) {
+): Promise<CrawlTally> {
+  const tally = emptyTally();
+
+  // 1. 跟分页收集全部详情页 URL。
   const detailUrls = new Set(firstListing.productUrls);
   let nextUrl = sameHostOrNull(firstListing.nextPageUrl, sourceHost);
   let listingPages = 1;
-  let failedPages = 0;
+  let listingWalkFailed = false;
 
   while (
     nextUrl &&
@@ -234,7 +359,8 @@ async function loadProductsFromListing(
       const page = await safeFetchText(nextUrl, { allowedHosts: [sourceHost] });
       listing = parseCatalogListing(page.text, page.url);
     } catch {
-      failedPages += 1;
+      tally.failed += 1;
+      listingWalkFailed = true;
       break;
     }
     if (!listing) break;
@@ -244,21 +370,47 @@ async function loadProductsFromListing(
     nextUrl = sameHostOrNull(listing.nextPageUrl, sourceHost);
   }
 
-  const products: ParsedCatalogProduct[] = [];
-  for (const detailUrl of [...detailUrls].slice(0, MAX_LISTING_PRODUCTS)) {
+  const allUrls = [...detailUrls].slice(0, MAX_LISTING_PRODUCTS);
+  tally.discovered = allUrls.length;
+
+  // 2. 载入检查点，跳过早前（被中断的）会话里已完成的 URL。
+  const processed = await loadProcessedDetailUrls(source.id);
+
+  // 3. 逐 URL：抓详情 → 解析 → 落草稿 → 成功即记检查点（失败留待下次重试，不记）。
+  for (const detailUrl of allUrls) {
+    if (processed.has(detailUrl)) {
+      tally.skipped += 1;
+      continue;
+    }
+
     await politeCrawlDelay();
 
+    let products: ParsedCatalogProduct[];
     try {
       const detail = await safeFetchText(detailUrl, {
         allowedHosts: [sourceHost],
       });
-      products.push(...parseCatalogPage(detail.text, detail.url).products);
+      products = parseCatalogPage(detail.text, detail.url).products;
     } catch {
-      failedPages += 1;
+      tally.failed += 1;
+      continue;
     }
+
+    let urlFailed = false;
+    for (const product of products) {
+      const outcome = await upsertProductDraft(source, product);
+      tally[outcome] += 1;
+      if (outcome === 'failed') urlFailed = true;
+    }
+
+    if (!urlFailed) await markDetailUrlProcessed(source.id, detailUrl);
   }
 
-  return dedupeProducts(products, failedPages);
+  // 4. 走到这里说明整轮跑完了（进程没被中途终止）。列表翻页未出错时清空检查点，让下一次
+  //    全量爬重新检查更新；进程若在上面的循环里被杀，这行到不了，留下的检查点供下次续爬。
+  if (!listingWalkFailed) await clearProcessedDetailUrls(source.id);
+
+  return tally;
 }
 
 async function buildDraftPayload(
@@ -429,84 +581,18 @@ export async function runCrawlerSourceById(
   let failedCount = 0;
 
   try {
-    const loaded = await loadProducts(source);
-    failedCount += loaded.failedPages;
-    discoveredCount = loaded.products.length;
+    // 抓取直接落草稿（列表来源可断点续爬），返回本轮统计。
+    const tally = await crawlSourceIntoDrafts(source);
+    discoveredCount = tally.discovered;
+    createdCount = tally.created;
+    updatedCount = tally.updated;
+    skippedCount = tally.skipped;
+    failedCount = tally.failed;
 
     if (discoveredCount === 0) {
       throw new Error(
         '页面中没有可识别的 Product 结构化数据；该站点可能需要专用适配器。',
       );
-    }
-
-    for (const product of loaded.products) {
-      const sourceKey = sourceKeyFor(product);
-      const contentHash = contentHashFor(product);
-      const existingRows = await db
-        .select({
-          id: crawlerDrafts.id,
-          contentHash: crawlerDrafts.contentHash,
-          status: crawlerDrafts.status,
-        })
-        .from(crawlerDrafts)
-        .where(
-          and(
-            eq(crawlerDrafts.sourceId, source.id),
-            eq(crawlerDrafts.sourceKey, sourceKey),
-          ),
-        )
-        .limit(1);
-      const existing = existingRows[0];
-
-      if (
-        existing &&
-        (existing.status !== 'pending' || existing.contentHash === contentHash)
-      ) {
-        skippedCount += 1;
-        continue;
-      }
-
-      // 只有真正要抓图 / 中文化的产品才等一下，给图片主机同样的礼貌间隔；未变更被跳过的
-      // 产品不等，重爬不会被拖慢。
-      await politeCrawlDelay();
-
-      try {
-        const now = new Date();
-        const payload = await buildDraftPayload(source, product, now, [
-          new URL(source.entryUrl).hostname,
-          ...source.allowedImageHosts,
-        ]);
-        const values = {
-          sourceUrl: product.sourceUrl,
-          contentHash,
-          title: payload.goods.name,
-          payload,
-          updatedAt: now,
-        };
-
-        if (existing) {
-          await db
-            .update(crawlerDrafts)
-            .set(values)
-            .where(
-              and(
-                eq(crawlerDrafts.id, existing.id),
-                eq(crawlerDrafts.status, 'pending'),
-              ),
-            );
-          updatedCount += 1;
-        } else {
-          await db.insert(crawlerDrafts).values({
-            id: crypto.randomUUID(),
-            sourceId: source.id,
-            sourceKey,
-            ...values,
-          });
-          createdCount += 1;
-        }
-      } catch {
-        failedCount += 1;
-      }
     }
 
     const finishedAt = new Date();

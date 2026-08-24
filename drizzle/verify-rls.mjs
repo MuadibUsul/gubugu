@@ -130,6 +130,10 @@ async function main() {
     ['no crawler sources', 'select count(*)::int n from crawler_sources'],
     ['no crawler runs', 'select count(*)::int n from crawler_runs'],
     ['no crawler drafts', 'select count(*)::int n from crawler_drafts'],
+    [
+      'no crawler crawl progress',
+      'select count(*)::int n from crawler_crawl_progress',
+    ],
   ]) {
     check(label, (await asClient(client, null, sql)).rows[0].n, 0);
   }

@@ -944,6 +944,34 @@ export const crawlerDrafts = pgTable(
   ],
 ).enableRLS();
 
+// 断点续爬的检查点：一行 = 本轮爬取会话里已抓完并落好草稿的一个详情页 URL。进程中途终止
+// 时这些行留存，重启后跳过它们、只补未完成的；整轮跑完再整体删除，让下一次全量爬重新检查
+// 更新。三张采集表一样启用 RLS 且无客户端 policy。
+export const crawlerCrawlProgress = pgTable(
+  'crawler_crawl_progress',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    sourceId: uuid('source_id')
+      .notNull()
+      .references(() => crawlerSources.id, {
+        onDelete: 'cascade',
+        onUpdate: 'cascade',
+      }),
+    detailUrl: text('detail_url').notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex('crawler_crawl_progress_source_url_unique').on(
+      table.sourceId,
+      table.detailUrl,
+    ),
+    check(
+      'crawler_crawl_progress_detail_url_http_check',
+      sql`${table.detailUrl} ~* '^https?://'`,
+    ),
+  ],
+).enableRLS();
+
 export const posts = pgTable(
   'posts',
   {
