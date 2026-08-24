@@ -202,7 +202,21 @@ const tagRowSchema = z.object({
 
 const imageRowSchema = z.object({
   id: optionalUuidFormSchema,
-  imageUrl: z.string().trim().url('图片地址必须是完整 URL。'),
+  // 接受绝对 http(s) URL，或站内同源相对路径（/catalog-assets/…、/demo-assets/… 等，与
+  // 种子数据一致）。目录图入库后是相对路径，之前只认绝对 URL 会拦下爬虫草稿的发布。
+  imageUrl: z
+    .string()
+    .trim()
+    .min(1, '图片缺少地址。')
+    .refine((value) => {
+      if (value.startsWith('/') && !value.startsWith('//')) return true;
+      try {
+        const url = new URL(value);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    }, '图片地址必须是完整 URL 或站内路径（/…）。'),
   altText: optionalTextFieldSchema(255),
   sortOrder: z.number().int().min(0, '排序值必须大于或等于 0。'),
 });
