@@ -8,6 +8,7 @@ import { GoodsCommunityPanel } from '@/components/goods/goods-community-panel';
 import { GoodsGallery } from '@/components/goods/goods-gallery';
 import { GoodsShareCard } from '@/components/goods/goods-share-card';
 import { GoodsSpecTable } from '@/components/goods/goods-spec-table';
+import { RarityBadge } from '@/components/goods/rarity-badge';
 import { GoodsStatusActions } from '@/components/goods/goods-status-actions';
 import { toAbsoluteImageUrl } from '@/lib/goods-image';
 import { getAuthUser } from '@/server/auth/session';
@@ -140,6 +141,11 @@ export default async function GoodsDetailPage({
               {goods.skuCode}
             </p>
             <span className="chip px-3 py-1.5 text-[11px]">SKU 条目</span>
+            <RarityBadge
+              rarityAverage={
+                data.community.ratingSummary.dimensionAverages.rarityScore
+              }
+            />
             <GoodsShareCard goodsName={goods.name} goodsSlug={goods.slug} />
           </div>
 
