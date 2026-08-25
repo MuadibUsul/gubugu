@@ -1,230 +1,70 @@
 'use client';
 
-import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { RecognitionCandidatesPanel } from '@/components/recognition/recognition-candidates-panel';
-import { Button } from '@/components/ui/button';
-import {
-  isRecognitionAttemptEligible,
-  type RecognitionCandidate,
-  recognitionResponseSchema,
-  type RecognitionSuccessResponse,
-} from '@/lib/recognition';
-import { acceptedImageInputValue } from '@/lib/image-upload';
-import { confirmRecognitionCandidateAction } from '@/server/recognition/actions';
+// 相机优先的自动扫描：进入即开相机、全屏取景 + 扫描光效，点快门直接识别并自动入库。
+// 匹配上官方谷库 → 自动点亮（可公开展示）；未匹配 → 存为未鉴定收藏项（进谷柜、不展示）。
+// 无需挑候选、无需审核。相机是唯一输入（不再有上传）。
 
-type CameraState =
-  | 'idle'
-  | 'requesting'
+type Phase =
+  | 'starting'
   | 'live'
-  | 'preview'
-  | 'unsupported'
+  | 'scanning'
+  | 'matched'
+  | 'unmatched'
   | 'denied'
   | 'error';
-type ResultState = 'idle' | 'processing' | 'ready' | 'error';
-type PreviewSource = 'camera' | 'upload' | null;
-type CaptureMode = 'manual' | 'auto' | null;
 
-// Placeholder results must not be presented as real matches. The warning text
-// says so too, but the header label is what a user reads first.
-function getProviderLabel(response: RecognitionSuccessResponse | null) {
-  if (!response) {
-    return '等待识别';
+type ScanResult = {
+  goodsSlug?: string;
+  goodsName?: string;
+  score?: number | null;
+};
+
+// 取景框 4:5，把源画面按此比例居中裁切。
+function clampFrameSize(sw: number, sh: number) {
+  const target = 4 / 5;
+  if (sw / sh > target) {
+    const w = sh * target;
+    return { sx: (sw - w) / 2, sy: 0, sw: w, sh };
   }
-
-  return response.pipeline.provider === 'embedding-search'
-    ? '图像特征匹配'
-    : '占位结果 · 非真实识别';
-}
-
-function clampFrameSize(sourceWidth: number, sourceHeight: number) {
-  const targetRatio = 4 / 5;
-  const sourceRatio = sourceWidth / sourceHeight;
-
-  if (sourceRatio > targetRatio) {
-    const width = sourceHeight * targetRatio;
-
-    return {
-      sx: (sourceWidth - width) / 2,
-      sy: 0,
-      sw: width,
-      sh: sourceHeight,
-    };
-  }
-
-  const height = sourceWidth / targetRatio;
-
-  return {
-    sx: 0,
-    sy: (sourceHeight - height) / 2,
-    sw: sourceWidth,
-    sh: height,
-  };
-}
-
-function getCameraStatusCopy(state: CameraState, errorMessage: string | null) {
-  switch (state) {
-    case 'requesting':
-      return '正在请求相机权限。';
-    case 'live':
-      return '相机已启动。你可以立即拍摄，或设置 3 秒倒计时。';
-    case 'preview':
-      return '预览已生成。';
-    case 'unsupported':
-      return '当前浏览器不支持相机访问，请改用上传图片。';
-    case 'denied':
-      return '相机权限被拒绝。请改用上传方式，或在浏览器设置里重新开启权限。';
-    case 'error':
-      return errorMessage ?? '相机启动失败，请改用上传方式。';
-    default:
-      return '启动相机或上传一张图片后继续。';
-  }
-}
-
-async function previewUrlToFile(
-  previewUrl: string,
-  source: PreviewSource,
-): Promise<File> {
-  const response = await fetch(previewUrl);
-  const blob = await response.blob();
-  const extension = blob.type === 'image/png' ? 'png' : 'jpg';
-  const fileName =
-    source === 'camera'
-      ? `recognition-capture-${Date.now()}.${extension}`
-      : `recognition-upload-${Date.now()}.${extension}`;
-
-  return new File([blob], fileName, {
-    type: blob.type || 'image/jpeg',
-  });
+  const h = sw / target;
+  return { sx: 0, sy: (sh - h) / 2, sw, sh: h };
 }
 
 export function RecognitionShell() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const countdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const uploadPreviewUrlRef = useRef<string | null>(null);
 
-  const [cameraState, setCameraState] = useState<CameraState>('idle');
-  const [resultState, setResultState] = useState<ResultState>('idle');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewSource, setPreviewSource] = useState<PreviewSource>(null);
-  const [captureMode, setCaptureMode] = useState<CaptureMode>(null);
-  const [cameraSupported, setCameraSupported] = useState(true);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [capturedAt, setCapturedAt] = useState<Date | null>(null);
+  const [phase, setPhase] = useState<Phase>('starting');
+  const [shotUrl, setShotUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [recognitionResponse, setRecognitionResponse] =
-    useState<RecognitionSuccessResponse | null>(null);
-  const [confirmedCandidateId, setConfirmedCandidateId] = useState<
-    string | null
-  >(null);
-  const [confirmingCandidateId, setConfirmingCandidateId] = useState<
-    string | null
-  >(null);
-  const [confirmationError, setConfirmationError] = useState<string | null>(
-    null,
-  );
+  const [result, setResult] = useState<ScanResult | null>(null);
 
-  const statusCopy = getCameraStatusCopy(cameraState, errorMessage);
-  const candidateItems = recognitionResponse?.candidates ?? [];
-  const canLight = recognitionResponse
-    ? isRecognitionAttemptEligible({
-        source: recognitionResponse.image.source,
-        provider: recognitionResponse.pipeline.provider,
-      })
-    : false;
-
-  const captureModeLabel = useMemo(() => {
-    if (previewSource === 'upload') {
-      return '上传预览';
-    }
-
-    if (previewSource === 'camera') {
-      return captureMode === 'auto' ? '自动拍摄预览' : '手动拍摄预览';
-    }
-
-    if (cameraState === 'live') {
-      return '相机实时取景';
-    }
-
-    return '等待取景';
-  }, [cameraState, captureMode, previewSource]);
-
-  useEffect(() => {
-    return () => {
-      if (countdownTimerRef.current) {
-        clearTimeout(countdownTimerRef.current);
-      }
-
-      if (uploadPreviewUrlRef.current) {
-        URL.revokeObjectURL(uploadPreviewUrlRef.current);
-      }
-
-      if (streamRef.current) {
-        for (const track of streamRef.current.getTracks()) {
-          track.stop();
-        }
-      }
-    };
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
-  function resetResult() {
-    setResultState('idle');
-    setRecognitionResponse(null);
-    setConfirmedCandidateId(null);
-    setConfirmingCandidateId(null);
-    setConfirmationError(null);
-  }
-
-  function stopCamera() {
-    if (streamRef.current) {
-      for (const track of streamRef.current.getTracks()) {
-        track.stop();
-      }
-
-      streamRef.current = null;
-    }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-  }
-
-  function clearUploadPreviewUrl() {
-    if (uploadPreviewUrlRef.current) {
-      URL.revokeObjectURL(uploadPreviewUrlRef.current);
-      uploadPreviewUrlRef.current = null;
-    }
-  }
-
-  async function startCamera() {
+  const startCamera = useCallback(async () => {
+    setErrorMessage(null);
+    setResult(null);
+    setShotUrl(null);
     if (
       typeof navigator === 'undefined' ||
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
+      !navigator.mediaDevices?.getUserMedia
     ) {
-      setCameraSupported(false);
-      setCameraState('unsupported');
+      setPhase('error');
+      setErrorMessage('当前环境不支持相机。');
       return;
     }
-
-    if (!cameraSupported) {
-      setCameraState('unsupported');
-      return;
-    }
-
-    setErrorMessage(null);
-    setCountdown(null);
-    setCaptureMode(null);
-    resetResult();
+    setPhase('starting');
     stopCamera();
-    setCameraState('requesting');
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
@@ -234,497 +74,222 @@ export function RecognitionShell() {
           height: { ideal: 1920 },
         },
       });
-
       streamRef.current = stream;
-
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
       }
-
-      setPreviewUrl(null);
-      setPreviewSource(null);
-      setCapturedAt(null);
-      setCameraState('live');
+      setPhase('live');
     } catch (error) {
       if (
         error instanceof DOMException &&
         (error.name === 'NotAllowedError' ||
           error.name === 'PermissionDeniedError')
       ) {
-        setCameraState('denied');
-        setErrorMessage(null);
+        setPhase('denied');
         return;
       }
-
-      setCameraState('error');
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : '无法启动相机，请改用上传方式。',
-      );
+      setPhase('error');
+      setErrorMessage(error instanceof Error ? error.message : '相机启动失败。');
     }
-  }
+  }, [stopCamera]);
 
-  const captureFrame = useCallback(
-    (source: Exclude<PreviewSource, null>, mode: CaptureMode) => {
-      const videoElement = videoRef.current;
-      const canvasElement = canvasRef.current;
-
-      if (!videoElement || !canvasElement || videoElement.videoWidth === 0) {
-        setErrorMessage('相机实时画面还没有准备好。');
-        setCameraState('error');
-        setCountdown(null);
-        return;
-      }
-
-      const frame = clampFrameSize(
-        videoElement.videoWidth,
-        videoElement.videoHeight,
-      );
-
-      canvasElement.width = 960;
-      canvasElement.height = 1200;
-
-      const context = canvasElement.getContext('2d');
-
-      if (!context) {
-        setErrorMessage('无法创建预览画布。');
-        setCameraState('error');
-        setCountdown(null);
-        return;
-      }
-
-      context.clearRect(0, 0, canvasElement.width, canvasElement.height);
-      context.drawImage(
-        videoElement,
-        frame.sx,
-        frame.sy,
-        frame.sw,
-        frame.sh,
-        0,
-        0,
-        canvasElement.width,
-        canvasElement.height,
-      );
-
-      const url = canvasElement.toDataURL('image/jpeg', 0.92);
-
-      stopCamera();
-      clearUploadPreviewUrl();
-      setPreviewUrl(url);
-      setPreviewSource(source);
-      setCaptureMode(mode);
-      setCapturedAt(new Date());
-      resetResult();
-      setCameraState('preview');
-      setCountdown(null);
-      setErrorMessage(null);
-    },
-    [],
-  );
-
-  function handleArmAutoCapture() {
-    if (cameraState !== 'live') {
-      return;
-    }
-
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-    }
-
-    const tick = (value: number) => {
-      setCountdown(value);
-
-      if (value <= 0) {
-        countdownTimerRef.current = setTimeout(() => {
-          captureFrame('camera', 'auto');
-          countdownTimerRef.current = null;
-        }, 220);
-        return;
-      }
-
-      countdownTimerRef.current = setTimeout(() => {
-        tick(value - 1);
-      }, 1000);
-    };
-
-    tick(3);
-  }
-
-  function handleCancelCountdown() {
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-
-    setCountdown(null);
-  }
-
-  function handleOpenUpload() {
-    fileInputRef.current?.click();
-  }
-
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    clearUploadPreviewUrl();
-    stopCamera();
-
-    const objectUrl = URL.createObjectURL(file);
-    uploadPreviewUrlRef.current = objectUrl;
-
-    setPreviewUrl(objectUrl);
-    setPreviewSource('upload');
-    setCaptureMode(null);
-    setCapturedAt(new Date());
-    resetResult();
-    setCameraState('preview');
-    setCountdown(null);
-    setErrorMessage(null);
-    event.target.value = '';
-  }
-
-  function handleRetake() {
-    setPreviewUrl(null);
-    setPreviewSource(null);
-    setCaptureMode(null);
-    setCapturedAt(null);
-    setCountdown(null);
-    setErrorMessage(null);
-    resetResult();
-
-    if (previewSource === 'upload') {
-      clearUploadPreviewUrl();
-      setCameraState(cameraSupported ? 'idle' : 'unsupported');
-      return;
-    }
-
+  // 进入即开相机。
+  useEffect(() => {
     void startCamera();
-  }
+    return () => stopCamera();
+  }, [startCamera, stopCamera]);
 
-  async function handleConfirmPreview() {
-    if (!previewUrl || !previewSource) {
-      return;
-    }
+  // 点快门：抓帧 → 上传自动识别入库。
+  const scan = useCallback(async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.videoWidth === 0) return;
 
-    setResultState('processing');
-    setRecognitionResponse(null);
+    const f = clampFrameSize(video.videoWidth, video.videoHeight);
+    canvas.width = 960;
+    canvas.height = 1200;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, f.sx, f.sy, f.sw, f.sh, 0, 0, canvas.width, canvas.height);
+    const url = canvas.toDataURL('image/jpeg', 0.92);
+
+    stopCamera();
+    setShotUrl(url);
+    setPhase('scanning');
     setErrorMessage(null);
 
     try {
-      const file = await previewUrlToFile(previewUrl, previewSource);
-      const formData = new FormData();
-
-      formData.set('image', file);
-      formData.set('source', previewSource);
-
-      if (captureMode) {
-        formData.set('captureMode', captureMode);
-      }
-
-      const response = await fetch('/api/recognition/candidates', {
-        method: 'POST',
-        body: formData,
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], `scan-${Date.now()}.jpg`, {
+        type: 'image/jpeg',
       });
-      const payload = await response.json();
-      const parsed = recognitionResponseSchema.safeParse(payload);
-
-      if (!parsed.success) {
-        throw new Error('识别返回结果格式无效。');
-      }
-
-      if (!parsed.data.ok) {
-        setResultState('error');
-        setErrorMessage(parsed.data.error.message);
+      const body = new FormData();
+      body.set('image', file);
+      body.set('source', 'camera');
+      const res = await fetch('/api/recognition/scan', {
+        method: 'POST',
+        body,
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        setPhase('error');
+        setErrorMessage(data?.message ?? '扫描失败，请重试。');
         return;
       }
-
-      setRecognitionResponse(parsed.data);
-      setConfirmedCandidateId(null);
-      setConfirmingCandidateId(null);
-      setConfirmationError(null);
-      setResultState('ready');
-    } catch (error) {
-      setResultState('error');
-      setErrorMessage(
-        error instanceof Error ? error.message : '识别请求失败。',
-      );
-    }
-  }
-
-  const handleConfirmCandidate = useCallback(
-    async (candidate: RecognitionCandidate) => {
-      if (!recognitionResponse) {
-        return;
-      }
-
-      if (!canLight) {
-        setConfirmedCandidateId(candidate.id);
-        router.push(`/goods/${candidate.goods.slug}`);
-        return;
-      }
-
-      setConfirmingCandidateId(candidate.id);
-      setConfirmationError(null);
-
-      try {
-        const result = await confirmRecognitionCandidateAction({
-          requestId: recognitionResponse.requestId,
-          candidateId: candidate.id,
+      if (data.matched) {
+        setResult({
+          goodsSlug: data.goodsSlug,
+          goodsName: data.goodsName,
+          score: data.score,
         });
-
-        if (!result.success) {
-          setConfirmationError(result.message);
-          return;
-        }
-
-        setConfirmedCandidateId(candidate.id);
-        const lightingState = result.alreadyConfirmed ? 'already' : 'success';
-        router.push(`/goods/${result.goodsSlug}?lighting=${lightingState}`);
-      } catch {
-        setConfirmationError('点亮失败，请重新扫描后再试。');
-      } finally {
-        setConfirmingCandidateId(null);
+        setPhase('matched');
+      } else {
+        setResult({ score: data.score });
+        setPhase('unmatched');
       }
-    },
-    [canLight, recognitionResponse, router],
-  );
+    } catch (error) {
+      setPhase('error');
+      setErrorMessage(error instanceof Error ? error.message : '扫描请求失败。');
+    }
+  }, [stopCamera]);
+
+  const done = phase === 'matched' || phase === 'unmatched';
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)]">
-      <div className="collection-panel relative overflow-hidden p-5 sm:p-6 lg:p-7">
-        <div className="relative space-y-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase">
-                拍摄阶段
-              </p>
-              <h2 className="font-heading text-foreground text-3xl leading-none sm:text-4xl">
-                拍照或上传
-              </h2>
-            </div>
+    <div className="scanner">
+      <canvas className="hidden" ref={canvasRef} />
 
-            <div className="flex flex-wrap gap-2">
-              <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
-                {captureModeLabel}
-              </span>
-              <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
-                {resultState === 'ready'
-                  ? '结果已就绪'
-                  : resultState === 'processing'
-                    ? '识别中'
-                    : resultState === 'error'
-                      ? '请求失败'
-                      : '等待中'}
-              </span>
-            </div>
-          </div>
+      <div className="scanner__stage">
+        {shotUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="扫描画面" className="scanner__media" src={shotUrl} />
+        ) : (
+          <video
+            autoPlay
+            className="scanner__media"
+            muted
+            playsInline
+            ref={videoRef}
+          />
+        )}
+        <div className="scanner__scrim" />
 
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.96fr)_minmax(280px,0.84fr)]">
-            <div className="order-2 space-y-4 lg:order-1">
-              <div className="border-border/70 bg-background/78 relative overflow-hidden rounded-[var(--radius)] border p-3">
-                <div className="recognition-grid border-border/60 relative aspect-[4/5] overflow-hidden rounded-[var(--radius)] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_90%,white),color-mix(in_oklab,var(--card)_86%,var(--background)))]">
-                  {previewUrl ? (
-                    <Image
-                      alt="识别预览图"
-                      className="object-cover"
-                      fill
-                      sizes="(max-width: 1280px) 100vw, 54rem"
-                      src={previewUrl}
-                      unoptimized
-                    />
-                  ) : cameraState === 'live' || cameraState === 'requesting' ? (
-                    <video
-                      autoPlay
-                      className="h-full w-full object-cover"
-                      muted
-                      playsInline
-                      ref={videoRef}
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
-                      <div className="border-border/70 bg-card/78 flex size-20 items-center justify-center rounded-full border text-2xl">
-                        ◎
-                      </div>
-                      <div className="space-y-2">
-                        <p className="font-heading text-foreground text-3xl leading-none">
-                          等待输入
-                        </p>
-                        <p className="text-muted-foreground text-sm">
-                          启动相机或上传图片。
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="pointer-events-none absolute inset-[11%] rounded-[var(--radius)] border border-[color:color-mix(in_oklab,var(--accent)_70%,white)]">
-                    <div className="absolute -top-px -left-px h-12 w-12 rounded-tl-[1.8rem] border-t-2 border-l-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
-                    <div className="absolute -top-px -right-px h-12 w-12 rounded-tr-[1.8rem] border-t-2 border-r-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
-                    <div className="absolute -bottom-px -left-px h-12 w-12 rounded-bl-[1.8rem] border-b-2 border-l-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
-                    <div className="absolute -right-px -bottom-px h-12 w-12 rounded-br-[1.8rem] border-r-2 border-b-2 border-[color:color-mix(in_oklab,var(--accent)_86%,white)]" />
-                    {cameraState === 'live' && countdown === null ? (
-                      <div className="recognition-scan-line absolute inset-x-5 top-5 bottom-5 overflow-hidden rounded-[var(--radius)]" />
-                    ) : null}
-                  </div>
-
-                  <div className="pointer-events-none absolute top-4 left-4">
-                    <span className="border-border/70 bg-background/74 text-foreground inline-flex rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase">
-                      取景框
-                    </span>
-                  </div>
-
-                  <div className="pointer-events-none absolute right-4 bottom-4 left-4 flex items-center justify-between gap-4">
-                    <span className="border-border/70 bg-background/74 text-muted-foreground inline-flex rounded-full border px-3 py-1 text-xs">
-                      尽量居中。
-                    </span>
-                    {countdown !== null ? (
-                      <span className="border-border/70 bg-background/74 text-foreground inline-flex min-w-16 items-center justify-center rounded-full border px-4 py-1 text-sm font-semibold">
-                        {countdown}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <canvas className="hidden" ref={canvasRef} />
-
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                <div className="border-border/70 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.66rem] uppercase">
-                    当前状态
-                  </p>
-                  <p className="text-foreground mt-2 text-sm leading-7">
-                    {statusCopy}
-                  </p>
-                </div>
-                <div className="border-border/70 bg-card/72 rounded-[var(--radius)] border px-4 py-4">
-                  <p className="text-muted-foreground text-[0.66rem] uppercase">
-                    预览时间
-                  </p>
-                  <p className="text-foreground mt-2 text-sm leading-7">
-                    {capturedAt
-                      ? capturedAt.toLocaleTimeString('zh-CN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit',
-                        })
-                      : '尚未生成预览'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <aside className="contents lg:order-2 lg:block lg:space-y-4">
-              <div className="border-border/70 bg-background/76 order-1 rounded-[var(--radius)] border p-5">
-                <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
-                  输入控制
-                </p>
-                <div className="mt-4 flex flex-col gap-3">
-                  <Button
-                    onClick={() => {
-                      void startCamera();
-                    }}
-                    type="button"
-                  >
-                    启动相机
-                  </Button>
-
-                  {cameraState === 'live' || countdown !== null ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Button
-                        disabled={cameraState !== 'live' || countdown !== null}
-                        onClick={() => captureFrame('camera', 'manual')}
-                        type="button"
-                        variant="secondary"
-                      >
-                        立即拍摄
-                      </Button>
-                      {countdown === null ? (
-                        <Button
-                          disabled={cameraState !== 'live'}
-                          onClick={handleArmAutoCapture}
-                          type="button"
-                          variant="outline"
-                        >
-                          3 秒后拍摄
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={handleCancelCountdown}
-                          type="button"
-                          variant="outline"
-                        >
-                          取消倒计时
-                        </Button>
-                      )}
-                    </div>
-                  ) : null}
-
-                  <Button
-                    onClick={handleOpenUpload}
-                    type="button"
-                    variant="outline"
-                  >
-                    上传图片
-                  </Button>
-
-                  <input
-                    accept={acceptedImageInputValue}
-                    className="hidden"
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                    type="file"
-                  />
-                </div>
-              </div>
-
-              {previewUrl ? (
-                <div className="border-border/70 bg-background/76 order-3 rounded-[var(--radius)] border p-5">
-                  <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
-                    预览
-                  </p>
-                  <div className="mt-4 grid gap-3">
-                    <Button
-                      disabled={resultState === 'processing'}
-                      onClick={handleConfirmPreview}
-                      type="button"
-                    >
-                      确认预览并请求候选
-                    </Button>
-                    <Button
-                      onClick={handleRetake}
-                      type="button"
-                      variant="secondary"
-                    >
-                      {previewSource === 'upload' ? '清空预览' : '重新拍摄'}
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-            </aside>
-          </div>
+        <div className="scanner__top">
+          <button
+            aria-label="返回"
+            className="scanner__icon"
+            onClick={() => router.back()}
+            type="button"
+          >
+            ✕
+          </button>
+          <span className="scanner__title">扫描点亮</span>
+          <span className="scanner__icon scanner__icon--ghost" aria-hidden />
         </div>
+
+        {phase === 'live' || phase === 'starting' ? (
+          <div className="scanner__frame">
+            <span className="scanner__corner scanner__corner--tl" />
+            <span className="scanner__corner scanner__corner--tr" />
+            <span className="scanner__corner scanner__corner--bl" />
+            <span className="scanner__corner scanner__corner--br" />
+            {phase === 'live' ? <span className="scanner__sweep" /> : null}
+            <p className="scanner__hint">
+              {phase === 'starting' ? '正在启动相机…' : '把谷子放进框里，点下方按钮'}
+            </p>
+          </div>
+        ) : null}
+
+        {phase === 'scanning' ? (
+          <div className="scanner__center">
+            <span className="scanner__pulse" />
+            <p className="scanner__hint">识别中…</p>
+          </div>
+        ) : null}
+
+        {phase === 'denied' || phase === 'error' ? (
+          <div className="scanner__center">
+            <p className="scanner__msg">
+              {phase === 'denied'
+                ? '相机权限被拒绝。请在系统设置里为谷布谷开启相机后重试。'
+                : (errorMessage ?? '相机出错了。')}
+            </p>
+            <button
+              className="scanner__retry"
+              onClick={() => void startCamera()}
+              type="button"
+            >
+              重试
+            </button>
+          </div>
+        ) : null}
       </div>
 
-      <aside className="space-y-6">
-        <RecognitionCandidatesPanel
-          candidates={candidateItems}
-          canLight={canLight}
-          confirmationError={confirmationError}
-          confirmedCandidateId={confirmedCandidateId}
-          confirmingCandidateId={confirmingCandidateId}
-          errorMessage={errorMessage}
-          onConfirmCandidate={handleConfirmCandidate}
-          onRetake={handleRetake}
-          providerLabel={getProviderLabel(recognitionResponse)}
-          resultState={resultState}
-          warnings={recognitionResponse?.warnings ?? []}
-        />
-      </aside>
-    </section>
+      {phase === 'live' ? (
+        <div className="scanner__bottom">
+          <button
+            aria-label="扫描"
+            className="scanner__shutter"
+            onClick={() => void scan()}
+            type="button"
+          >
+            <span className="scanner__shutter-ring" />
+          </button>
+        </div>
+      ) : null}
+
+      {done ? (
+        <div className="scanner__sheet">
+          {phase === 'matched' ? (
+            <>
+              <p className="scanner__result-badge scanner__result-badge--ok">
+                ✦ 已点亮
+              </p>
+              <p className="scanner__result-title">{result?.goodsName}</p>
+              <p className="scanner__result-sub">
+                匹配官方谷子 · 匹配度 {result?.score}% · 已收进谷柜并可公开展示
+              </p>
+              <div className="scanner__result-actions">
+                {result?.goodsSlug ? (
+                  <Link
+                    className="scanner__btn scanner__btn--primary"
+                    href={`/goods/${result.goodsSlug}?lighting=success`}
+                  >
+                    查看谷子
+                  </Link>
+                ) : null}
+                <button
+                  className="scanner__btn"
+                  onClick={() => void startCamera()}
+                  type="button"
+                >
+                  继续扫描
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="scanner__result-badge">已收入谷柜 · 未鉴定</p>
+              <p className="scanner__result-sub scanner__result-sub--lead">
+                没匹配到官方谷子，已作为你的收藏保存；未鉴定项不会在公开主页展示。
+              </p>
+              <div className="scanner__result-actions">
+                <button
+                  className="scanner__btn scanner__btn--primary"
+                  onClick={() => void startCamera()}
+                  type="button"
+                >
+                  继续扫描
+                </button>
+                <Link className="scanner__btn" href="/me/collection">
+                  去谷柜
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }

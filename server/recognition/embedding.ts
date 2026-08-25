@@ -4,8 +4,15 @@
 import {
   AutoProcessor,
   CLIPVisionModelWithProjection,
+  env,
   RawImage,
 } from '@huggingface/transformers';
+
+// 可选：从镜像下载模型（如中国网络下 huggingface.co 被墙）。设 HF_MIRROR=https://hf-mirror.com
+// 即可；不设则用默认 Hugging Face。仅影响模型下载源，不影响推理。
+if (process.env.HF_MIRROR) {
+  env.remoteHost = process.env.HF_MIRROR.replace(/\/?$/, '/');
+}
 
 /**
  * CLIP image embeddings, generated in-process. No Python service, no API calls

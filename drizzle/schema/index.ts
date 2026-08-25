@@ -657,6 +657,24 @@ export const userGoods = pgTable(
 );
 
 /**
+ * 自由扫描项：用户扫了实物但没匹配上官方 SKU（盗版 / 二创 / 未收录）。进个人谷柜，但
+ * 不在公开主页展示——公开展示只给匹配上官方 SKU 的点亮项，以此保证展示照片的稀缺性。
+ */
+export const userScans = pgTable(
+  'user_scans',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').notNull(),
+    imageUrl: text('image_url').notNull(),
+    // 最接近的官方匹配分（0–100，信息用，可为空）。
+    topScore: integer('top_score'),
+    note: text('note'),
+    ...timestamps,
+  },
+  (table) => [index('user_scans_user_id_idx').on(table.userId)],
+);
+
+/**
  * 一次服务端识别结果。candidate_map 把返回给浏览器的候选 id 绑定到 SKU id；
  * 确认动作只接受 requestId + candidateId，从不接受浏览器提供的 goodsId。
  */

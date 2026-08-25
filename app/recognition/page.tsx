@@ -19,26 +19,10 @@ export default async function RecognitionPage() {
   }
 
   await requireAuthUser('/recognition');
+  // 扫描是相机优先的沉浸界面，页面只作最薄的容器，交互全在 RecognitionShell。
   return (
-    <main>
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 px-5 py-10 md:px-10">
-        <section className="border-border border-b pb-8">
-          <div className="relative">
-            <div className="space-y-4">
-              <p className="section-kicker">实物识别 · 点亮收藏</p>
-              <h1 className="font-heading text-foreground max-w-5xl text-[clamp(32px,4.6vw,54px)] leading-[1.08] text-balance">
-                扫描手里的谷子，点亮它。
-              </h1>
-              <p className="text-muted-foreground max-w-[54ch] text-sm">
-                相机扫描并确认真实候选后，谷柜里的灰色缩略图会恢复彩色。上传图片只用于查找
-                SKU，不会点亮收藏。
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <RecognitionShell />
-      </div>
+    <main className="mx-auto w-full max-w-[560px] p-3">
+      <RecognitionShell />
     </main>
   );
 }
