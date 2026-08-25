@@ -15,6 +15,7 @@ import {
   tags,
 } from '@/drizzle/schema';
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
+import { descNullsLast } from '@/server/data/ordering';
 import {
   getUserGoodsStateFlags,
   getUserGoodsStateMap,
@@ -279,7 +280,7 @@ class SqlGoodsSearchProvider implements GoodsSearchProvider {
         .leftJoin(tags, eq(goodsTags.tagId, tags.id))
         .where(whereClause)
         .orderBy(
-          desc(goods.releaseDate),
+          descNullsLast(goods.releaseDate),
           desc(goods.createdAt),
           asc(goods.name),
         )

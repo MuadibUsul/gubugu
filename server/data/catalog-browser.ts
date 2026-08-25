@@ -11,6 +11,7 @@ import {
   series,
 } from '@/drizzle/schema';
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
+import { descNullsLast } from '@/server/data/ordering';
 import { unstable_cache } from 'next/cache';
 
 import { catalogCacheTag, ipCacheTag, seriesCacheTag } from '@/lib/cache-tags';
@@ -213,7 +214,7 @@ async function getIpEncyclopediaPageDataUncached(
         )
         .groupBy(series.id)
         .orderBy(
-          desc(series.releaseDate),
+          descNullsLast(series.releaseDate),
           desc(seriesGoodsCountSql),
           asc(series.name),
         ),
@@ -235,7 +236,7 @@ async function getIpEncyclopediaPageDataUncached(
         )
         .where(eq(goods.status, 'published'))
         .orderBy(
-          desc(goods.releaseDate),
+          descNullsLast(goods.releaseDate),
           desc(goods.createdAt),
           asc(goods.name),
         )
@@ -391,7 +392,11 @@ async function getSeriesEncyclopediaPageDataUncached(
           eq(goods.status, 'published'),
         ),
       )
-      .orderBy(desc(goods.releaseDate), desc(goods.createdAt), asc(goods.name))
+      .orderBy(
+        descNullsLast(goods.releaseDate),
+        desc(goods.createdAt),
+        asc(goods.name),
+      )
       .limit(limit),
   ]);
 

@@ -28,6 +28,7 @@ import { getDb } from '@/server/db/client';
 // The window is a backstop for anything written outside the app.
 const CATALOG_REVALIDATE_SECONDS = 300;
 import { getPublishedGoodsCardsByIds } from '@/server/data/_shared';
+import { descNullsLast } from '@/server/data/ordering';
 import {
   getUserGoodsStateFlags,
   getUserGoodsStateMap,
@@ -365,7 +366,11 @@ async function getCharacterEncyclopediaPageDataUncached(
           eq(goods.status, 'published'),
         ),
       )
-      .orderBy(desc(goods.releaseDate), desc(goods.createdAt), asc(goods.name))
+      .orderBy(
+        descNullsLast(goods.releaseDate),
+        desc(goods.createdAt),
+        asc(goods.name),
+      )
       .limit(limit),
     db
       .select({
