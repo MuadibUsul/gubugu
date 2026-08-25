@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
+    "dev:lan": "next dev --hostname 0.0.0.0",
     "build": "next build",
+    "cap:sync": "cap sync android",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -23,6 +25,9 @@
     "format:check": "prettier . --check"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
     "@huggingface/transformers": "^4.2.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@supabase/ssr": "^0.9.0",
@@ -40,6 +45,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^20.19.25",
     "@types/pg": "^8.18.0",

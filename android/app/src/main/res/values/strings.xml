@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">谷布谷</string>
+    <string name="title_activity_main">谷布谷</string>
+    <string name="package_name">com.gubugu.app</string>
+    <string name="custom_url_scheme">com.gubugu.app</string>
+</resources>
