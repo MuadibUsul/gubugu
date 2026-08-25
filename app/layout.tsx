@@ -1,5 +1,7 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
+import { BottomTabBar } from '@/components/app-shell/bottom-tab-bar';
+import { PwaProvider } from '@/components/app-shell/pwa-provider';
 import { SiteNavigation } from '@/components/layout/site-navigation';
 import { siteConfig } from '@/lib/config/site';
 
@@ -12,12 +14,30 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  appleWebApp: {
+    capable: true,
+    title: '谷布谷',
+    statusBarStyle: 'default',
+  },
+  icons: {
+    apple: '/icons/apple-touch-icon.png',
+  },
   keywords: [
     'anime goods',
     'collectibles',
     'goods encyclopedia',
     'gubugu',
     'web collection tracker',
+  ],
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f7f1e5' },
+    { media: '(prefers-color-scheme: dark)', color: '#201c16' },
   ],
 };
 
@@ -36,9 +56,15 @@ export default function RootLayout({
           跳到主要内容
         </a>
         <SiteNavigation />
-        <div id="main-content" tabIndex={-1}>
+        <div
+          className="pb-[calc(66px+env(safe-area-inset-bottom))] md:pb-0"
+          id="main-content"
+          tabIndex={-1}
+        >
           {children}
         </div>
+        <BottomTabBar />
+        <PwaProvider />
       </body>
     </html>
   );

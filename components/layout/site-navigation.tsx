@@ -43,7 +43,8 @@ export async function SiteNavigation() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-1 sm:gap-2">
+        {/* 移动端用底部 Tab 导航，顶部只留品牌，隐藏这组链接避免重复。 */}
+        <div className="only-desktop items-center gap-1 sm:gap-2">
           <SiteNavLinks links={primaryLinks} />
         </div>
       </div>
