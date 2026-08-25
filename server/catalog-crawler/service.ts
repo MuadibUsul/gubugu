@@ -17,6 +17,7 @@ import {
   type CatalogListing,
   type ParsedCatalogProduct,
 } from '@/lib/catalog-crawler/parser';
+import { classifyGoodsType } from '@/lib/goods-type';
 import { slugifyText } from '@/lib/slug';
 import { enrichCatalogProduct } from '@/server/catalog-crawler/enrich';
 import { normalizeAndStoreCatalogImage } from '@/server/catalog-crawler/image-store';
@@ -96,27 +97,9 @@ function trimText(value: string | null, maxLength: number) {
   return normalized ? normalized.slice(0, maxLength) : null;
 }
 
+// 类型判定走 lib/goods-type 的形态优先分类器（8 类固定枚举），线索可以是原始类型或商品名。
 function inferGoodsType(value: string | null) {
-  const normalized = value?.trim().toLowerCase() ?? '';
-  const mappings: Array<[RegExp, string]> = [
-    [
-      /acrylic.*(?:stand|figure)|亚克力.*(?:立牌|台座)|アクリルスタンド/,
-      'acrylic-stand',
-    ],
-    [
-      /acrylic.*(?:charm|key)|亚克力.*(?:挂件|钥匙)|アクリルキーホルダー/,
-      'acrylic-charm',
-    ],
-    [/(?:can|tin).*badge|徽章|缶バッジ/, 'can-badge'],
-    [/shikishi|色纸|色紙/, 'mini-shikishi'],
-    [/clear.*card|透卡|クリアカード/, 'clear-card'],
-    [/trading.*card|收藏卡|トレーディングカード/, 'trading-card'],
-    [/plush|玩偶|毛绒|ぬいぐるみ/, 'plush'],
-    [/tapestry|挂画|タペストリー/, 'tapestry'],
-    [/poster|海报|ポスター/, 'poster'],
-  ];
-
-  return mappings.find(([pattern]) => pattern.test(normalized))?.[1] ?? 'other';
+  return classifyGoodsType(value);
 }
 
 function sourceKeyFor(product: ParsedCatalogProduct) {

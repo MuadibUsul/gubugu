@@ -5,6 +5,7 @@ import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { Button } from '@/components/ui/button';
+import { GOODS_TYPE_KEYS, goodsTypeLabel } from '@/lib/goods-type';
 import { slugifyText } from '@/lib/slug';
 import { initialSaveAdminGoodsActionState } from '@/server/admin/goods/action-state';
 import { saveAdminGoodsAction } from '@/server/admin/goods/actions';
@@ -362,14 +363,18 @@ export function AdminGoodsEditorForm({
                 <label className={labelClassName} htmlFor="admin-goods-type">
                   商品类型
                 </label>
-                <input
+                <select
                   className={inputClassName}
-                  defaultValue={initialGoods?.goodsType ?? ''}
+                  defaultValue={initialGoods?.goodsType ?? 'other'}
                   id="admin-goods-type"
                   name="goodsType"
-                  placeholder="acrylic-stand"
-                  type="text"
-                />
+                >
+                  {GOODS_TYPE_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {goodsTypeLabel(key)}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-3">

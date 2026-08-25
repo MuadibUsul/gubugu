@@ -1,3 +1,6 @@
+import { GOODS_TYPE_KEYS, goodsTypeLabel } from '@/lib/goods-type';
+
+// 旧类型 slug → 中文，仅用于兼容尚未迁移的历史值；新数据统一用 goods-type 的 8 类。
 const goodsTypeLabels: Record<string, string> = {
   'acrylic-stand': '亚克力立牌',
   'acrylic-block': '亚克力砖',
@@ -60,6 +63,11 @@ const tagLabels: Record<string, string> = {
 };
 
 export function formatGoodsTypeLabel(goodsType: string) {
+  // 8 类固定类型统一走 goods-type 的「中文（English）」标签；旧值兜底到历史映射。
+  const key = goodsType.trim();
+  if (GOODS_TYPE_KEYS.includes(key as (typeof GOODS_TYPE_KEYS)[number])) {
+    return goodsTypeLabel(key);
+  }
   return goodsTypeLabels[goodsType] ?? goodsType.replace(/[-_]/g, ' / ');
 }
 
