@@ -31,6 +31,10 @@ export default async function AdminCrawlerPage({
       tone: 'success' as const,
       text: '来源启用状态已更新。',
     },
+    'scan-started': {
+      tone: 'success' as const,
+      text: '扫描已在后台启动，全量爬取需数十分钟，可在运行记录 / 待审核队列刷新查看进度。',
+    },
     'scan-finished': {
       tone: 'success' as const,
       text: '扫描已完成，结果已写入运行记录。',

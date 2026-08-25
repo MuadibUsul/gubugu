@@ -185,19 +185,22 @@ export async function scanCrawlerSourceAction(formData: FormData) {
 
   if (!parsed.success) redirect('/admin/crawler?view=sources');
 
-  await runCrawlerSourceById(parsed.data.sourceId, {
+  // 全量爬取可长达数十分钟；绝不在请求里等它跑完，否则「扫描」按钮会一直卡住、看着像失败。
+  // 后台异步启动，运行状态写进 crawler_runs，页面刷新即可看进度；claimRun 的唯一约束会挡住
+  // 重复触发。错误吞掉以免未处理拒绝——它们已记录在 run / source 行上，可在运行记录里看到。
+  void runCrawlerSourceById(parsed.data.sourceId, {
     trigger: 'manual',
     scheduledFor: null,
-  });
-  revalidatePath('/admin/crawler');
-  redirect(crawlerPath({ view: 'runs', notice: 'scan-finished' }));
+  }).catch(() => {});
+
+  redirect(crawlerPath({ view: 'runs', notice: 'scan-started' }));
 }
 
 export async function scanAllCrawlerSourcesAction() {
   await requireAdminAccess('/admin/crawler');
-  await runManualCrawlerSweep();
-  revalidatePath('/admin/crawler');
-  redirect(crawlerPath({ view: 'runs', notice: 'scan-finished' }));
+  // 同上：全站轮扫可能更久，后台异步启动、立即返回，进度看运行记录。
+  void runManualCrawlerSweep().catch(() => {});
+  redirect(crawlerPath({ view: 'runs', notice: 'scan-started' }));
 }
 
 const manualUrlSchema = z.object({ url: z.string().trim().url().max(2000) });
