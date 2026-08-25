@@ -4,6 +4,7 @@ import {
   assertSafeCrawlerUrl,
   isPublicIpAddress,
   safeFetchBuffer,
+  safeFetchJson,
   safeFetchText,
 } from './safe-fetch';
 
@@ -108,5 +109,31 @@ describe('crawler safe fetch', () => {
 
     expect(seen[0].referer).toBe('https://cdn.example.com/');
     expect(seen[1].referer).toBeUndefined();
+  });
+
+  it('parses JSON APIs, accepting text/plain (as mihoyogift serves) and rejecting HTML', async () => {
+    const jsonImpl = (async () =>
+      new Response('{"retcode":0,"data":{"count":7}}', {
+        // The mall API mislabels JSON as text/plain; the json kind must accept it.
+        headers: { 'content-type': 'text/plain; charset=utf-8' },
+      })) as typeof fetch;
+
+    const result = await safeFetchJson<{ retcode: number; data: { count: number } }>(
+      'https://api.example.com/list',
+      { allowedHosts: ['api.example.com'], fetchImpl: jsonImpl, resolveHost: publicResolver },
+    );
+    expect(result.json.retcode).toBe(0);
+    expect(result.json.data.count).toBe(7);
+
+    await expect(
+      safeFetchJson('https://api.example.com/list', {
+        allowedHosts: ['api.example.com'],
+        fetchImpl: (async () =>
+          new Response('<html></html>', {
+            headers: { 'content-type': 'text/html' },
+          })) as typeof fetch,
+        resolveHost: publicResolver,
+      }),
+    ).rejects.toThrow('Expected a JSON response');
   });
 });

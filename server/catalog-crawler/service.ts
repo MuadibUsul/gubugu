@@ -12,6 +12,16 @@ import {
   type CrawlerSource,
 } from '@/drizzle/schema';
 import {
+  isMihoyogiftSource,
+  MIHOYOGIFT_API_HOST,
+  mihoyogiftDetailUrl,
+  mihoyogiftListUrl,
+  mihoyogiftWebUrl,
+  parseSpuDetailResponse,
+  parseSpuListResponse,
+  shopCodeFromEntry,
+} from '@/lib/catalog-crawler/mihoyogift';
+import {
   parseCatalogListing,
   parseCatalogPage,
   type CatalogListing,
@@ -23,6 +33,7 @@ import { enrichCatalogProduct } from '@/server/catalog-crawler/enrich';
 import { normalizeAndStoreCatalogImage } from '@/server/catalog-crawler/image-store';
 import {
   safeFetchBuffer,
+  safeFetchJson,
   safeFetchText,
 } from '@/server/catalog-crawler/safe-fetch';
 import { getDb } from '@/server/db/client';
@@ -260,6 +271,11 @@ async function upsertProductDraft(
 }
 
 async function crawlSourceIntoDrafts(source: CrawlerSource): Promise<CrawlTally> {
+  // 米游铺（米哈游官方谷店）是 SPA + JSON API，不解析 HTML，走专用接口爬取。
+  if (isMihoyogiftSource(source.entryUrl)) {
+    return crawlMihoyogiftIntoDrafts(source);
+  }
+
   const sourceHost = new URL(source.entryUrl).hostname;
   const entry = await safeFetchText(source.entryUrl, {
     allowedHosts: [sourceHost],
@@ -391,6 +407,96 @@ async function crawlListingIntoDrafts(
 
   // 4. 走到这里说明整轮跑完了（进程没被中途终止）。列表翻页未出错时清空检查点，让下一次
   //    全量爬重新检查更新；进程若在上面的循环里被杀，这行到不了，留下的检查点供下次续爬。
+  if (!listingWalkFailed) await clearProcessedDetailUrls(source.id);
+
+  return tally;
+}
+
+/**
+ * 米游铺 JSON API 爬取（可断点续爬）：按分店 shop_code 翻列表接口收集全部 goods_id，再逐个
+ * 调详情接口解析成标准化产品并落草稿。结构与 crawlListingIntoDrafts 一致，只是「列表页/详情
+ * 页」换成了 JSON 接口。API 主机固定为 api-mall.mihoyogift.com，safe-fetch 仍做私网/大小校验。
+ */
+async function crawlMihoyogiftIntoDrafts(
+  source: CrawlerSource,
+): Promise<CrawlTally> {
+  const tally = emptyTally();
+  const shopCode = shopCodeFromEntry(source.entryUrl);
+  if (!shopCode) {
+    throw new Error('无法从来源地址解析米游铺分店代码（shop_code）。');
+  }
+  const apiHosts = [MIHOYOGIFT_API_HOST];
+
+  // 1. 翻列表接口收集全部 goods_id（按总数 count 与硬上限收敛翻页）。
+  const goodsIds = new Set<string>();
+  let page = 1;
+  let total = Infinity;
+  let listingWalkFailed = false;
+
+  while (
+    goodsIds.size < total &&
+    page <= MAX_LISTING_PAGES &&
+    goodsIds.size < MAX_LISTING_PRODUCTS
+  ) {
+    if (page > 1) await politeCrawlDelay();
+
+    let pageIds: string[];
+    try {
+      const { json } = await safeFetchJson(mihoyogiftListUrl(shopCode, page), {
+        allowedHosts: apiHosts,
+      });
+      const parsed = parseSpuListResponse(json);
+      pageIds = parsed.goodsIds;
+      total = parsed.count || pageIds.length;
+    } catch {
+      tally.failed += 1;
+      listingWalkFailed = true;
+      break;
+    }
+
+    if (pageIds.length === 0) break;
+    for (const id of pageIds) goodsIds.add(id);
+    page += 1;
+  }
+
+  const allIds = [...goodsIds].slice(0, MAX_LISTING_PRODUCTS);
+  tally.discovered = allIds.length;
+
+  // 2. 载入检查点，跳过早前（被中断的）会话里已完成的商品。检查点键用商品详情页地址。
+  const processed = await loadProcessedDetailUrls(source.id);
+
+  // 3. 逐个：抓详情接口 → 解析 → 落草稿 → 成功即记检查点（失败留待下次重试，不记）。
+  for (const goodsId of allIds) {
+    const webUrl = mihoyogiftWebUrl(shopCode, goodsId);
+    if (processed.has(webUrl)) {
+      tally.skipped += 1;
+      continue;
+    }
+
+    await politeCrawlDelay();
+
+    let product: ParsedCatalogProduct | null;
+    try {
+      const { json } = await safeFetchJson(mihoyogiftDetailUrl(goodsId), {
+        allowedHosts: apiHosts,
+      });
+      product = parseSpuDetailResponse(json, { shopCode, goodsId });
+    } catch {
+      tally.failed += 1;
+      continue;
+    }
+
+    if (!product) {
+      tally.failed += 1;
+      continue;
+    }
+
+    const outcome = await upsertProductDraft(source, product);
+    tally[outcome] += 1;
+    if (outcome !== 'failed') await markDetailUrlProcessed(source.id, webUrl);
+  }
+
+  // 4. 整轮跑完且列表翻页未出错 → 清空检查点，让下次全量爬重新检查更新。
   if (!listingWalkFailed) await clearProcessedDetailUrls(source.id);
 
   return tally;

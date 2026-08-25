@@ -7,7 +7,7 @@ import { domainToASCII } from 'node:url';
 export const CRAWLER_HTML_MAX_BYTES = 2 * 1024 * 1024;
 export const CRAWLER_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 
-export type SafeFetchKind = 'html' | 'image';
+export type SafeFetchKind = 'html' | 'image' | 'json';
 
 export type SafeFetchResult = {
   url: string;
@@ -193,6 +193,21 @@ function validateContentType(kind: SafeFetchKind, value: string | null) {
     );
   }
 
+  // JSON APIs are inconsistent about their content type: some serve
+  // `application/json`, others `text/json`, and a few (e.g. the mihoyogift
+  // mall API) mislabel JSON as `text/plain`. Accept all three; the caller
+  // parses the body and surfaces any malformed JSON.
+  if (
+    kind === 'json' &&
+    contentType !== 'application/json' &&
+    contentType !== 'text/json' &&
+    contentType !== 'text/plain'
+  ) {
+    throw new Error(
+      `Expected a JSON response, received ${contentType || 'no content type'}.`,
+    );
+  }
+
   if (
     kind === 'image' &&
     !/^image\/(?:avif|gif|jpeg|png|tiff|webp)$/.test(contentType)
@@ -258,7 +273,9 @@ export async function safeFetch(
         Accept:
           kind === 'image'
             ? 'image/avif,image/webp,image/png,image/jpeg,image/gif;q=0.8'
-            : 'text/html,application/xhtml+xml;q=0.9',
+            : kind === 'json'
+              ? 'application/json,text/plain;q=0.9'
+              : 'text/html,application/xhtml+xml;q=0.9',
         'User-Agent': 'GubuguCatalogCrawler/1.0',
       };
       // Image servers commonly use hotlink protection (a same-site Referer
@@ -324,4 +341,13 @@ export async function safeFetchBuffer(
   options: Omit<SafeFetchOptions, 'kind'>,
 ) {
   return safeFetch(input, { ...options, kind: 'image' });
+}
+
+export async function safeFetchJson<T = unknown>(
+  input: string | URL,
+  options: Omit<SafeFetchOptions, 'kind'>,
+): Promise<{ url: string; status: number; json: T }> {
+  const result = await safeFetch(input, { ...options, kind: 'json' });
+  const text = new TextDecoder().decode(result.buffer);
+  return { url: result.url, status: result.status, json: JSON.parse(text) as T };
 }
