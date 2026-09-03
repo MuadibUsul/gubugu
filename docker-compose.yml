@@ -32,6 +32,10 @@ services:
   web:
     image: ${WEB_IMAGE:?WEB_IMAGE 未设置}
     restart: unless-stopped
+    # 只绑回环地址：本机的 Caddy 反代到这里，不对公网暴露 3000。
+    # 若改用下面 bundled-caddy profile 里的 Caddy 容器，这段可以删掉（同网络直连 web:3000）。
+    ports:
+      - '127.0.0.1:3000:3000'
     environment:
       NODE_ENV: production
       # ── 数据库（自建 PG，同网络）──
@@ -71,7 +75,10 @@ services:
       retries: 5
       start_period: 60s
 
+  # 可选：仅当宿主机上没有反向代理时才用。本机已装 Caddy 并占用 80/443，
+  # 所以默认不启动（profile 未激活）。需要时：docker compose --profile bundled-caddy up -d
   caddy:
+    profiles: ['bundled-caddy']
     image: caddy:2
     restart: unless-stopped
     ports:

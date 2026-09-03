@@ -28,7 +28,10 @@ Caddy 自动 HTTPS，靠 GitHub Actions 构建镜像并 SSH 上线。
    ```bash
    curl -fsSL https://get.docker.com | sh
    ```
-2. **域名**：把 A 记录指向 VPS 公网 IP，放行 `80`、`443`。
+2. **域名**：本项目用子域 **`gubugu.tlines.tech`**。在 Namecheap 的 `tlines.tech`
+   下加一条 A 记录：`Host=gubugu`，`Value=104.207.82.85`。放行 `80`、`443`。
+   > 用子域而非顶级域，是为了避开 `tlines.tech` 上混着的 Namecheap 停放页 A 记录
+   > （`156.154.132.200/133.200`）——那会让流量轮询到停放页并导致证书签发失败。
 3. **Supabase 项目**：新建一个免费项目，记下 `Project URL` 和 `anon public key`
    （Settings → API）。仅用于登录鉴权。
 
@@ -77,6 +80,25 @@ cd /opt/gubugu
 填你的登录邮箱）。`WEB_IMAGE` / `MIGRATOR_IMAGE` 两行留空——CI 会自动写入。
 
 > `.env` 只放在 VPS 上，**永不进 git、永不经 CI**。
+
+### 反向代理：复用宿主机已有的 Caddy（本机就是这种情况）
+
+这台 VPS 上**已经装了 Caddy 并占用 80/443**，所以 compose 里的 `caddy` 服务默认
+不启动（藏在 `bundled-caddy` profile 后面），`web` 只绑 `127.0.0.1:3000`。
+在宿主机的 Caddy 配置（通常 `/etc/caddy/Caddyfile`）里追加一段：
+
+```caddy
+gubugu.tlines.tech {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+```
+
+然后 `sudo systemctl reload caddy`。Caddy 会自动为该子域签发证书，**不影响
+`tlines.tech` 上原有的站点**。
+
+> 只有当宿主机没有任何反向代理时，才改用自带的那个：
+> `docker compose --profile bundled-caddy up -d`（并把 `web` 的 `ports` 去掉）。
 
 ---
 
