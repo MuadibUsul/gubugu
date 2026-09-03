@@ -1,6 +1,0 @@
-# Caddy 自动申请并续期 Let's Encrypt 证书。只需 APP_DOMAIN 的 DNS A 记录指向本机，
-# 且 80/443 端口放行。反代到 compose 内网的 web:3000。
-{$APP_DOMAIN} {
-	encode zstd gzip
-	reverse_proxy web:3000
-}

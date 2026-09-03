@@ -1,11 +1,24 @@
-# VPS 上的生产编排：自建 Postgres + 一次性迁移 + Next 网站 + Caddy 自动 HTTPS。
-# 变量来自同目录的 .env（见 .env.production.example）。CI 推送镜像到 GHCR，
-# 部署时 `docker compose pull && docker compose up -d`。
+# VPS 生产编排：自建 Postgres + 一次性迁移 + Next 应用。
+#
+# ⚠️ 这台机器上已经跑着 tline（tline-app / tline-db-1 / caddy-caddy-1）。
+# 本文件按“绝不干扰既有服务”设计：
+#   - compose 项目名固定 gubugu，容器/卷/网络全部独立，不复用 tline 的任何资源；
+#   - 不发布任何宿主机端口。宿主机的 caddy-caddy-1 独占 80/443，它通过共享的
+#     外部网络 `web` 用容器名直接访问 gubugu-app:3000，因此无需端口映射；
+#   - Postgres 只接在内部网络，`web` 网络上的其它容器访问不到它；
+#   - 每个服务设内存上限，避免挤垮同机的 tline（整机 6 GB）。
+#
+# 变量来自同目录 .env（见 .env.production.example）。
+
+name: gubugu
 
 services:
   postgres:
     image: postgres:16-bookworm
     restart: unless-stopped
+    # 仅内部网络：不加入 web，代理层碰不到数据库。
+    networks: [internal]
+    mem_limit: 768m
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-gubugu}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须在 .env 中设置}
@@ -17,12 +30,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    # 不对外暴露端口：只在 compose 内网可达。需要本机调试时再 `ports`。
 
   # 一次性跑数据库迁移，成功退出后 web 才启动。
   migrate:
     image: ${MIGRATOR_IMAGE:?MIGRATOR_IMAGE 未设置}
     restart: 'no'
+    networks: [internal]
+    mem_limit: 768m
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-gubugu}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gubugu}
     depends_on:
@@ -32,38 +46,35 @@ services:
   web:
     image: ${WEB_IMAGE:?WEB_IMAGE 未设置}
     restart: unless-stopped
-    # 只绑回环地址：本机的 Caddy 反代到这里，不对公网暴露 3000。
-    # 若改用下面 bundled-caddy profile 里的 Caddy 容器，这段可以删掉（同网络直连 web:3000）。
-    ports:
-      - '127.0.0.1:3000:3000'
+    # 固定容器名：宿主机 Caddy 的 reverse_proxy 靠这个名字解析。
+    container_name: gubugu-app
+    # internal 连数据库，web 供 Caddy 反代。不发布任何端口。
+    networks: [internal, web]
+    # CLIP 模型（fp32）常驻约 1 GB，加 Next 运行时；留出余量给 tline。
+    mem_limit: 2560m
     environment:
       NODE_ENV: production
-      # ── 数据库（自建 PG，同网络）──
       DATABASE_URL: postgresql://${POSTGRES_USER:-gubugu}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gubugu}
-      # ── 公网源，必须是纯 HTTPS 站点源，无路径/参数 ──
       APP_URL: ${APP_URL:?APP_URL 必须设置为 https://你的域名}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Gooods Dex}
-      # ── Supabase Auth（生产强制，见 server/env.ts）──
+      # Supabase Auth：生产强制，见 server/env.ts
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?生产必须配置 Supabase Auth}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?生产必须配置 Supabase Auth}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
-      # ── 后台权限白名单 ──
       ADMIN_USER_EMAILS: ${ADMIN_USER_EMAILS:-}
       ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
       MODERATOR_USER_EMAILS: ${MODERATOR_USER_EMAILS:-}
       MODERATOR_USER_IDS: ${MODERATOR_USER_IDS:-}
-      # ── 识别模型与爬虫 ──
       RECOGNITION_WARMUP: ${RECOGNITION_WARMUP:-1}
       CATALOG_CRAWLER_SCHEDULER: ${CATALOG_CRAWLER_SCHEDULER:-1}
       CATALOG_ASSET_DIR: /app/.data/catalog-assets
+      MODEL_CACHE_DIR: /app/.data/models
       HF_MIRROR: ${HF_MIRROR:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       CATALOG_TRANSLATE_MODEL: ${CATALOG_TRANSLATE_MODEL:-deepseek-chat}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
     volumes:
-      # 爬虫产出的内容寻址图片，必须持久化。
       - catalog_assets:/app/.data/catalog-assets
-      # CLIP 模型缓存（MODEL_CACHE_DIR），避免每次重启重新下载。
       - model_cache:/app/.data/models
     depends_on:
       migrate:
@@ -73,29 +84,20 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      # 开了 RECOGNITION_WARMUP 时首启要下载并加载 CLIP，给足冷启动时间。
+      start_period: 300s
 
-  # 可选：仅当宿主机上没有反向代理时才用。本机已装 Caddy 并占用 80/443，
-  # 所以默认不启动（profile 未激活）。需要时：docker compose --profile bundled-caddy up -d
-  caddy:
-    profiles: ['bundled-caddy']
-    image: caddy:2
-    restart: unless-stopped
-    ports:
-      - '80:80'
-      - '443:443'
-    environment:
-      APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN 必须设置，例如 gubugu.example.com}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - web
+networks:
+  # 本项目专属网络。
+  internal:
+    name: gubugu_internal
+  # 宿主机上已存在的共享代理网络，由 caddy-caddy-1 使用。external 表示
+  # 只接入、不创建也不管理它——compose down 不会删掉它。
+  web:
+    external: true
+    name: web
 
 volumes:
   pgdata:
   catalog_assets:
   model_cache:
-  caddy_data:
-  caddy_config:

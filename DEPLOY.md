@@ -81,24 +81,46 @@ cd /opt/gubugu
 
 > `.env` 只放在 VPS 上，**永不进 git、永不经 CI**。
 
-### 反向代理：复用宿主机已有的 Caddy（本机就是这种情况）
+### ⚠️ 与机器上原有项目的隔离约定
 
-这台 VPS 上**已经装了 Caddy 并占用 80/443**，所以 compose 里的 `caddy` 服务默认
-不启动（藏在 `bundled-caddy` profile 后面），`web` 只绑 `127.0.0.1:3000`。
-在宿主机的 Caddy 配置（通常 `/etc/caddy/Caddyfile`）里追加一段：
+这台 VPS 上**已经跑着别的项目**（Caddy 占用 80/443，磁盘已用 50 GB）。本部署遵守
+以下硬约定，任何一条都不得为了图省事而破例：
+
+这台 VPS 上跑着 **tline**：`tline-app`、`tline-scheduler-1`、`tline-macro-scheduler-1`、
+`tline-db-1`（Postgres 16），以及 `caddy-caddy-1`（`caddy:2-alpine` 容器，独占
+80/443，配置来自宿主机 `/opt/caddy/Caddyfile`，只接在共享网络 `web` 上）。
+
+| 资源 | 隔离方式 |
+| --- | --- |
+| 容器 / 卷 | compose 项目名固定 `gubugu`，资源带 `gubugu_` 前缀；应用容器名 `gubugu-app`，与 `tline-*` 无交集 |
+| 网络 | 自有 `gubugu_internal`；只把应用接入既有的 `web`（声明为 `external`，`compose down` 不会删它） |
+| 宿主机端口 | **一个都不占**。Caddy 经 `web` 网络用容器名直连 `gubugu-app:3000`，无需任何端口映射 |
+| 数据库 | 自建 Postgres 只在 `gubugu_internal` 上，`web` 网络够不着；**不碰 `tline-db-1`** |
+| 内存 | 整机 6 GB。web 限 2560m、postgres 限 768m，避免挤垮 tline |
+| 文件 | 只写 `~/gubugu`；数据在命名卷里 |
+| 镜像清理 | 只删 `gubugu-*` 的旧镜像。**绝不可用 `docker image prune -a`** —— tline 有大量按 sha 标记、未运行的镜像，会被一并删除 |
+
+### 反向代理：给现有 Caddy 加一段站点配置
+
+`/opt/caddy/Caddyfile` 属主是 `deploy`、可写，无需 sudo。追加：
 
 ```caddy
 gubugu.tlines.tech {
 	encode zstd gzip
-	reverse_proxy 127.0.0.1:3000
+	reverse_proxy gubugu-app:3000
 }
 ```
 
-然后 `sudo systemctl reload caddy`。Caddy 会自动为该子域签发证书，**不影响
-`tlines.tech` 上原有的站点**。
+先备份、再校验、最后热重载，**校验不过就别 reload**（坏配置会让 Caddy 起不来，
+把 tline 一起拖下水）：
 
-> 只有当宿主机没有任何反向代理时，才改用自带的那个：
-> `docker compose --profile bundled-caddy up -d`（并把 `web` 的 `ports` 去掉）。
+```bash
+cp /opt/caddy/Caddyfile /opt/caddy/Caddyfile.bak.$(date +%F-%H%M)
+docker exec caddy-caddy-1 caddy validate --config /etc/caddy/Caddyfile \
+  && docker exec caddy-caddy-1 caddy reload --config /etc/caddy/Caddyfile
+```
+
+`reload` 是热重载，不中断 `tlines.tech`。Caddy 会自动为新子域签发证书。
 
 ---
 
