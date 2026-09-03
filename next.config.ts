@@ -31,9 +31,16 @@ function buildRemoteImagePatterns() {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // 原生依赖不进 bundle，运行时从 node_modules 直接加载：sharp 与
+  // onnxruntime-node（@huggingface/transformers 的依赖）带平台预编译二进制，
+  // 打包会破坏它们。生产镜像保留完整依赖（见 Dockerfile / DEPLOY.md）。
+  serverExternalPackages: ['@huggingface/transformers', 'sharp'],
   images: {
     remotePatterns: buildRemoteImagePatterns(),
   },
+  // 关掉开发模式左下角的调试指示器（那个「1 Issue」浮标），它不是 App 的一部分，
+  // 会盖在底部 Tab 上；生产本就不出现。
+  devIndicators: false,
   experimental: {
     // server/auth/admin.ts 用 forbidden() 拦截权限不足的访问，app/forbidden.tsx
     // 是它的渲染目标。这个开关不打开时 forbidden() 直接抛错，后台页面会变成

@@ -1,0 +1,23 @@
+# 构建镜像时不要把这些拷进 build context（加速上传、避免泄密）。
+node_modules
+.next
+.git
+.github
+android
+.data
+images
+*.md
+!drizzle/README.md
+
+# 本地环境与密钥，绝不进镜像。运行时靠 compose 的 .env 注入。
+.env
+.env.local
+.env.*.local
+.env.production
+
+# 杂项
+npm-debug.log*
+.DS_Store
+coverage
+.vscode
+.idea

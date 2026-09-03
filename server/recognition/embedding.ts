@@ -14,6 +14,14 @@ if (process.env.HF_MIRROR) {
   env.remoteHost = process.env.HF_MIRROR.replace(/\/?$/, '/');
 }
 
+// 可选：把模型缓存目录指到一个稳定路径。默认缓存写在
+// node_modules/@huggingface/transformers/dist/.cache/，容器里该路径受 pnpm 符号
+// 链接影响、且每次重建镜像就丢失。生产用 MODEL_CACHE_DIR 指到挂载的持久卷，
+// 避免每次重启重新下载约 140s 的模型（见 docker-compose.yml 的 model_cache 卷）。
+if (process.env.MODEL_CACHE_DIR) {
+  env.cacheDir = process.env.MODEL_CACHE_DIR;
+}
+
 /**
  * CLIP image embeddings, generated in-process. No Python service, no API calls
  * and no model training — the boundary AGENTS.md section 8 sets.

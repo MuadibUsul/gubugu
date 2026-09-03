@@ -1,0 +1,113 @@
+name: Deploy to VPS
+
+# 推到 main 或手动触发时：构建 web + migrator 镜像推到 GHCR，再 SSH 到 VPS 拉取重启。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # 推镜像到 GHCR
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # GHCR 要求全小写的 owner。
+      - name: Resolve image names
+        id: img
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "base=ghcr.io/${owner}/gubugu" >> "$GITHUB_OUTPUT"
+          echo "sha=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── web（精简运行镜像）──
+      # NEXT_PUBLIC_* 在 build 时内联，必须作为 build-args 传入。它们是公开值，
+      # 放在 Actions Variables（vars）而非 secrets 更合适。
+      - name: Build & push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runner
+          push: true
+          tags: |
+            ${{ steps.img.outputs.base }}-web:${{ steps.img.outputs.sha }}
+            ${{ steps.img.outputs.base }}-web:latest
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_APP_NAME=${{ vars.NEXT_PUBLIC_APP_NAME }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── migrator（跑 drizzle 迁移）──
+      - name: Build & push migrator
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: migrator
+          push: true
+          tags: |
+            ${{ steps.img.outputs.base }}-migrator:${{ steps.img.outputs.sha }}
+            ${{ steps.img.outputs.base }}-migrator:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 把编排文件同步到 VPS（.env 与密钥只在 VPS 上手动维护，不经 CI）。
+      - name: Copy compose files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: 'docker-compose.yml,Caddyfile'
+          target: ${{ secrets.DEPLOY_DIR }}
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          WEB_IMAGE: ${{ steps.img.outputs.base }}-web:${{ steps.img.outputs.sha }}
+          MIGRATOR_IMAGE: ${{ steps.img.outputs.base }}-migrator:${{ steps.img.outputs.sha }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          envs: WEB_IMAGE,MIGRATOR_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_DIR }}"
+
+            # 用本次构建的不可变 sha 标签覆盖 .env 里的镜像坐标。
+            touch .env
+            grep -v -E '^(WEB_IMAGE|MIGRATOR_IMAGE)=' .env > .env.next || true
+            echo "WEB_IMAGE=${WEB_IMAGE}" >> .env.next
+            echo "MIGRATOR_IMAGE=${MIGRATOR_IMAGE}" >> .env.next
+            mv .env.next .env
+
+            # 登录 GHCR 拉私有镜像（token 仅本次运行有效）。
+            echo "${REGISTRY_TOKEN}" | docker login ghcr.io -u "${REGISTRY_USER}" --password-stdin
+
+            docker compose pull
+            # migrate 是一次性服务；up -d 会先跑它成功后再起 web。
+            docker compose up -d --remove-orphans
+            docker image prune -f

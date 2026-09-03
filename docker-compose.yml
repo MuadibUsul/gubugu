@@ -1,0 +1,94 @@
+# VPS 上的生产编排：自建 Postgres + 一次性迁移 + Next 网站 + Caddy 自动 HTTPS。
+# 变量来自同目录的 .env（见 .env.production.example）。CI 推送镜像到 GHCR，
+# 部署时 `docker compose pull && docker compose up -d`。
+
+services:
+  postgres:
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gubugu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须在 .env 中设置}
+      POSTGRES_DB: ${POSTGRES_DB:-gubugu}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-gubugu} -d ${POSTGRES_DB:-gubugu}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # 不对外暴露端口：只在 compose 内网可达。需要本机调试时再 `ports`。
+
+  # 一次性跑数据库迁移，成功退出后 web 才启动。
+  migrate:
+    image: ${MIGRATOR_IMAGE:?MIGRATOR_IMAGE 未设置}
+    restart: 'no'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gubugu}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gubugu}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: ${WEB_IMAGE:?WEB_IMAGE 未设置}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      # ── 数据库（自建 PG，同网络）──
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gubugu}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gubugu}
+      # ── 公网源，必须是纯 HTTPS 站点源，无路径/参数 ──
+      APP_URL: ${APP_URL:?APP_URL 必须设置为 https://你的域名}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Gooods Dex}
+      # ── Supabase Auth（生产强制，见 server/env.ts）──
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?生产必须配置 Supabase Auth}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?生产必须配置 Supabase Auth}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      # ── 后台权限白名单 ──
+      ADMIN_USER_EMAILS: ${ADMIN_USER_EMAILS:-}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
+      MODERATOR_USER_EMAILS: ${MODERATOR_USER_EMAILS:-}
+      MODERATOR_USER_IDS: ${MODERATOR_USER_IDS:-}
+      # ── 识别模型与爬虫 ──
+      RECOGNITION_WARMUP: ${RECOGNITION_WARMUP:-1}
+      CATALOG_CRAWLER_SCHEDULER: ${CATALOG_CRAWLER_SCHEDULER:-1}
+      CATALOG_ASSET_DIR: /app/.data/catalog-assets
+      HF_MIRROR: ${HF_MIRROR:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CATALOG_TRANSLATE_MODEL: ${CATALOG_TRANSLATE_MODEL:-deepseek-chat}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+    volumes:
+      # 爬虫产出的内容寻址图片，必须持久化。
+      - catalog_assets:/app/.data/catalog-assets
+      # CLIP 模型缓存（MODEL_CACHE_DIR），避免每次重启重新下载。
+      - model_cache:/app/.data/models
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN 必须设置，例如 gubugu.example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  catalog_assets:
+  model_cache:
+  caddy_data:
+  caddy_config:
