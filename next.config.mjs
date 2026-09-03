@@ -1,4 +1,7 @@
-import type { NextConfig } from 'next';
+// 用 .mjs 而非 .ts：`next start` 会在运行时加载本文件，若是 TypeScript 就需要
+// typescript 包。它是 devDependency，生产镜像只装 --prod 依赖，Next 便会尝试在
+// 运行时自行安装它，在非 root 容器里必然 EACCES 失败、应用起不来。
+// JSDoc 注解保留了与原来等价的编辑器类型检查。
 
 // Goods images are stored as absolute URLs in the database. Locally the seed
 // writes same-origin paths, but once images come from Supabase Storage they are
@@ -11,7 +14,7 @@ function buildRemoteImagePatterns() {
     return [];
   }
 
-  let parsedUrl: URL;
+  let parsedUrl;
 
   try {
     parsedUrl = new URL(supabaseUrl);
@@ -21,15 +24,15 @@ function buildRemoteImagePatterns() {
 
   return [
     {
-      protocol:
-        parsedUrl.protocol === 'http:' ? ('http' as const) : ('https' as const),
+      protocol: parsedUrl.protocol === 'http:' ? 'http' : 'https',
       hostname: parsedUrl.hostname,
       pathname: '/storage/v1/object/public/**',
     },
   ];
 }
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   // 原生依赖不进 bundle，运行时从 node_modules 直接加载：sharp 与
   // onnxruntime-node（@huggingface/transformers 的依赖）带平台预编译二进制，

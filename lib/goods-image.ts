@@ -2,7 +2,7 @@
  * goods_images.image_url accepts any absolute URL — server/admin/goods/actions.ts
  * validates it with z.string().url() and nothing narrows the host — while the
  * seed writes same-origin paths. next/image only accepts internal paths and
- * hosts listed in next.config.ts images.remotePatterns, so routing every URL
+ * hosts listed in next.config.mjs images.remotePatterns, so routing every URL
  * through it would stop rendering images that work today.
  *
  * Callers use this to decide: optimisable URLs go through next/image, the rest

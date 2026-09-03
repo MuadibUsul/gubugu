@@ -65,7 +65,7 @@ COPY --from=proddeps /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/next.config.ts ./next.config.ts
+COPY --from=build /app/next.config.mjs ./next.config.mjs
 
 # 持久卷挂载点（模型缓存、爬虫图片），先建好并交给 node 用户以保证可写。
 RUN mkdir -p /app/.data/models /app/.data/catalog-assets \
