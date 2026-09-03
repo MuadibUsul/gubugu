@@ -105,12 +105,23 @@ const envSchema = z
       });
     }
 
-    if (isProduction && !hasSupabaseUrl) {
+    // 生产环境必须有一套可用的认证：Supabase，或自托管的本地认证。
+    //
+    // 本地认证本身是可靠的：scrypt 口令哈希、HMAC 签名的会话 cookie、登录与注册
+    // 限流、用固定 dummy hash 做等时比较以防用户枚举，注册 id 走 crypto.randomUUID
+    // 因此不可能撞上演示账号的固定 UUID。它唯一的历史隐患是种子里的演示账号
+    // （collector@local.demo，口令硬编码在仓库中）会被 lib/admin-access.ts 直接
+    // 认成管理员——那两处现已分别按 NODE_ENV 关闭，生产的管理员只认
+    // ADMIN_USER_EMAILS / ADMIN_USER_IDS。
+    //
+    // 但本地认证的会话签名完全依赖 LOCAL_AUTH_SECRET，缺了它 getLocalAuthUser 会
+    // 在每个请求上抛错；太短则可被爆破后伪造任意用户的会话。所以这里强制它存在。
+    if (isProduction && !hasSupabaseUrl && !value.LOCAL_AUTH_SECRET) {
       ctx.addIssue({
         code: 'custom',
-        path: ['SUPABASE_URL'],
+        path: ['LOCAL_AUTH_SECRET'],
         message:
-          '生产环境必须配置 Supabase Auth，否则登录会回退到无凭证校验的演示账号，并直接授予管理员权限。',
+          '生产环境必须配置认证：要么设置 Supabase，要么为自托管的本地认证设置至少 32 位的 LOCAL_AUTH_SECRET。',
       });
     }
   });

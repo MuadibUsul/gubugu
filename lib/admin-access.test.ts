@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getAdminRoleForUser, hasRequiredAdminRole } from './admin-access';
 import { demoViewers } from './config/demo-viewers';
@@ -125,6 +125,23 @@ describe('getAdminRoleForUser demo fallback', () => {
 
   it('ignores a real user id that is not a demo viewer', () => {
     expect(getAdminRoleForUser({ id: stranger.id, email: null })).toBeNull();
+  });
+
+  // 种子里的演示账号口令（gubugu-demo）就写在仓库中。自托管认证的生产站点上，
+  // 这个回退等于把后台交给任何读过源码的人，因此必须在生产环境完全关闭。
+  it('never grants demo roles in production, where the seeded password is public', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+
+    try {
+      expect(
+        getAdminRoleForUser({ id: demoViewers.collector.userId, email: null }),
+      ).toBeNull();
+      expect(
+        getAdminRoleForUser({ id: demoViewers.reviewer.userId, email: null }),
+      ).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
 

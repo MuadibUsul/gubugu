@@ -8,16 +8,20 @@ Caddy 自动 HTTPS，靠 GitHub Actions 构建镜像并 SSH 上线。
                                                                     │
                                             SSH 到 VPS ◀────────────┘
                                                 │
-                          docker compose：postgres → migrate(一次性) → web → caddy
+             docker compose：postgres → migrate(一次性) → web ──▶ 宿主机既有 Caddy
 ```
 
 ## 为什么是这套
 
 - 应用带 CLIP 识别模型（首次加载约 140s）和每日采集爬虫，**必须长驻**，不适合
   Serverless。见 [server/recognition/embedding.ts](server/recognition/embedding.ts)。
-- 生产**强制 Supabase Auth**：[server/env.ts](server/env.ts) 在 `NODE_ENV=production`
-  且未配 Supabase 时**拒绝启动**（否则登录会回退到无校验的演示管理员账号）。
-  数据库仍是你自建的 Postgres，Supabase 只承担登录鉴权——一个免费项目即可。
+- **认证完全自托管**，不依赖 Supabase：账号存在自建 Postgres（scrypt 口令哈希），
+  会话是 HMAC 签名的 cookie，登录与注册都有限流。生产环境必须设置至少 32 位的
+  `LOCAL_AUTH_SECRET`，否则 [server/env.ts](server/env.ts) 拒绝启动。
+- 与此配套的两处安全收口（**改动前务必理解**）：种子里的演示账号口令
+  `gubugu-demo` 硬编码在仓库中，而 [lib/admin-access.ts](lib/admin-access.ts) 曾在未配
+  Supabase 时把演示账号 id 直接认成管理员。现在**生产环境**下：演示角色回退已关闭
+  （管理员只认 `ADMIN_USER_EMAILS`/`ADMIN_USER_IDS`），且种子不再写入演示登录凭据。
 
 ---
 
@@ -32,25 +36,14 @@ Caddy 自动 HTTPS，靠 GitHub Actions 构建镜像并 SSH 上线。
    下加一条 A 记录：`Host=gubugu`，`Value=104.207.82.85`。放行 `80`、`443`。
    > 用子域而非顶级域，是为了避开 `tlines.tech` 上混着的 Namecheap 停放页 A 记录
    > （`156.154.132.200/133.200`）——那会让流量轮询到停放页并导致证书签发失败。
-3. **Supabase 项目**：新建一个免费项目，记下 `Project URL` 和 `anon public key`
-   （Settings → API）。仅用于登录鉴权。
-
 ---
 
 ## 二、GitHub 仓库配置
 
-镜像构建时会把 `NEXT_PUBLIC_*` 内联进客户端包，所以它们要在**构建时**就位。
-公开值放 **Variables**，私密值放 **Secrets**。
+认证自托管后，构建期不再需要任何 `NEXT_PUBLIC_*` 变量，只需配置 SSH 部署用的
+Secrets（想让 CI 自动上线时才需要；手动部署可跳过整节）。
 
 ### Repository → Settings → Secrets and variables → Actions
-
-**Variables（公开，用于构建）**
-
-| 名称 | 值 |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `NEXT_PUBLIC_APP_NAME` | `Gooods Dex`（可选） |
 
 **Secrets（私密，用于 SSH 部署）**
 
@@ -70,23 +63,19 @@ Caddy 自动 HTTPS，靠 GitHub Actions 构建镜像并 SSH 上线。
 ## 三、VPS 首次手动准备（只做一次）
 
 ```bash
-sudo mkdir -p /opt/gubugu            # 与 DEPLOY_DIR 一致
-sudo chown "$USER":"$USER" /opt/gubugu
-cd /opt/gubugu
+mkdir -p ~/gubugu && cd ~/gubugu     # 与 DEPLOY_DIR 一致，沿用 tline 的家目录约定
 ```
 
-把仓库里的 [.env.production.example](.env.production.example) 内容拷成 `/opt/gubugu/.env`，
-按注释填好（域名、`POSTGRES_PASSWORD` 用强随机、Supabase 三项、`ADMIN_USER_EMAILS`
-填你的登录邮箱）。`WEB_IMAGE` / `MIGRATOR_IMAGE` 两行留空——CI 会自动写入。
+把仓库里的 [.env.production.example](.env.production.example) 内容拷成 `~/gubugu/.env`（权限
+600），按注释填好：域名、`POSTGRES_PASSWORD` 与 `LOCAL_AUTH_SECRET` 都用
+`openssl rand -base64 48` 生成，`ADMIN_USER_EMAILS` 填你的登录邮箱。
+`WEB_IMAGE` / `MIGRATOR_IMAGE` 由 CI 或手动填入。
 
 > `.env` 只放在 VPS 上，**永不进 git、永不经 CI**。
 
 ### ⚠️ 与机器上原有项目的隔离约定
 
-这台 VPS 上**已经跑着别的项目**（Caddy 占用 80/443，磁盘已用 50 GB）。本部署遵守
-以下硬约定，任何一条都不得为了图省事而破例：
-
-这台 VPS 上跑着 **tline**：`tline-app`、`tline-scheduler-1`、`tline-macro-scheduler-1`、
+本部署遵守以下硬约定，任何一条都不得为了图省事而破例。这台 VPS 上跑着 **tline**：`tline-app`、`tline-scheduler-1`、`tline-macro-scheduler-1`、
 `tline-db-1`（Postgres 16），以及 `caddy-caddy-1`（`caddy:2-alpine` 容器，独占
 80/443，配置来自宿主机 `/opt/caddy/Caddyfile`，只接在共享网络 `web` 上）。
 
@@ -140,7 +129,7 @@ Actions 会：构建并推两个镜像 → scp 编排文件到 `DEPLOY_DIR` → 
 
 ## 五、首次数据初始化（可选，一次性）
 
-迁移只建表，库是空的。种子与识别向量按需灌入（在 VPS 的 `/opt/gubugu` 下）：
+迁移只建表，库是空的。种子与识别向量按需灌入（在 VPS 的 `~/gubugu` 下）：
 
 ```bash
 # 灌入种子数据（用 migrator 镜像，它带 tsx 与源码；共用同一个内网 DB）
@@ -157,7 +146,7 @@ docker compose run --rm migrate pnpm db:embed
 ## 六、日常运维
 
 ```bash
-cd /opt/gubugu
+cd ~/gubugu
 docker compose logs -f web        # 看应用日志
 docker compose ps                 # 看状态与健康检查
 docker compose restart web        # 重启网站
@@ -170,7 +159,7 @@ docker compose restart web        # 重启网站
   docker compose exec postgres pg_dump -U gubugu gubugu > backup_$(date +%F).sql
   ```
 - **持久化数据**都在命名卷里：`pgdata`（库）、`catalog_assets`（爬虫图片）、
-  `model_cache`（模型）、`caddy_data`（证书）。删卷即丢数据，勿轻动。
+  `model_cache`（模型）。证书由宿主机既有的 Caddy 管理，不归本项目。删卷即丢数据，勿轻动。
 
 ---
 
@@ -180,9 +169,7 @@ docker compose restart web        # 重启网站
 
 ```bash
 # 本机构建两个镜像
-docker build --target runner   -t gubugu-web \
-  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co \
-  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key .
+docker build --target runner   -t gubugu-web .
 docker build --target migrator -t gubugu-migrator .
 
 # 让 compose 用本地镜像（.env 里）

@@ -174,9 +174,13 @@ async function seed() {
         });
     }
 
-    for (const [key, viewer] of demoViewerEntries as Array<
-      [DemoViewerKey, (typeof demoViewers)[DemoViewerKey]]
-    >) {
+    // 演示账号的口令硬编码在仓库里（gubugu-demo），生产库中绝不能存在可登录的
+    // 演示凭据，否则等于给公网站点留了一个人人可用的后门。生产只种资料，不种凭据。
+    const demoAuthEntries = (
+      process.env.NODE_ENV === 'production' ? [] : demoViewerEntries
+    ) as Array<[DemoViewerKey, (typeof demoViewers)[DemoViewerKey]]>;
+
+    for (const [key, viewer] of demoAuthEntries) {
       await tx
         .insert(localAuthAccounts)
         .values({

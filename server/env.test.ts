@@ -126,14 +126,36 @@ describe('production', () => {
     ).rejects.toThrow(/DATABASE_URL/);
   });
 
-  it('refuses to boot without Supabase auth, which would open the admin panel', async () => {
+  it('refuses to boot with no authentication configured at all', async () => {
     await expect(
       loadEnv({
         NODE_ENV: 'production',
         APP_URL,
         DATABASE_URL: DB,
       }),
-    ).rejects.toThrow(/SUPABASE_URL/);
+    ).rejects.toThrow(/LOCAL_AUTH_SECRET/);
+  });
+
+  it('accepts self-hosted local auth when the session signing secret is set', async () => {
+    await expect(
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL,
+        DATABASE_URL: DB,
+        LOCAL_AUTH_SECRET: 'a'.repeat(48),
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it('still refuses local auth when the session secret is too short to resist brute force', async () => {
+    await expect(
+      loadEnv({
+        NODE_ENV: 'production',
+        APP_URL,
+        DATABASE_URL: DB,
+        LOCAL_AUTH_SECRET: 'too-short',
+      }),
+    ).rejects.toThrow(/LOCAL_AUTH_SECRET/);
   });
 
   it('reports every problem at once instead of one per restart', async () => {
@@ -148,7 +170,7 @@ describe('production', () => {
 
     expect(message).toMatch(/DATABASE_URL/);
     expect(message).toMatch(/APP_URL/);
-    expect(message).toMatch(/SUPABASE_URL/);
+    expect(message).toMatch(/LOCAL_AUTH_SECRET/);
   });
 
   it('refuses to boot without the public app URL used by share cards', async () => {
