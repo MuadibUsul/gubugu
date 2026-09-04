@@ -52,6 +52,11 @@ CMD ["pnpm", "db:migrate"]
 
 # ── 运行镜像 ─────────────────────────────────────────────────────────────────
 FROM base AS runner
+
+# Satori/resvg 渲染分享卡时会查找 fontconfig 的默认配置，缺失会持续刷警告。
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fontconfig \
+    && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
@@ -74,10 +79,11 @@ RUN node -e "const s=require('sharp'); const v=s.versions.sharp; if(!v.startsWit
 
 # 可写目录，全部交给运行用户 node：
 #  - .data 是持久卷挂载点（模型缓存、爬虫图片）；
-#  - .next/cache 是 Next 的运行时缓存（ISR / fetch cache）。构建产物以 root 拷入，
-#    不预先建好并授权，每个请求都会报 EACCES，缓存彻底失效、页面每次重新渲染。
+#  - 整个 .next 都要可写：除 .next/cache（fetch cache）外，ISR 还会把 force-static
+#    路由（如分享卡）的预渲染结果写回 .next/server/app/**。产物以 root 拷入，不授权
+#    就会 EACCES —— 结果无法落盘，每次过期都要重算十几秒。
 RUN mkdir -p /app/.data/models /app/.data/catalog-assets /app/.next/cache \
-    && chown -R node:node /app/.data /app/.next/cache
+    && chown -R node:node /app/.data /app/.next
 
 USER node
 EXPOSE 3000
