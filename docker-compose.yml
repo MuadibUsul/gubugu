@@ -70,6 +70,8 @@ services:
       MODERATOR_USER_IDS: ${MODERATOR_USER_IDS:-}
       RECOGNITION_WARMUP: ${RECOGNITION_WARMUP:-1}
       CATALOG_CRAWLER_SCHEDULER: ${CATALOG_CRAWLER_SCHEDULER:-1}
+      # 见 next.config.mjs：CPU 不支持 sharp 时置 1，图片直出以保证整站可用。
+      DISABLE_IMAGE_OPTIMIZATION: ${DISABLE_IMAGE_OPTIMIZATION:-0}
       CATALOG_ASSET_DIR: /app/.data/catalog-assets
       MODEL_CACHE_DIR: /app/.data/models
       HF_MIRROR: ${HF_MIRROR:-}
