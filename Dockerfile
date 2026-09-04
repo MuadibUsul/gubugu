@@ -81,9 +81,12 @@ RUN rm -rf node_modules/.pnpm/@img+sharp-linux-x64@* \
     && test -z "$(find node_modules -name sharp-linux-x64 -print -quit)" \
     && node -e "require('sharp'); console.log('sharp loaded via wasm32')"
 
-# 持久卷挂载点（模型缓存、爬虫图片），先建好并交给 node 用户以保证可写。
-RUN mkdir -p /app/.data/models /app/.data/catalog-assets \
-    && chown -R node:node /app/.data
+# 可写目录，全部交给运行用户 node：
+#  - .data 是持久卷挂载点（模型缓存、爬虫图片）；
+#  - .next/cache 是 Next 的运行时缓存（ISR / fetch cache）。构建产物以 root 拷入，
+#    不预先建好并授权，每个请求都会报 EACCES，缓存彻底失效、页面每次重新渲染。
+RUN mkdir -p /app/.data/models /app/.data/catalog-assets /app/.next/cache \
+    && chown -R node:node /app/.data /app/.next/cache
 
 USER node
 EXPOSE 3000
