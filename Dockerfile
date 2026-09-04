@@ -73,8 +73,12 @@ COPY --from=build /app/next.config.mjs ./next.config.mjs
 # 它上面拿到 MODULE_NOT_FOUND 继续往下，落到 @img/sharp-wasm32（sharp 官方为不受
 # 支持的 CPU 提供的 WebAssembly 版本，由 package.json 的 supportedArchitectures 装入）。
 # 等价于 sharp 文档里的 `npm install --cpu=wasm32 sharp`。
-RUN rm -rf node_modules/.pnpm/sharp@*/node_modules/@img/sharp-linux-x64 \
-    && ! ls -d node_modules/.pnpm/sharp@*/node_modules/@img/sharp-linux-x64 > /dev/null 2>&1 \
+# 注意要删三处：pnpm 除了包自身的依赖目录，还会在 .pnpm/node_modules/ 留一份提升
+# 副本，而它正在 Node 的向上查找路径上——只删前者仍会被后者命中。
+RUN rm -rf node_modules/.pnpm/@img+sharp-linux-x64@* \
+           node_modules/.pnpm/node_modules/@img/sharp-linux-x64 \
+           node_modules/.pnpm/*/node_modules/@img/sharp-linux-x64 \
+    && test -z "$(find node_modules -name sharp-linux-x64 -print -quit)" \
     && node -e "require('sharp'); console.log('sharp loaded via wasm32')"
 
 # 持久卷挂载点（模型缓存、爬虫图片），先建好并交给 node 用户以保证可写。
