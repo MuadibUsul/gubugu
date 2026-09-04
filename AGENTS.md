@@ -78,7 +78,6 @@ Product stack requirements:
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
-- Supabase
 - PostgreSQL
 - Drizzle ORM when schema work is implemented
 - Zod for input and boundary validation

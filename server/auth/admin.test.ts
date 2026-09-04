@@ -30,7 +30,7 @@ const adminUser = {
   phone: null,
   handle: null,
   displayLabel: 'boss',
-  provider: 'supabase',
+  provider: 'local',
 };
 
 const moderatorUser = { ...adminUser, email: 'mod@example.com' };
@@ -42,22 +42,20 @@ beforeEach(() => {
   previousEnv = {
     ADMIN_USER_EMAILS: process.env.ADMIN_USER_EMAILS,
     MODERATOR_USER_EMAILS: process.env.MODERATOR_USER_EMAILS,
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   };
 
   process.env.ADMIN_USER_EMAILS = 'boss@example.com';
   process.env.MODERATOR_USER_EMAILS = 'mod@example.com';
-  // Configured Supabase disables the demo-viewer fallback, which is the
-  // production shape.
-  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co';
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key';
+  // 演示身份回退只在非生产环境生效，这里按生产形态测试。
+  vi.stubEnv('NODE_ENV', 'production');
 
   forbidden.mockClear();
   requireAuthUser.mockReset();
 });
 
 afterEach(() => {
+  vi.unstubAllEnvs();
+
   for (const [key, value] of Object.entries(previousEnv)) {
     if (value === undefined) {
       delete process.env[key];

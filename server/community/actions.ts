@@ -14,15 +14,10 @@ import {
   calculateGoodsRatingScore,
   goodsRatingValueSchema,
 } from '@/lib/goods-rating';
-import {
-  getGoodsCommunityBucketName,
-  goodsCommunityUploadLimits,
-  sanitizeStorageFilename,
-} from '@/lib/supabase/storage';
+import { goodsCommunityUploadLimits } from '@/lib/community-upload';
+import { normalizeAndStoreCatalogImage } from '@/server/catalog-crawler/image-store';
 import { getDb } from '@/server/db/client';
 import { requireAuthUser } from '@/server/auth/session';
-import { getSupabaseAuthConfig } from '@/lib/supabase/config';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type {
   CreateGoodsPostActionState,
   SaveGoodsRatingActionState,
@@ -79,40 +74,6 @@ function validateImageFiles(files: File[]) {
   }
 
   return null;
-}
-
-async function createInlineImageRows({
-  files,
-  postId,
-}: {
-  files: File[];
-  postId: string;
-}) {
-  const imageRows: PostImageInsert[] = [];
-
-  for (const [index, file] of files.entries()) {
-    const base64Payload = Buffer.from(await file.arrayBuffer()).toString(
-      'base64',
-    );
-
-    imageRows.push({
-      id: crypto.randomUUID(),
-      postId,
-      imageUrl: `data:${file.type};base64,${base64Payload}`,
-      storagePath: [
-        'local-inline',
-        'goods-community',
-        postId,
-        `${index + 1}-${sanitizeStorageFilename(file.name)}`,
-      ].join('/'),
-      altText: null,
-      status: 'visible' as const,
-      moderationStatus: 'pending',
-      sortOrder: index,
-    });
-  }
-
-  return imageRows;
 }
 
 function appendSearchParam(pathname: string, key: string, value: string) {
@@ -273,60 +234,32 @@ export async function createGoodsPostAction(
   }
 
   const postId = crypto.randomUUID();
-  const authConfigured = Boolean(getSupabaseAuthConfig());
-  const bucketName = authConfigured ? getGoodsCommunityBucketName() : null;
-  const supabase = authConfigured ? await createServerSupabaseClient() : null;
-  const uploadedPaths: string[] = [];
 
   try {
     const imageRows: PostImageInsert[] = [];
 
-    if (supabase && bucketName) {
-      for (const [index, file] of imageFiles.entries()) {
-        const storagePath = [
-          'goods',
-          goodsId,
-          'posts',
-          postId,
-          `${index + 1}-${sanitizeStorageFilename(file.name)}`,
-        ].join('/');
-
-        const { error: uploadError } = await supabase.storage
-          .from(bucketName)
-          .upload(storagePath, file, {
-            cacheControl: '3600',
-            contentType: file.type,
-            upsert: false,
-          });
-
-        if (uploadError) {
-          throw new Error(uploadError.message);
-        }
-
-        uploadedPaths.push(storagePath);
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(bucketName).getPublicUrl(storagePath);
-
-        imageRows.push({
-          id: crypto.randomUUID(),
-          postId,
-          imageUrl: publicUrl,
-          storagePath,
-          altText: null,
-          status: 'visible' as const,
-          moderationStatus: 'pending',
-          sortOrder: index,
-        });
-      }
-    } else {
-      imageRows.push(
-        ...(await createInlineImageRows({
-          files: imageFiles,
-          postId,
-        })),
+    // 图片存到自有 VPS 的公开资产区：内容寻址、统一转 webp，和目录图共用读取
+    // 路由与缓存策略。此前没有 Supabase 时走的是把整张图以 base64 data URI 塞进
+    // 数据库的分支，那会让 post_images 行随图片体积膨胀，也拿不到任何缓存。
+    //
+    // 这些图入库时 moderationStatus 为 pending，但和改造前一样可被公开 URL 读到；
+    // 「待审核用户图应转入私密区」属于审核流程本身的改造，不在本次范围内。
+    for (const [index, file] of imageFiles.entries()) {
+      const stored = await normalizeAndStoreCatalogImage(
+        Buffer.from(await file.arrayBuffer()),
+        { maxInputBytes: goodsCommunityUploadLimits.maxFileSizeBytes },
       );
+
+      imageRows.push({
+        id: crypto.randomUUID(),
+        postId,
+        imageUrl: stored.imageUrl,
+        storagePath: stored.fileName,
+        altText: null,
+        status: 'visible' as const,
+        moderationStatus: 'pending',
+        sortOrder: index,
+      });
     }
 
     await db.transaction(async (tx) => {
@@ -344,10 +277,8 @@ export async function createGoodsPostAction(
       }
     });
   } catch (error) {
-    if (supabase && bucketName && uploadedPaths.length > 0) {
-      await supabase.storage.from(bucketName).remove(uploadedPaths);
-    }
-
+    // 落盘的图片是内容寻址的，写库失败时留下的孤儿文件不会被任何行引用，
+    // 由目录资产的清理流程统一回收，不在这里做即时删除。
     return {
       status: 'error',
       message: error instanceof Error ? error.message : '社区笔记发布失败。',

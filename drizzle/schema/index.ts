@@ -533,11 +533,10 @@ export const goodsCharacters = pgTable(
   ],
 );
 
-// Supabase auth lives outside the app schema (auth.users), which Drizzle does
-// not manage, so every user_id column here is a plain UUID with no foreign key.
-// `profiles` is the app-side record for a user: it carries everything the
-// product needs to render an author or a collection page, keyed by the same id
-// Supabase issues. Join through it rather than adding more user_id columns.
+// 凭据表 local_auth_accounts 独立于业务表，用户 id 由注册时生成，因此这里每个
+// user_id 都是裸 UUID、不设外键。`profiles` 是用户在应用侧的记录：渲染作者和
+// 收藏页所需的一切都在它上面，主键与账号 id 相同。需要用户信息时 join 它，
+// 而不是再加一列 user_id。
 export const profiles = pgTable(
   'profiles',
   {
@@ -574,7 +573,7 @@ export const profiles = pgTable(
   ],
 );
 
-/** 本地 PostgreSQL 认证账号。配置 Supabase 后不读取此表。 */
+/** 自托管认证账号：邮箱 + scrypt 口令哈希，会话由 HMAC 签名的 cookie 承载。 */
 export const localAuthAccounts = pgTable(
   'local_auth_accounts',
   {
@@ -801,7 +800,7 @@ export const catalogSubmissions = pgTable(
 
 /**
  * 管理员维护的抓取白名单。三个 crawler 表均只允许服务端数据库连接访问：
- * RLS 已启用但不创建客户端 policy，因此 Supabase anon/authenticated 默认拒绝。
+ * RLS 已启用但不创建客户端 policy，因此非属主的数据库角色一律被拒。
  */
 export const crawlerSources = pgTable(
   'crawler_sources',

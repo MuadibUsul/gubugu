@@ -5,8 +5,7 @@ import { z } from 'zod';
 //
 // - without DATABASE_URL every data module falls back to empty state and the
 //   site renders a blank encyclopedia with HTTP 200
-// - without Supabase auth, local development uses PostgreSQL accounts and a
-//   signed local session cookie
+// - 认证完全自托管：账号存在自建 PostgreSQL，会话是 HMAC 签名的 cookie
 //
 // Both fallbacks are deliberate local-development conveniences. Neither may be
 // reachable in production.
@@ -30,11 +29,6 @@ const envSchema = z
     ALLOW_INSECURE_LOCAL_APP_URL: z.enum(['0', '1']).default('0'),
     DATABASE_URL: z.string().min(1).optional(),
     LOCAL_AUTH_SECRET: z.string().min(32).optional(),
-    // lib/supabase/config.ts prefers the NEXT_PUBLIC_ variants and falls back
-    // to the server-only names, so both spellings are accepted here.
-    SUPABASE_URL: z.url().optional(),
-    SUPABASE_ANON_KEY: z.string().min(1).optional(),
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
     RECOGNITION_WARMUP: z.enum(['0', '1']).default('0'),
     CATALOG_CRAWLER_SCHEDULER: z.enum(['0', '1']).default('1'),
     CATALOG_ASSET_DIR: z.string().min(1).default('.data/catalog-assets'),
@@ -42,8 +36,6 @@ const envSchema = z
   })
   .superRefine((value, ctx) => {
     const isProduction = value.NODE_ENV === 'production';
-    const hasSupabaseUrl = Boolean(value.SUPABASE_URL);
-    const hasSupabaseAnonKey = Boolean(value.SUPABASE_ANON_KEY);
 
     if (isProduction && !value.DATABASE_URL) {
       ctx.addIssue({
@@ -97,16 +89,7 @@ const envSchema = z
       }
     }
 
-    if (hasSupabaseUrl !== hasSupabaseAnonKey) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['SUPABASE_ANON_KEY'],
-        message:
-          'Supabase URL 与 anon key 必须同时配置；只配一半会静默回退到本地演示登录。',
-      });
-    }
-
-    // 生产环境必须有一套可用的认证：Supabase，或自托管的本地认证。
+    // 生产环境必须有可用的认证。
     //
     // 本地认证本身是可靠的：scrypt 口令哈希、HMAC 签名的会话 cookie、登录与注册
     // 限流、用固定 dummy hash 做等时比较以防用户枚举，注册 id 走 crypto.randomUUID
@@ -117,12 +100,12 @@ const envSchema = z
     //
     // 但本地认证的会话签名完全依赖 LOCAL_AUTH_SECRET，缺了它 getLocalAuthUser 会
     // 在每个请求上抛错；太短则可被爆破后伪造任意用户的会话。所以这里强制它存在。
-    if (isProduction && !hasSupabaseUrl && !value.LOCAL_AUTH_SECRET) {
+    if (isProduction && !value.LOCAL_AUTH_SECRET) {
       ctx.addIssue({
         code: 'custom',
         path: ['LOCAL_AUTH_SECRET'],
         message:
-          '生产环境必须配置认证：要么设置 Supabase，要么为自托管的本地认证设置至少 32 位的 LOCAL_AUTH_SECRET。',
+          '生产环境必须为自托管认证设置至少 32 位的 LOCAL_AUTH_SECRET，否则会话签名无从谈起。',
       });
     }
   });
@@ -143,15 +126,6 @@ const result = envSchema.safeParse({
   ),
   DATABASE_URL: readOptional(process.env.DATABASE_URL),
   LOCAL_AUTH_SECRET: readOptional(process.env.LOCAL_AUTH_SECRET),
-  SUPABASE_URL: readOptional(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL,
-  ),
-  SUPABASE_ANON_KEY: readOptional(
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY,
-  ),
-  SUPABASE_SERVICE_ROLE_KEY: readOptional(
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-  ),
   RECOGNITION_WARMUP: readOptional(process.env.RECOGNITION_WARMUP),
   CATALOG_CRAWLER_SCHEDULER: readOptional(
     process.env.CATALOG_CRAWLER_SCHEDULER,

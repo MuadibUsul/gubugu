@@ -8,15 +8,12 @@ import { localAuthAccounts, profiles } from '@/drizzle/schema';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { normalizeInternalPath } from '@/lib/internal-path';
 import { consumeServerWrite } from '@/lib/rate-limit';
-import { getSupabaseAuthConfig } from '@/lib/supabase/config';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { AuthActionState } from '@/server/auth/action-state';
 import {
   clearLocalAuthSession,
   setLocalAuthSession,
 } from '@/server/auth/local-session';
 import { getDb } from '@/server/db/client';
-import { ensureAuthProfile } from '@/server/auth/profile';
 
 const signInInputSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(320),
@@ -72,47 +69,28 @@ export async function signInAction(
     return authError('尝试次数过多，请一分钟后再试。');
   }
 
-  if (!getSupabaseAuthConfig()) {
-    const account = (
-      await getDb()
-        .select({
-          userId: localAuthAccounts.userId,
-          passwordHash: localAuthAccounts.passwordHash,
-        })
-        .from(localAuthAccounts)
-        .where(eq(localAuthAccounts.email, email))
-        .limit(1)
-    )[0];
+  const account = (
+    await getDb()
+      .select({
+        userId: localAuthAccounts.userId,
+        passwordHash: localAuthAccounts.passwordHash,
+      })
+      .from(localAuthAccounts)
+      .where(eq(localAuthAccounts.email, email))
+      .limit(1)
+  )[0];
 
-    const passwordMatches = await verifyPassword(
-      password,
-      account?.passwordHash ?? DUMMY_PASSWORD_HASH,
-    );
-    if (!account || !passwordMatches) {
-      return authError('邮箱或密码不正确。');
-    }
-
-    await setLocalAuthSession(account.userId);
-    redirect(normalizeInternalPath(next));
-  }
-
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+  // 即使邮箱不存在也要跑一次校验：命中与否耗时一致，否则响应时间会泄露哪些邮箱
+  // 已注册。
+  const passwordMatches = await verifyPassword(
     password,
-  });
-  if (error) return authError('登录失败，请检查邮箱和密码。');
-  if (data.user) {
-    await ensureAuthProfile({
-      id: data.user.id,
-      email: data.user.email,
-      displayName:
-        typeof data.user.user_metadata?.display_name === 'string'
-          ? data.user.user_metadata.display_name
-          : null,
-    });
+    account?.passwordHash ?? DUMMY_PASSWORD_HASH,
+  );
+  if (!account || !passwordMatches) {
+    return authError('邮箱或密码不正确。');
   }
 
+  await setLocalAuthSession(account.userId);
   redirect(normalizeInternalPath(next));
 }
 
@@ -120,10 +98,6 @@ export async function registerAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  if (getSupabaseAuthConfig()) {
-    return authError('当前环境请通过 Supabase 创建账号。');
-  }
-
   const parsed = registerInputSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -172,12 +146,7 @@ export async function registerAction(
 }
 
 export async function signOutAction() {
-  if (getSupabaseAuthConfig()) {
-    const supabase = await createServerSupabaseClient();
-    await supabase.auth.signOut();
-  } else {
-    await clearLocalAuthSession();
-  }
+  await clearLocalAuthSession();
 
   redirect('/');
 }

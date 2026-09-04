@@ -3,34 +3,6 @@
 // 运行时自行安装它，在非 root 容器里必然 EACCES 失败、应用起不来。
 // JSDoc 注解保留了与原来等价的编辑器类型检查。
 
-// Goods images are stored as absolute URLs in the database. Locally the seed
-// writes same-origin paths, but once images come from Supabase Storage they are
-// remote and next/image rejects them unless the host is allowlisted here.
-function buildRemoteImagePatterns() {
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-
-  if (!supabaseUrl) {
-    return [];
-  }
-
-  let parsedUrl;
-
-  try {
-    parsedUrl = new URL(supabaseUrl);
-  } catch {
-    return [];
-  }
-
-  return [
-    {
-      protocol: parsedUrl.protocol === 'http:' ? 'http' : 'https',
-      hostname: parsedUrl.hostname,
-      pathname: '/storage/v1/object/public/**',
-    },
-  ];
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -45,7 +17,7 @@ const nextConfig = {
     // 是不再压缩/转 WebP。等宿主把 CPU 型号换成支持 v2 的型号后，去掉这个变量即可
     // 恢复优化——它在 next start 启动时读取，无需重新构建镜像。
     unoptimized: process.env.DISABLE_IMAGE_OPTIMIZATION === '1',
-    remotePatterns: buildRemoteImagePatterns(),
+    // 图片只来自本站自有域，没有需要放行的远程图床。
   },
   // 关掉开发模式左下角的调试指示器（那个「1 Issue」浮标），它不是 App 的一部分，
   // 会盖在底部 Tab 上；生产本就不出现。

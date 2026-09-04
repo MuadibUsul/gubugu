@@ -57,7 +57,6 @@ The platform should support:
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
-- Supabase
 - PostgreSQL
 - Drizzle ORM
 - Zod
@@ -111,9 +110,7 @@ Copy `.env.example` to `.env.local` and configure:
 - `NEXT_PUBLIC_APP_NAME`
 - `APP_URL`（生产公开 HTTPS origin，本地可不配置）
 - `DATABASE_URL`
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `LOCAL_AUTH_SECRET`（会话 cookie 的 HMAC 签名密钥，生产必填、至少 32 位）
 - `ADMIN_USER_EMAILS` / `ADMIN_USER_IDS`
 - `MODERATOR_USER_EMAILS` / `MODERATOR_USER_IDS`
 - `CATALOG_CRAWLER_SCHEDULER`（长驻服务默认开启，北京时间 10:00 / 22:00）

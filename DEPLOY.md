@@ -15,12 +15,12 @@ Caddy 自动 HTTPS，靠 GitHub Actions 构建镜像并 SSH 上线。
 
 - 应用带 CLIP 识别模型（首次加载约 140s）和每日采集爬虫，**必须长驻**，不适合
   Serverless。见 [server/recognition/embedding.ts](server/recognition/embedding.ts)。
-- **认证完全自托管**，不依赖 Supabase：账号存在自建 Postgres（scrypt 口令哈希），
+- **认证完全自托管**：账号存在自建 Postgres（scrypt 口令哈希），
   会话是 HMAC 签名的 cookie，登录与注册都有限流。生产环境必须设置至少 32 位的
   `LOCAL_AUTH_SECRET`，否则 [server/env.ts](server/env.ts) 拒绝启动。
 - 与此配套的两处安全收口（**改动前务必理解**）：种子里的演示账号口令
-  `gubugu-demo` 硬编码在仓库中，而 [lib/admin-access.ts](lib/admin-access.ts) 曾在未配
-  Supabase 时把演示账号 id 直接认成管理员。现在**生产环境**下：演示角色回退已关闭
+  `gubugu-demo` 硬编码在仓库中，而 [lib/admin-access.ts](lib/admin-access.ts) 曾把演示
+  账号 id 直接认成管理员。现在**生产环境**下：演示角色回退已关闭
   （管理员只认 `ADMIN_USER_EMAILS`/`ADMIN_USER_IDS`），且种子不再写入演示登录凭据。
 
 ---

@@ -76,13 +76,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-gubugu}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gubugu}
       APP_URL: ${APP_URL:?APP_URL 必须设置为 https://你的域名}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Gooods Dex}
-      # 认证：自托管在本机，不依赖 Supabase。会话 cookie 由这个密钥 HMAC 签名，
-      # 缺失或过短会让每个请求抛错，因此强制要求（见 server/env.ts）。
+      # 认证完全自托管。会话 cookie 由这个密钥 HMAC 签名，缺失或过短会让每个
+      # 请求抛错，因此强制要求（见 server/env.ts）。
       LOCAL_AUTH_SECRET: ${LOCAL_AUTH_SECRET:?必须设置至少 32 位的 LOCAL_AUTH_SECRET}
-      # 留空即走本地认证；将来若要接 Supabase，填上这两项即可自动切换过去。
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       ADMIN_USER_EMAILS: ${ADMIN_USER_EMAILS:-}
       ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
       MODERATOR_USER_EMAILS: ${MODERATOR_USER_EMAILS:-}

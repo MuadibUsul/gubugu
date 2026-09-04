@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/auth/login-form';
 import { normalizeInternalPath } from '@/lib/internal-path';
 import { getSingleSearchParamValue } from '@/lib/search-params';
-import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 import { getAuthUser } from '@/server/auth/session';
 
 export const metadata: Metadata = {
@@ -28,22 +27,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   const routeError = getSingleSearchParamValue(resolvedSearchParams.error);
-  const authMode = getSupabaseAuthConfig() ? 'supabase' : 'local';
-  const heroTitle =
-    authMode === 'supabase' ? '登录后继续。' : '进入你的收藏档案。';
-  const panelTitle = authMode === 'supabase' ? '登录' : '本地账号';
-  const benefits =
-    authMode === 'supabase'
-      ? [
-          '收藏状态在设备间同步',
-          '留下评分、评论与实物照片',
-          '保存换谷提案和履约记录',
-        ]
-      : [
-          '注册后立即进入自己的谷柜',
-          '账号与收藏保存在本地数据库',
-          '适合当前本地测试与验收',
-        ];
+  const heroTitle = '进入你的收藏档案。';
+  const panelTitle = '登录';
+  const benefits = [
+    '收藏状态在设备间同步',
+    '留下评分、评论与实物照片',
+    '保存换谷提案和履约记录',
+  ];
 
   return (
     <main>
@@ -91,11 +81,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 </p>
               </div>
 
-              <LoginForm
-                authMode={authMode}
-                nextPath={nextPath}
-                routeError={routeError}
-              />
+              <LoginForm nextPath={nextPath} routeError={routeError} />
             </div>
           </aside>
         </section>

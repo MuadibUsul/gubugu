@@ -9,7 +9,6 @@ import {
   LOCAL_SESSION_TTL_SECONDS,
   readLocalSessionToken,
 } from '@/lib/auth/session-token';
-import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 import { getDb } from '@/server/db/client';
 
 import type { AuthUser } from './types';
@@ -36,8 +35,6 @@ function shouldUseSecureCookie() {
 }
 
 export async function getLocalAuthUser(): Promise<AuthUser | null> {
-  if (getSupabaseAuthConfig()) return null;
-
   const cookieStore = await cookies();
   const rawToken = cookieStore.get(LOCAL_AUTH_COOKIE_NAME)?.value;
   if (!rawToken) return null;

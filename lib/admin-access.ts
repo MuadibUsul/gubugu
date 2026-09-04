@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 import { findDemoViewerKeyByUserId } from '@/lib/config/demo-viewers';
 import { getLocalDemoAdminRole } from '@/lib/auth/local-demo';
-import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 
 import type { AuthUser } from '@/server/auth/types';
 
@@ -66,7 +65,7 @@ export function getAdminRoleForUser(
   // 种子里的演示账号（collector@local.demo 等）口令硬编码在仓库中，绝不能凭它在
   // 公网上授予管理员。这条只在非生产环境生效；生产的管理员身份只认
   // ADMIN_USER_EMAILS / ADMIN_USER_IDS。
-  if (process.env.NODE_ENV !== 'production' && !getSupabaseAuthConfig()) {
+  if (process.env.NODE_ENV !== 'production') {
     const demoViewerKey = findDemoViewerKeyByUserId(user.id);
 
     if (demoViewerKey) {

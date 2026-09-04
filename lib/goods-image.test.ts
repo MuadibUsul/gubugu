@@ -2,26 +2,17 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { isOptimizableImageUrl, toSafeShareImageUrl } from './goods-image';
 
-let previousSupabaseUrl: string | undefined;
 let previousAppUrl: string | undefined;
 let previousLegacyAppUrl: string | undefined;
 
 beforeEach(() => {
-  previousSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   previousAppUrl = process.env.APP_URL;
   previousLegacyAppUrl = process.env.NEXT_PUBLIC_APP_URL;
-  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co';
   process.env.APP_URL = 'https://gubugu.example';
   delete process.env.NEXT_PUBLIC_APP_URL;
 });
 
 afterEach(() => {
-  if (previousSupabaseUrl === undefined) {
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-  } else {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = previousSupabaseUrl;
-  }
-
   if (previousAppUrl === undefined) {
     delete process.env.APP_URL;
   } else {
@@ -47,29 +38,26 @@ describe('toSafeShareImageUrl', () => {
     ).toBe('https://gubugu.example/demo-assets/goods/example.svg');
   });
 
-  it('allows only the public object path on the exact Supabase origin', () => {
+  // 图片只由本站自有域提供，不存在任何第三方图床来源。
+  it('rejects remote origins outright', () => {
     expect(
       toSafeShareImageUrl(
-        'https://project.supabase.co/storage/v1/object/public/goods/a.png',
-      ),
-    ).toBe('https://project.supabase.co/storage/v1/object/public/goods/a.png');
-    expect(
-      toSafeShareImageUrl(
-        'https://project.supabase.co/rest/v1/private-table?select=*',
+        'https://cdn.example.net/storage/v1/object/public/goods/a.png',
       ),
     ).toBeNull();
+    expect(toSafeShareImageUrl('https://cdn.example.com/a.png')).toBeNull();
   });
 
   it.each([
     'http://project.supabase.co/storage/v1/object/public/goods/a.png',
-    'https://project.supabase.co:444/storage/v1/object/public/goods/a.png',
+    'https://cdn.example.net:444/storage/v1/object/public/goods/a.png',
     'https://user:secret@project.supabase.co/storage/v1/object/public/a.png',
     'https://cdn.example.com/a.png',
     'https://gubugu.example/api/v1/collection',
     '/api/v1/collection',
     '/local-sample-images/%2e%2e/api/v1/collection',
     '/local-sample-images/%252e%252e/api/v1/collection',
-    'https://project.supabase.co/storage/v1/object/public/%2e%2e/%2e%2e/rest/v1/private-table',
+    'https://cdn.example.net/storage/v1/object/public/%2e%2e/%2e%2e/rest/v1/private-table',
     '//project.supabase.co/storage/v1/object/public/a.png',
     'http://[bad',
   ])('rejects untrusted server fetch target %s', (url) => {
@@ -94,12 +82,12 @@ describe('isOptimizableImageUrl', () => {
     ).toBe(false);
   });
 
-  it('accepts a URL on the configured Supabase host', () => {
+  it('rejects absolute URLs, since no remote host is allowlisted', () => {
     expect(
       isOptimizableImageUrl(
-        'https://project.supabase.co/storage/v1/object/public/goods/a.png',
+        'https://cdn.example.net/storage/v1/object/public/goods/a.png',
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('rejects another host, which next/image would refuse to render', () => {
@@ -120,12 +108,10 @@ describe('isOptimizableImageUrl', () => {
     expect(isOptimizableImageUrl(value)).toBe(false);
   });
 
-  it('rejects every remote host when Supabase is unconfigured', () => {
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-    expect(
-      isOptimizableImageUrl('https://project.supabase.co/storage/a.png'),
-    ).toBe(false);
+  it('rejects every remote host', () => {
+    expect(isOptimizableImageUrl('https://cdn.example.net/storage/a.png')).toBe(
+      false,
+    );
     // Same-origin paths stay optimisable — they never needed the allowlist.
     expect(isOptimizableImageUrl('/local-sample-images/a.jpg')).toBe(true);
   });

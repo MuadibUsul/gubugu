@@ -63,8 +63,8 @@ async function main() {
   const client = new Client({ connectionString });
   await client.connect();
 
-  // Stands in for Supabase's anon / authenticated roles: owns nothing, so the
-  // policies are enforced instead of bypassed.
+  // 模拟一个不拥有任何表的普通数据库角色：应用自身以属主连接会绕过 RLS，
+  // 只有这样的角色才会真正触发策略判定。
   await client.query(`DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_client') THEN
       CREATE ROLE app_client NOLOGIN;

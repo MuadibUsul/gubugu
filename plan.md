@@ -28,7 +28,7 @@
 ## 1. 现状审计（Current Architecture）
 
 **技术栈**：Next.js 16（App Router，RSC + Server Actions）· React 19 · TypeScript ·
-Drizzle ORM · PostgreSQL · Supabase Auth · Tailwind v4 · zod · vitest · pnpm。
+Drizzle ORM · PostgreSQL · 自托管认证 · Tailwind v4 · zod · vitest · pnpm。
 
 **架构现状（关键结论）**：本项目**已经是**重后端 / 薄前端结构——
 
@@ -51,7 +51,7 @@ Drizzle ORM · PostgreSQL · Supabase Auth · Tailwind v4 · zod · vitest · pn
 **历史增量（已下线运行时，见 §6）**：定价市场 schema 与迁移仅保留数据兼容；支付、订单、
 定价挂单入口和 Mock Provider 已删除。品相快照、`official_type` 与 `verification_status` 继续服务图鉴与换谷。
 
-**鉴权**：Supabase（生产）/ 本地演示三账号（collector/trader/reviewer）；admin 角色来自
+**鉴权**：自托管（scrypt 口令 + HMAC 签名会话 cookie）；非生产环境另有演示三账号（collector/trader/reviewer）；admin 角色来自
 env allowlist（`lib/admin-access.ts`）。
 
 **数据流**：`RSC → server/data（仓储）→ drizzle → PG`；变更 `Server Action（zod+鉴权+所有权）→ 事务 → PG`。
@@ -234,6 +234,6 @@ Mock 数据冒充真实数据库结果。
 - 弹窗复用同一个预生成 `File` 做预览、下载和系统分享，未打开弹窗时不加载大图。
 - 支持系统文件分享、高清 PNG 下载与 canonical 链接复制；不支持文件分享时降级为链接分享或下载。
 - 普通 Web 无法指定或静默发布到微信、抖音；页面只承诺唤起操作系统分享目标，平台未出现时提示先下载图片再发布。
-- 分享路由只允许可信同源静态图与 Supabase public Storage，拒绝任意 URL 服务端抓取；slug 有长度/格式边界。
+- 分享路由只允许可信同源静态图，拒绝任意远程 URL 的服务端抓取；slug 有长度/格式边界。
 - 分享 PNG 使用 5 分钟 ISR/HTTP 缓存；SKU metadata 使用真实标题、描述、canonical 与分享卡 Open Graph 图片。
 - 生产必须配置 server-only 的公开 HTTPS `APP_URL` 纯 origin；本地开发未配置时回退到 loopback。

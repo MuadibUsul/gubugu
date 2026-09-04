@@ -9,7 +9,6 @@ import { registerAction, signInAction } from '@/server/auth/actions';
 
 type LoginFormProps = {
   nextPath: string;
-  authMode: 'supabase' | 'local';
   routeError?: string;
 };
 
@@ -73,7 +72,7 @@ function CredentialsFields() {
   );
 }
 
-export function LoginForm({ nextPath, authMode, routeError }: LoginFormProps) {
+export function LoginForm({ nextPath, routeError }: LoginFormProps) {
   const [signInState, signInFormAction] = useActionState(
     signInAction,
     initialAuthActionState,
@@ -94,55 +93,55 @@ export function LoginForm({ nextPath, authMode, routeError }: LoginFormProps) {
         <SubmitButton label="登录" pendingLabel="登录中…" />
       </form>
 
-      {authMode === 'local' ? (
-        <>
+      <>
+        {process.env.NODE_ENV !== 'production' ? (
+          // 种子里的演示账号口令是硬编码的，公网页面上不能印出来。生产环境
+          // 本就不写入这些凭据（见 drizzle/seed），提示也一并隐藏。
           <p className="text-muted-foreground text-xs leading-6">
             本地测试账号：collector@local.demo / gubugu-demo
           </p>
-          <details className="border-border border-t pt-5">
-            <summary className="cursor-pointer text-sm font-medium">
-              没有账号？创建本地账号
-            </summary>
-            <form action={registerFormAction} className="mt-5 space-y-4">
-              <input name="next" type="hidden" value={nextPath} />
-              <label className="block space-y-2 text-sm">
-                <span className="text-muted-foreground block">展示名</span>
-                <input
-                  autoComplete="name"
-                  className="ui-field h-12 px-4"
-                  maxLength={120}
-                  name="displayName"
-                  placeholder="你的收藏档案名称"
-                  required
-                />
-              </label>
-              <label className="block space-y-2 text-sm">
-                <span className="text-muted-foreground block">英文用户名</span>
-                <input
-                  autoCapitalize="none"
-                  autoComplete="username"
-                  className="ui-field h-12 px-4"
-                  maxLength={64}
-                  minLength={2}
-                  name="handle"
-                  pattern="[a-z0-9][a-z0-9._-]*[a-z0-9]"
-                  placeholder="例如 mika.collects"
-                  required
-                />
-              </label>
-              <CredentialsFields />
-              <AuthMessage
-                message={
-                  registerState.status === 'error'
-                    ? registerState.message
-                    : null
-                }
+        ) : null}
+        <details className="border-border border-t pt-5">
+          <summary className="cursor-pointer text-sm font-medium">
+            没有账号？创建本地账号
+          </summary>
+          <form action={registerFormAction} className="mt-5 space-y-4">
+            <input name="next" type="hidden" value={nextPath} />
+            <label className="block space-y-2 text-sm">
+              <span className="text-muted-foreground block">展示名</span>
+              <input
+                autoComplete="name"
+                className="ui-field h-12 px-4"
+                maxLength={120}
+                name="displayName"
+                placeholder="你的收藏档案名称"
+                required
               />
-              <SubmitButton label="注册并登录" pendingLabel="创建中…" />
-            </form>
-          </details>
-        </>
-      ) : null}
+            </label>
+            <label className="block space-y-2 text-sm">
+              <span className="text-muted-foreground block">英文用户名</span>
+              <input
+                autoCapitalize="none"
+                autoComplete="username"
+                className="ui-field h-12 px-4"
+                maxLength={64}
+                minLength={2}
+                name="handle"
+                pattern="[a-z0-9][a-z0-9._-]*[a-z0-9]"
+                placeholder="例如 mika.collects"
+                required
+              />
+            </label>
+            <CredentialsFields />
+            <AuthMessage
+              message={
+                registerState.status === 'error' ? registerState.message : null
+              }
+            />
+            <SubmitButton label="注册并登录" pendingLabel="创建中…" />
+          </form>
+        </details>
+      </>
     </div>
   );
 }

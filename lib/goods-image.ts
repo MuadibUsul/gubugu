@@ -76,21 +76,9 @@ export function toSafeShareImageUrl(url: string | null | undefined) {
     return candidate.toString();
   }
 
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-
-  if (!supabaseUrl) return null;
-
-  try {
-    const supabaseOrigin = new URL(supabaseUrl).origin;
-
-    return candidate.origin === supabaseOrigin &&
-      hasTrustedPath(candidate, ['/storage/v1/object/public/'])
-      ? candidate.toString()
-      : null;
-  } catch {
-    return null;
-  }
+  // 图片全部由本站自有域提供（目录资产、用户扫描的鉴权路由、种子样图），
+  // 没有第三方图床来源，所以非同源一律拒绝。
+  return null;
 }
 
 /**
@@ -160,16 +148,6 @@ export function isOptimizableImageUrl(url: string | null | undefined) {
     return true;
   }
 
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-
-  if (!supabaseUrl) {
-    return false;
-  }
-
-  try {
-    return new URL(trimmed).hostname === new URL(supabaseUrl).hostname;
-  } catch {
-    return false;
-  }
+  // 同上：没有外部图床，绝对 URL 不在可优化名单内。
+  return false;
 }

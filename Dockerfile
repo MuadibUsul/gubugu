@@ -32,13 +32,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # ── 构建 .next 产物 ──────────────────────────────────────────────────────────
 FROM base AS build
 # NEXT_PUBLIC_* 在 build 时被内联进客户端包，必须在这里就位（见 CI 的 build-args）。
-# 它们是公开值，进镜像无妨。
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+# 认证改为自托管后只剩站名一个，且是公开值，进镜像无妨。
 ARG NEXT_PUBLIC_APP_NAME="Gooods Dex"
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
-    NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME \
+ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME \
     NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
