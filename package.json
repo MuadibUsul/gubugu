@@ -23,7 +23,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "recognition:evaluate": "tsx scripts/evaluate-recognition.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

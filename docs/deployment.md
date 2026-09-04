@@ -8,23 +8,25 @@
 `server/env.ts` 由 `instrumentation.ts` 在服务启动时加载并校验，生产环境缺项直接抛错、
 服务起不来。这是有意为之：静默降级比启动失败更难排查。
 
-| 变量                         | 生产必需 | 说明                                                                       |
-| ---------------------------- | -------- | -------------------------------------------------------------------------- |
-| `DATABASE_URL`               | 是       | 缺失时所有数据模块回退空状态，站点渲染空图鉴却仍返回 200                   |
-| `LOCAL_AUTH_SECRET`          | 是       | 至少 32 位。会话 Cookie 的 HMAC 签名密钥，泄露或过短等于任何人可伪造会话   |
-| `APP_URL`                    | 是       | canonical、社交分享卡与同源图片解析；必须是无路径/查询/片段的 HTTPS origin |
-| `ADMIN_USER_EMAILS`          | 实际必需 | 见下方「管理员允许名单」                                                   |
-| `ADMIN_USER_IDS`             | 否       | 与上一项二选一即可                                                         |
-| `MODERATOR_USER_EMAILS/IDS`  | 否       | 审核员允许名单                                                             |
-| `NEXT_PUBLIC_APP_NAME`       | 否       | 站点名，构建期内联                                                         |
-| `RECOGNITION_WARMUP`         | 否       | 长驻服务器设 `1`，启动阶段预热 CLIP，首个真实请求不必等冷加载              |
-| `CATALOG_CRAWLER_SCHEDULER`  | 否       | 长驻进程默认 `1`，北京时间 10:00 / 22:00 自动采集                          |
-| `CATALOG_ASSET_DIR`          | 否       | 公开资产目录，默认 `.data/catalog-assets`，生产须挂持久卷                  |
-| `USER_SCAN_ASSET_DIR`        | 否       | 私密扫描图目录，默认 `.data/user-scans`，生产须挂持久卷                    |
-| `MODEL_CACHE_DIR`            | 否       | CLIP 模型缓存，指向持久卷可免去每次重启重下约 336MB 模型                   |
-| `HF_MIRROR`                  | 否       | 模型下载镜像，中国网络下设 `https://hf-mirror.com`                         |
-| `DISABLE_IMAGE_OPTIMIZATION` | 否       | 置 `1` 时图片直出，用于 sharp 不可用的 CPU；见 `next.config.mjs`           |
-| `DEEPSEEK_API_KEY`           | 否       | 采集草稿的 LLM 中文化；不配时爬虫仍产出草稿，只是保留原文                  |
+| 变量                               | 生产必需 | 说明                                                                       |
+| ---------------------------------- | -------- | -------------------------------------------------------------------------- |
+| `DATABASE_URL`                     | 是       | 缺失时所有数据模块回退空状态，站点渲染空图鉴却仍返回 200                   |
+| `LOCAL_AUTH_SECRET`                | 是       | 至少 32 位。会话 Cookie 的 HMAC 签名密钥，泄露或过短等于任何人可伪造会话   |
+| `APP_URL`                          | 是       | canonical、社交分享卡与同源图片解析；必须是无路径/查询/片段的 HTTPS origin |
+| `ADMIN_USER_EMAILS`                | 实际必需 | 见下方「管理员允许名单」                                                   |
+| `ADMIN_USER_IDS`                   | 否       | 与上一项二选一即可                                                         |
+| `MODERATOR_USER_EMAILS/IDS`        | 否       | 审核员允许名单                                                             |
+| `NEXT_PUBLIC_APP_NAME`             | 否       | 站点名，构建期内联                                                         |
+| `RECOGNITION_AUTO_LIGHT_THRESHOLD` | 否       | 高置信自动点亮门槛，留空用默认 0.86；见 `pnpm recognition:evaluate`        |
+| `RECOGNITION_CANDIDATE_THRESHOLD`  | 否       | 候选门槛，留空用默认 0.58；必须不高于自动点亮阈值                          |
+| `RECOGNITION_WARMUP`               | 否       | 长驻服务器设 `1`，启动阶段预热 CLIP，首个真实请求不必等冷加载              |
+| `CATALOG_CRAWLER_SCHEDULER`        | 否       | 长驻进程默认 `1`，北京时间 10:00 / 22:00 自动采集                          |
+| `CATALOG_ASSET_DIR`                | 否       | 公开资产目录，默认 `.data/catalog-assets`，生产须挂持久卷                  |
+| `USER_SCAN_ASSET_DIR`              | 否       | 私密扫描图目录，默认 `.data/user-scans`，生产须挂持久卷                    |
+| `MODEL_CACHE_DIR`                  | 否       | CLIP 模型缓存，指向持久卷可免去每次重启重下约 336MB 模型                   |
+| `HF_MIRROR`                        | 否       | 模型下载镜像，中国网络下设 `https://hf-mirror.com`                         |
+| `DISABLE_IMAGE_OPTIMIZATION`       | 否       | 置 `1` 时图片直出，用于 sharp 不可用的 CPU；见 `next.config.mjs`           |
+| `DEEPSEEK_API_KEY`                 | 否       | 采集草稿的 LLM 中文化；不配时爬虫仍产出草稿，只是保留原文                  |
 
 ## 2. 生产不变式
 

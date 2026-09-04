@@ -1,6 +1,6 @@
 # 谷布谷移动优先全端改造计划
 
-状态：Phase 0 已完成，Phase 1 进行中  
+状态：Phase 0 已完成，Phase 1 进行中（4/6）  
 制定日期：2026-09-04  
 适用基线：当前 `chore/engineering-foundation` 工作区  
 历史计划：保留根目录 `plan.md` 与 `docs/refactor-execution-plan.md`，不覆盖
@@ -251,10 +251,10 @@ private user assets
 
 目标：先修正会影响用户信任和后续 UI 的底层边界。
 
-- [ ] 将未鉴定扫描图迁入 VPS 私密资产区，替换公共 `/catalog-assets/*` 访问方式。
-- [ ] 为 `user_scans` 补齐 migration、RLS、所有权读取、删除联动和验证用例。
-- [ ] 把自动点亮与候选确认合并到统一 recognition service/事务。
-- [ ] 配置高置信、候选和未匹配三档阈值，建立离线样本评估脚本。
+- [x] 将未鉴定扫描图迁入 VPS 私密资产区，替换公共 `/catalog-assets/*` 访问方式。改由 `/api/user-scans/[scanId]/image` 鉴权读取。
+- [x] 为 `user_scans` 补齐 migration（0028/0029）、RLS（仅 self-read，刻意不给写策略）、所有权读取与 `db:verify-rls` 用例。**账号删除的级联清理仍未做**，见第 7.2 节。
+- [x] 把自动点亮与候选确认合并到统一 recognition service/事务：两条路径都走 `server/recognition/confirm.ts`。此前自动点亮在 Route Handler 里直接 upsert，不进事务、不留确认记录，也漏掉了成就判定与缓存刷新。
+- [x] 三档阈值配置化（`RECOGNITION_AUTO_LIGHT_THRESHOLD` / `RECOGNITION_CANDIDATE_THRESHOLD`，经 `server/env.ts` 校验区间与顺序），分档逻辑是纯函数 `gradeRecognitionScore` 并有测试；离线校准脚本 `pnpm recognition:evaluate`。**阈值尚未用真实样本校准**，当前仍是默认值。
 - [ ] 收敛 `owned`、`lit_at`、未鉴定扫描项和 `exchange` 的服务端规则。
 - [ ] 将页面和 Route Handler 中的数据库编排移入 `server/data` 或领域 service。
 

@@ -31,6 +31,14 @@ const envSchema = z
     LOCAL_AUTH_SECRET: z.string().min(32).optional(),
     RECOGNITION_WARMUP: z.enum(['0', '1']).default('0'),
     CATALOG_CRAWLER_SCHEDULER: z.enum(['0', '1']).default('1'),
+    // 识别分档阈值。留空则用 lib/recognition.ts 的默认值；校准后按环境覆盖，
+    // 不必改代码发版。
+    RECOGNITION_AUTO_LIGHT_THRESHOLD: z.coerce
+      .number()
+      .min(0)
+      .max(1)
+      .optional(),
+    RECOGNITION_CANDIDATE_THRESHOLD: z.coerce.number().min(0).max(1).optional(),
     CATALOG_ASSET_DIR: z.string().min(1).default('.data/catalog-assets'),
     USER_SCAN_ASSET_DIR: z.string().min(1).default('.data/user-scans'),
   })
@@ -89,6 +97,24 @@ const envSchema = z
       }
     }
 
+    // 自动点亮的门槛不能低于候选门槛，否则会出现「分数够自动点亮、却低到进不了
+    // 候选」的空档，行为无法解释。
+    const autoLight = value.RECOGNITION_AUTO_LIGHT_THRESHOLD;
+    const candidate = value.RECOGNITION_CANDIDATE_THRESHOLD;
+
+    if (
+      typeof autoLight === 'number' &&
+      typeof candidate === 'number' &&
+      autoLight < candidate
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RECOGNITION_AUTO_LIGHT_THRESHOLD'],
+        message:
+          '自动点亮阈值不能低于候选阈值，否则分档区间会出现无法解释的空档。',
+      });
+    }
+
     // 生产环境必须有可用的认证。
     //
     // 本地认证本身是可靠的：scrypt 口令哈希、HMAC 签名的会话 cookie、登录与注册
@@ -129,6 +155,12 @@ const result = envSchema.safeParse({
   RECOGNITION_WARMUP: readOptional(process.env.RECOGNITION_WARMUP),
   CATALOG_CRAWLER_SCHEDULER: readOptional(
     process.env.CATALOG_CRAWLER_SCHEDULER,
+  ),
+  RECOGNITION_AUTO_LIGHT_THRESHOLD: readOptional(
+    process.env.RECOGNITION_AUTO_LIGHT_THRESHOLD,
+  ),
+  RECOGNITION_CANDIDATE_THRESHOLD: readOptional(
+    process.env.RECOGNITION_CANDIDATE_THRESHOLD,
   ),
   CATALOG_ASSET_DIR: readOptional(process.env.CATALOG_ASSET_DIR),
   USER_SCAN_ASSET_DIR: readOptional(process.env.USER_SCAN_ASSET_DIR),

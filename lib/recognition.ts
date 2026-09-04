@@ -44,10 +44,51 @@ export const recognitionUploadLimits = {
 } as const;
 
 export const recognitionCandidateDisplayLimit = 5;
-export const recognitionAutoLightThreshold = 0.86;
-export const recognitionStrongMatchThreshold = 0.72;
-export const recognitionWeakMatchThreshold = 0.58;
 export const recognitionAttemptTtlMs = 15 * 60 * 1000;
+
+/**
+ * 识别结果分三档处理。阈值的默认值放在这里，服务端可经环境变量覆盖
+ * （见 server/recognition/thresholds.ts）——校准需要按真实样本调，不该改代码发版。
+ *
+ * 取值原则：**误点亮率优先低于漏识别率**。漏掉一次识别，用户再拍一张即可；错误的
+ * 自动点亮却会把不属于自己的 SKU 写成公开拥有，直接破坏稀缺性信誉，而且用户未必
+ * 会发现。所以 autoLight 宁可保守。
+ */
+export const recognitionThresholdDefaults = {
+  /** 高于此分：服务端直接确认并点亮。 */
+  autoLight: 0.86,
+  /** 高于此分才作为候选返回；低于则视为无可靠候选。 */
+  candidate: 0.58,
+} as const;
+
+export type RecognitionThresholds = {
+  autoLight: number;
+  candidate: number;
+};
+
+export type RecognitionTier = 'auto-light' | 'candidates' | 'unidentified';
+
+/**
+ * 纯函数，便于用固定样本回归。分档只看最高分：候选列表本身由检索层按
+ * `candidate` 下限裁剪。
+ */
+export function gradeRecognitionScore(
+  topScore: number | null | undefined,
+  thresholds: RecognitionThresholds = recognitionThresholdDefaults,
+): RecognitionTier {
+  if (typeof topScore !== 'number' || Number.isNaN(topScore)) {
+    return 'unidentified';
+  }
+  if (topScore >= thresholds.autoLight) return 'auto-light';
+  if (topScore >= thresholds.candidate) return 'candidates';
+  return 'unidentified';
+}
+
+/** 展示用：低于此分的候选在界面上要弱化措辞，不能说得像鉴定结论。 */
+export const recognitionStrongMatchThreshold = 0.72;
+/** 检索下限，等同于「候选」档的门槛。 */
+export const recognitionWeakMatchThreshold =
+  recognitionThresholdDefaults.candidate;
 
 export const recognitionRequestMetadataSchema = z.object({
   source: recognitionSourceSchema.default('upload'),

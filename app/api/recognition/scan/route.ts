@@ -1,19 +1,22 @@
-import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { isAcceptedImageMimeType } from '@/lib/image-upload';
 import { consumeServerWrite } from '@/lib/rate-limit';
 import { isMobileUserAgent } from '@/lib/device';
 import { recognitionUploadLimits } from '@/lib/recognition';
-import { goods, userGoods, userScans } from '@/drizzle/schema';
+import { userScans } from '@/drizzle/schema';
 import { getAuthUser } from '@/server/auth/session';
+import { confirmRecognitionAttempt } from '@/server/recognition/confirm';
 import { recognizeGoodsImage } from '@/server/recognition/service';
+import { gradeRecognition } from '@/server/recognition/thresholds';
 import { getDb } from '@/server/db/client';
 import { normalizeAndStoreUserScan } from '@/server/user-scans/image-store';
 
-// 自动扫描入库：拍一张 → 匹配官方谷库。高置信直接点亮对应 SKU（可公开展示）；
-// 否则存为「未鉴定收藏项」（进谷柜、不公开展示）。全程无需用户挑候选、无需审核。
-const AUTO_LIGHT_THRESHOLD = 0.86;
+// 自动扫描入库：拍一张 → 匹配官方谷库。分档见 lib/recognition.ts：
+//   高置信      → 服务端直接确认并点亮（可公开展示）
+//   有可靠候选  → 交给 /recognition 让用户挑，这里不擅自点亮
+//   无可靠候选  → 存为「未鉴定收藏项」（进谷柜、不公开展示）
+// 点亮走 confirmRecognitionAttempt，与用户手动确认候选是同一段事务。
 
 function fail(status: number, message: string) {
   return NextResponse.json({ ok: false, message }, { status });
@@ -64,58 +67,45 @@ export async function POST(request: Request) {
     });
 
     const top = response.candidates[0];
-    const db = getDb();
+    const tier = gradeRecognition(top?.score);
+    const score = top ? Math.round(top.score * 100) : null;
 
-    // 高置信 + 真实特征匹配 → 自动点亮对应官方 SKU。
-    if (
-      response.pipeline.provider === 'embedding-search' &&
-      top &&
-      top.score >= AUTO_LIGHT_THRESHOLD
-    ) {
-      const matchedGoods = (
-        await db
-          .select({ id: goods.id, slug: goods.slug })
-          .from(goods)
-          .where(
-            and(eq(goods.slug, top.goods.slug), eq(goods.status, 'published')),
-          )
-          .limit(1)
-      )[0];
+    if (tier === 'auto-light' && top) {
+      // 与手动确认完全同路：资格、过期、幂等、SKU 解析、审计、成就、缓存刷新
+      // 都在里面，SKU 由服务端从 attempt 的 candidate_map 解析。
+      const confirmed = await confirmRecognitionAttempt({
+        userId: user.id,
+        requestId: response.requestId,
+        candidateId: top.id,
+      });
 
-      if (matchedGoods) {
-        const now = new Date();
-        await db
-          .insert(userGoods)
-          .values({
-            userId: user.id,
-            goodsId: matchedGoods.id,
-            status: 'owned',
-            litAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [userGoods.userId, userGoods.goodsId, userGoods.status],
-            set: { litAt: sql`coalesce(${userGoods.litAt}, excluded.lit_at)` },
-          });
-
+      if (confirmed.success) {
         return NextResponse.json({
           ok: true,
           matched: true,
-          goodsSlug: matchedGoods.slug,
+          goodsSlug: confirmed.goodsSlug,
           goodsName: top.goods.name,
-          score: Math.round(top.score * 100),
+          score,
         });
       }
+
+      // 分数够但确认没通过（SKU 下架、记录不合格等）：不当作失败，落为未鉴定项，
+      // 用户的这一张照片不会白拍。
+      console.error('[recognition] 自动点亮未通过确认', confirmed.code);
     }
 
-    // 未匹配（或置信不足）→ 存为未鉴定收藏项：谷柜可见、公开主页不展示。
+    // 候选档不在这里点亮：交由 /recognition 展示候选、由用户确认。
+    // 无可靠候选或自动点亮未通过 → 存为未鉴定收藏项。
     const stored = await normalizeAndStoreUserScan(buffer);
     const inserted = (
-      await db
+      await getDb()
         .insert(userScans)
         .values({
           userId: user.id,
           assetKey: stored.assetKey,
-          topScore: top ? Math.round(top.score * 100) : null,
+          // 留下与识别记录的关联，日后可据此重新匹配。
+          recognitionAttemptId: response.requestId,
+          topScore: score,
         })
         .returning({ id: userScans.id })
     )[0];
@@ -123,8 +113,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       matched: false,
+      tier,
       scanId: inserted?.id ?? null,
-      score: top ? Math.round(top.score * 100) : null,
+      requestId: response.requestId,
+      score,
     });
   } catch (error) {
     console.error('[recognition] 自动扫描失败', error);
