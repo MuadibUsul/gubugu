@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-// 移动端 App 外壳的底部导航（仅移动端显示，桌面保留顶部导航）。tab 是链接，无需水合即可跳转；
+// 移动端 App 外壳的底部导航。`lg:hidden`——宽屏由 DesktopNav 接管，两者互斥。tab 是链接，无需水合即可跳转；
 // 当前态用 usePathname 高亮（外壳在 layout 里，可正常水合）。中间「扫描」做成抬升的主按钮。
 
 type Tab = {
@@ -96,7 +96,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="底部导航"
-      className="app-tabbar fixed inset-x-0 bottom-0 z-50 border-t border-[var(--rule)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur"
+      className="app-tabbar fixed inset-x-0 bottom-0 z-50 border-t border-[var(--rule)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur lg:hidden"
     >
       <ul className="mx-auto grid max-w-[560px] grid-cols-5 items-end px-2">
         {TABS.map((tab) => {

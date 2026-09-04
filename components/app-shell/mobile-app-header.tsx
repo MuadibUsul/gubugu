@@ -1,7 +1,8 @@
 import Link from 'next/link';
 
 // 移动端顶栏（对齐设计稿「首页」头部）：左品牌印、居中搜索 pill、右通知铃。
-// 仅移动端出现（md:hidden），桌面沿用各页自己的英雄区 / 顶部导航。搜索做成可点的
+// `lg:hidden`——宽屏用 DesktopNav。（此前注释写着 md:hidden 但类名里没有，桌面
+// 上会和顶部导航叠一起。）搜索做成可点的
 // pill 直接跳 /search，不在顶栏里塞输入态——和设计稿一致，输入交给谷库页。
 
 const searchIcon = (
@@ -52,7 +53,7 @@ export function MobileAppHeader({
   hasUnread = true,
 }: MobileAppHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2.5 border-b border-[var(--rule-2)] bg-[var(--paper)] px-4 py-2.5 sm:-mx-6 sm:px-6">
+    <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2.5 border-b border-[var(--rule-2)] bg-[var(--paper)] px-4 py-2.5 sm:-mx-6 sm:px-6 lg:hidden">
       <BrandSeal />
       <Link
         aria-label="搜索"

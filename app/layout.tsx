@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 
 import { BottomTabBar } from '@/components/app-shell/bottom-tab-bar';
+import { DesktopNav } from '@/components/app-shell/desktop-nav';
 import { PwaProvider } from '@/components/app-shell/pwa-provider';
 import { siteConfig } from '@/lib/config/site';
 
@@ -54,10 +55,12 @@ export default function RootLayout({
         >
           跳到主要内容
         </a>
-        {/* App 为唯一标准：不再有桌面顶部导航；内容居中成手机列，宽屏也显示同一套
-            App 界面（底部 Tab + 每屏自带的头部）。 */}
+        {/* 一套路由，两种外壳：< 1024px 是移动 App 形态（底部五 Tab，内容单列）；
+            >= 1024px 换成顶部导航并放开宽度。断点只决定排布，不产生两套业务组件。
+            此前这里给所有设备写死 max-w-[560px]，宽屏上就是一根居中的手机列。 */}
+        <DesktopNav />
         <div
-          className="mx-auto w-full max-w-[560px] pb-[calc(66px+env(safe-area-inset-bottom))]"
+          className="mx-auto w-full max-w-[560px] pb-[calc(66px+env(safe-area-inset-bottom))] md:max-w-[720px] lg:max-w-[1240px] lg:px-8 lg:pb-16"
           id="main-content"
           tabIndex={-1}
         >

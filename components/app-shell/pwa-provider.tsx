@@ -64,7 +64,7 @@ export function PwaProvider() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-[60] mx-auto max-w-[560px] px-4 md:bottom-4">
+    <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-[60] mx-auto max-w-[560px] px-4 lg:bottom-4">
       <div className="flex items-center gap-3 rounded-[16px] border border-[var(--rule)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-float)]">
         <Image
           alt=""
