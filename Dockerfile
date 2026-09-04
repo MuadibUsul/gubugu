@@ -67,6 +67,16 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/next.config.mjs ./next.config.mjs
 
+# 目标 VPS 的 CPU 是 QEMU 通用型号，只有 x86-64-v1，而 sharp 的 linux-x64 预编译包
+# 要求 v2。sharp 的加载器会先 require 到 linux-x64 包并 break 出候选循环，之后才做
+# v2 自检并把结果置空，因此不会自动回退——必须让这个绑定根本不存在，加载器才会在
+# 它上面拿到 MODULE_NOT_FOUND 继续往下，落到 @img/sharp-wasm32（sharp 官方为不受
+# 支持的 CPU 提供的 WebAssembly 版本，由 package.json 的 supportedArchitectures 装入）。
+# 等价于 sharp 文档里的 `npm install --cpu=wasm32 sharp`。
+RUN rm -rf node_modules/.pnpm/sharp@*/node_modules/@img/sharp-linux-x64 \
+    && ! ls -d node_modules/.pnpm/sharp@*/node_modules/@img/sharp-linux-x64 > /dev/null 2>&1 \
+    && node -e "require('sharp'); console.log('sharp loaded via wasm32')"
+
 # 持久卷挂载点（模型缓存、爬虫图片），先建好并交给 node 用户以保证可写。
 RUN mkdir -p /app/.data/models /app/.data/catalog-assets \
     && chown -R node:node /app/.data
