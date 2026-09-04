@@ -1,6 +1,6 @@
 # 谷布谷移动优先全端改造计划
 
-状态：Phase 0 已完成，Phase 1 进行中（4/6）  
+状态：Phase 0、Phase 1 已完成，Phase 2 待开始  
 制定日期：2026-09-04  
 适用基线：当前 `chore/engineering-foundation` 工作区  
 历史计划：保留根目录 `plan.md` 与 `docs/refactor-execution-plan.md`，不覆盖
@@ -255,10 +255,17 @@ private user assets
 - [x] 为 `user_scans` 补齐 migration（0028/0029）、RLS（仅 self-read，刻意不给写策略）、所有权读取与 `db:verify-rls` 用例。**账号删除的级联清理仍未做**，见第 7.2 节。
 - [x] 把自动点亮与候选确认合并到统一 recognition service/事务：两条路径都走 `server/recognition/confirm.ts`。此前自动点亮在 Route Handler 里直接 upsert，不进事务、不留确认记录，也漏掉了成就判定与缓存刷新。
 - [x] 三档阈值配置化（`RECOGNITION_AUTO_LIGHT_THRESHOLD` / `RECOGNITION_CANDIDATE_THRESHOLD`，经 `server/env.ts` 校验区间与顺序），分档逻辑是纯函数 `gradeRecognitionScore` 并有测试；离线校准脚本 `pnpm recognition:evaluate`。**阈值尚未用真实样本校准**，当前仍是默认值。
-- [ ] 收敛 `owned`、`lit_at`、未鉴定扫描项和 `exchange` 的服务端规则。
-- [ ] 将页面和 Route Handler 中的数据库编排移入 `server/data` 或领域 service。
+- [x] 收敛 `owned`、`lit_at`、未鉴定扫描项和 `exchange` 的服务端规则：公开视角只返回已点亮的 owned（此前会渲染「已入柜，待点亮」给访客）；已归属的扫描不再列为未鉴定项；`exchange ⇒ 已点亮 owned` 由 `db:verify-lighting` 断言。
+- [x] 将页面和 Route Handler 中的数据库编排移入 `server/data` 或领域 service。`app/` 下已无 `getDb()`。
 
 完成闸门：无法伪造点亮、无法越权读取扫描图、重复确认幂等、换谷库存只来自已点亮拥有。
+
+> 闸门现状：全部满足。SKU 由服务端从 attempt 的 candidate_map 解析，浏览器提交不了；
+> 扫描图经鉴权路由按 user_id 限定，未登录 401、他人 404；确认走行锁 + 幂等；
+> `db:verify-lighting` 断言可换库存必有已点亮 owned 行。
+>
+> 遗留：**阈值尚未用真实样本校准**（工具已就绪：`pnpm recognition:evaluate`），
+> 以及账号删除的级联清理（见 7.2）。两者都不阻塞 Phase 2。
 
 ### Phase 2：全端响应式外壳
 
