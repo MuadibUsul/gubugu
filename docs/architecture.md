@@ -25,11 +25,12 @@ Drizzle / PostgreSQL
 - `app/`：路由、元数据、页面边界、loading/error/not-found。
 - `components/`：具有明确产品语义的界面组件和少量 UI primitive。
 - `lib/`：纯函数、Zod schema、状态机、展示映射和 P2 接口。
-- `server/auth/`：Supabase 会话、本地 PostgreSQL 密码账号、签名 Cookie 与管理员角色。
+- `server/auth/`：自托管账号（scrypt 口令）、HMAC 签名会话 Cookie 与管理员角色。
 - `server/data/`：批量、分页、仅服务端的数据读取。
 - `server/*/actions.ts`：服务端写入与权限校验。
 - `drizzle/schema/`：唯一 schema 来源；所有变化必须有 migration。
-- `drizzle/seed/`：可重复执行的三账号验收数据。
+- `server/user-scans/`、`server/catalog-crawler/image-store.ts`：VPS 资产的私密区与公开区。
+- `drizzle/seed/`：可重复执行的三账号验收数据；生产环境不写入演示登录凭据。
 
 ## 权限层级
 
@@ -46,7 +47,7 @@ Drizzle / PostgreSQL
 - 只有未过期的相机 `embedding-search` 结果可以在事务中写入 `lit_at`；mock、普通上传、伪造查询参数和重复确认都不能点亮。
 - 完成度、成就、角色收藏圈、拥有数量以及换谷资格统一只统计已点亮 owned；单独存在 owned 或 exchange 行不构成实物拥有证明。
 - 换谷匹配、发布、报价和最终库存预留都要求出让方同一 SKU 存在已点亮 owned；接受报价时的事务锁与复验是最终权威。换谷收货新增的 owned 默认未点亮，仍需扫描实物。
-- SKU 详情页始终展示完整彩色高清图；公共图鉴缩略图按当前 viewer 的点亮状态渲染，当前用户已点亮时为彩色，否则（包括匿名访问）保持灰色。
+- 公共图鉴与搜索结果始终展示原色商品图，不因收藏状态做灰阶；点亮与否由印章、边框和文案表达。灰阶只出现在本人谷柜里，用来区分自己已点亮与未点亮的藏品。
 
 ## 换谷不变式
 
@@ -70,11 +71,18 @@ Drizzle / PostgreSQL
 
 ## 分享边界
 
-- `/goods/[goodsSlug]/share` 只读取公开 SKU，使用 `ImageResponse` 生成 1080 × 1440 PNG；不包含用户身份、收藏状态或私密资料。
-- 商品图服务端抓取只允许同源静态样例路径和配置一致的 Supabase public Storage origin/path；任意外部 URL 使用占位图，避免 SSRF。
+- `/goods/[goodsSlug]/share` 只读取公开 SKU，生成 1080 × 1440 PNG；不包含用户身份、收藏状态或私密资料。
+- 卡面由 `server/share-card/render-card.ts` 用 sharp（librsvg + Pango）合成：手写 SVG 栅格化后再叠加主图。此前用 Satori/resvg，在部署机上单张约 11.8 秒，其中 sharp 部分只占 110 毫秒；改法后约 195 毫秒。代价是换行与胶囊宽度需自行量算。
+- 商品图服务端抓取只允许同源路径；没有任何远程图床来源，绝对 URL 一律拒绝，避免 SSRF。
 - 分享弹窗打开后才生成并缓存浏览器 `File`，同一文件用于预览、下载和 Web Share，避免未使用时下载及重复制图。
 - 系统文件分享依赖 HTTPS、用户手势与 `navigator.canShare({ files })`；普通 Web 无法选择或确认微信、抖音等目标应用是否完成发布。
-- PNG 路由按 SKU 缓存 5 分钟。生产 server-only `APP_URL` 是 canonical 和 Open Graph 的权威公开 origin，必须是无路径、查询参数或片段的 HTTPS origin；本地开发未配置时回退到 loopback。
+- PNG 路由按 SKU 缓存一天（卡面只随 SKU 元数据与评分变化）。生产 server-only `APP_URL` 是 canonical 和 Open Graph 的权威公开 origin，必须是无路径、查询参数或片段的 HTTPS origin；本地开发未配置时回退到 loopback。
+
+## 资产边界
+
+- 公开资产（官方图、爬虫发布图、社区帖子图）内容寻址存放于 `CATALOG_ASSET_DIR`，由 `/catalog-assets/[fileName]` 提供，可长期缓存。
+- 私密资产（未鉴定扫描图）存放于 `USER_SCAN_ASSET_DIR`，没有公开静态 URL，只能经 `/api/user-scans/[scanId]/image` 读取：要求会话、按 `user_id` 限定所有权、校验资产名格式以防路径穿越、对他人返回 404 而非 403，响应为 `private` 缓存。
+- 两者命名空间、读取路由和缓存策略都不共用；用户图片不会因为「也是图片」而落进公开区。
 
 ## 性能边界
 

@@ -13,7 +13,10 @@ The product exists to help collectors:
 - participate through comments, ratings, and photos
 - enter items through a camera-style recognition workflow
 
-This is a PC-first product with responsive support for mobile web. Future native clients should remain thin clients over the same backend capabilities.
+Mobile is the product's centre of gravity; desktop gets a layout that genuinely
+uses the width rather than a stretched phone view. Web, PWA and the Android
+shell share one backend and one domain layer — the native client stays a thin
+shell and never reimplements collection, recognition or exchange rules.
 
 ## Problem Statement
 
@@ -63,8 +66,9 @@ V1 is not trying to become:
 
 The recognition feature is intentionally bounded:
 
-- it is a recognition entry plus candidate matching flow
-- it is not a heavy automated CV system
+- it is a recognition entry plus candidate matching flow over a pretrained model
+- it is not a heavy automated CV system, and no model is trained in-house
+- similarity is never presented as authenticity verification
 
 ## Target Users
 
@@ -142,14 +146,17 @@ Excluded:
 
 The camera flow should reduce friction when users do not know the exact item name.
 
-V1 flow:
+Results are graded into three tiers rather than always asking the user to pick:
 
-- open camera
-- show framing overlay
-- capture image
-- upload image
-- receive ranked candidates
-- let the user confirm the final SKU
+- high confidence — the server confirms and lights the SKU itself, and shows
+  which official SKU it matched
+- medium or low confidence with credible candidates — a short candidate list the
+  user confirms
+- no credible candidate — kept as a private unidentified scan, visible only in
+  the owner's own cabinet, never on a public profile and never as exchange stock
+
+The SKU is always resolved server-side from the recognition record. A browser
+cannot light an item by submitting a SKU id.
 
 ## Functional Scope
 
@@ -194,16 +201,19 @@ Must support:
 
 ### Exchange
 
-Must support:
+Barter only, with a complete fulfilment loop:
 
-- low-friction exchange intent or listing
-- association to SKU
-- simple status or availability note
+- matching, public listings and direct offers, all bound to SKUs
+- formal offers with at most three counters; each immutable revision freezes both
+  sides' SKUs, quantities, condition and terms
+- accepting reserves inventory inside one transaction and re-verifies the listing
+- both parties independently confirm dispatch and receipt, then review each other
+- exchange stock derives only from lit, owned SKUs
 
 Must not support:
 
-- transaction completion
-- funds handling
+- money in any form — no cash, wallet, escrow, arbitration or RMB C2C
+- treating chat as terms; only the immutable revision counts
 
 ### Admin
 

@@ -17,9 +17,9 @@ This is not a generic admin table site. The product should feel like a premium c
 
 Platform priority:
 
-- PC-first experience
+- mobile-first experience, with a desktop layout that genuinely uses the width
 - responsive support for mobile web
-- future iOS app as a thin client on top of the same web backend capabilities
+- Android ships as a thin Capacitor shell over the same web backend; a future iOS client stays equally thin
 
 Maintenance priority:
 

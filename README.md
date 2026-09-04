@@ -9,7 +9,7 @@ The project is built around four principles:
 - SKU is the core entity
 - the product should feel like a premium collectible encyclopedia, not a generic admin table site
 
-This is a PC-first product with responsive support for mobile web. A future iOS app is expected to be a thin client on top of the same backend capabilities.
+Mobile is the product's centre of gravity, with a desktop layout that uses the width rather than centring a phone column. Web, PWA and the Android Capacitor shell share one backend and one domain layer; the native shell stays thin.
 
 ## V1 Scope
 
@@ -121,12 +121,18 @@ Copy `.env.example` to `.env.local` and configure:
 - `docs/prd.md`: product scope, goals, non-goals, and V1 capabilities
 - `docs/schema.md`: domain model summary centered on SKU
 - `docs/ui-guidelines.md`: visual and interaction direction for the encyclopedia experience
-- `docs/architecture.md`: current technical foundation and next initialization steps
+- `docs/architecture.md`: 请求边界、目录职责与各项领域不变式
+- `docs/project-status.md`: 当前能力、已知缺口与文档地图
+- `docs/mobile-first-transformation-plan.md`: 推进中的分阶段改造计划
+- `docs/deployment.md`: 运行时环境变量与生产不变式（上线步骤见根目录 `DEPLOY.md`）
+- `docs/release-regression-checklist.md`: 桌面 / 移动 Web / Android 回归清单
 - `docs/catalog-crawler.md`: 白名单采集、图片标准化、审核发布与定时运行说明
 
 ## Current Status
 
-The repository already contains working V1 slices for search, goods detail, collection state, community submission, exchange intent, recognition entry, and admin management. It should be treated as a usable product baseline, not a throwaway shell.
+生产环境已上线：<https://gubugu.tlines.tech>。图鉴、搜索、收藏点亮、扫描识别、完整换谷闭环、社区、通知与后台均已可用，应视为可运行的产品基线而非脚手架。
+
+当前主要缺口见 [docs/project-status.md](docs/project-status.md)：桌面宽屏信息架构尚未完成（底部 Tab 仍出现在大屏），识别阈值未配置化，首发内容覆盖不足。
 
 When implementing features, keep these constraints in mind:
 
