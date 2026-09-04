@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// ⚠️ 只能被 instrumentation.ts 以**动态 import** 引入。
+//
+// 本模块在模块作用域校验并抛错。一旦有被页面或 Route Handler 静态依赖的模块
+// import 它，`next build` 收集页面数据时就会求值这段代码，而 CI 的构建环境没有
+// 生产变量，构建会直接失败（实测报 Failed to collect page data for …）。需要读这些
+// 变量的服务端模块请直接读 process.env，把合法性校验留在这里做启动期 fail-fast，
+// 例如 server/recognition/thresholds.ts。
+//
 // This module is imported by instrumentation.ts so that a misconfigured
 // deployment fails at boot instead of silently degrading:
 //
