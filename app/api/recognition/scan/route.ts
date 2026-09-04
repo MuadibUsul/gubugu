@@ -4,13 +4,11 @@ import { isAcceptedImageMimeType } from '@/lib/image-upload';
 import { consumeServerWrite } from '@/lib/rate-limit';
 import { isMobileUserAgent } from '@/lib/device';
 import { recognitionUploadLimits } from '@/lib/recognition';
-import { userScans } from '@/drizzle/schema';
 import { getAuthUser } from '@/server/auth/session';
 import { confirmRecognitionAttempt } from '@/server/recognition/confirm';
 import { recognizeGoodsImage } from '@/server/recognition/service';
 import { gradeRecognition } from '@/server/recognition/thresholds';
-import { getDb } from '@/server/db/client';
-import { normalizeAndStoreUserScan } from '@/server/user-scans/image-store';
+import { recordUnidentifiedScan } from '@/server/user-scans/record';
 
 // 自动扫描入库：拍一张 → 匹配官方谷库。分档见 lib/recognition.ts：
 //   高置信      → 服务端直接确认并点亮（可公开展示）
@@ -96,25 +94,18 @@ export async function POST(request: Request) {
 
     // 候选档不在这里点亮：交由 /recognition 展示候选、由用户确认。
     // 无可靠候选或自动点亮未通过 → 存为未鉴定收藏项。
-    const stored = await normalizeAndStoreUserScan(buffer);
-    const inserted = (
-      await getDb()
-        .insert(userScans)
-        .values({
-          userId: user.id,
-          assetKey: stored.assetKey,
-          // 留下与识别记录的关联，日后可据此重新匹配。
-          recognitionAttemptId: response.requestId,
-          topScore: score,
-        })
-        .returning({ id: userScans.id })
-    )[0];
+    const { scanId } = await recordUnidentifiedScan({
+      userId: user.id,
+      image: buffer,
+      recognitionAttemptId: response.requestId,
+      topScore: score,
+    });
 
     return NextResponse.json({
       ok: true,
       matched: false,
       tier,
-      scanId: inserted?.id ?? null,
+      scanId,
       requestId: response.requestId,
       score,
     });

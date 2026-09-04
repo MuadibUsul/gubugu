@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
-import { sql } from 'drizzle-orm';
 import Link from 'next/link';
 
 import { ReportForm } from '@/components/safety/report-form';
-import { coordinationProposals } from '@/drizzle/schema';
 import {
   acceptExchangeAction,
   cancelExchangeAction,
@@ -19,10 +17,10 @@ import {
 import { requireAuthUser } from '@/server/auth/session';
 import { decideCoordinationProposalAction } from '@/server/social/actions';
 import {
+  listCoordinationProposalsForUser,
   listExchangesForUser,
   type ExchangeListItem,
 } from '@/server/data/exchanges';
-import { getDb } from '@/server/db/client';
 import { listTradeActivityForUser } from '@/server/data/trade';
 import { startConversationAction } from '@/server/messages/actions';
 
@@ -184,13 +182,7 @@ export default async function MyExchangesPage({
   const [exchanges, coordinationItems, tradeActivity, query] =
     await Promise.all([
       listExchangesForUser({ userId: user.id }),
-      getDb()
-        .select()
-        .from(coordinationProposals)
-        .where(
-          sql`${user.id}::uuid = any(${coordinationProposals.participantIds})`,
-        )
-        .limit(48),
+      listCoordinationProposalsForUser({ userId: user.id }),
       listTradeActivityForUser(user.id),
       searchParams,
     ]);

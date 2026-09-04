@@ -1,12 +1,10 @@
 import { readFile } from 'node:fs/promises';
 
-import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { userScans } from '@/drizzle/schema';
 import { getAuthUser } from '@/server/auth/session';
-import { getDb } from '@/server/db/client';
+import { getOwnedUserScanAssetKey } from '@/server/data/user-scans';
 import { userScanAssetPath } from '@/server/user-scans/image-store';
 
 export const runtime = 'nodejs';
@@ -28,19 +26,15 @@ export async function GET(
   const parsedId = scanIdSchema.safeParse((await params).scanId);
   if (!parsedId.success) return new NextResponse(null, { status: 404 });
 
-  const scan = (
-    await getDb()
-      .select({ assetKey: userScans.assetKey })
-      .from(userScans)
-      .where(
-        and(eq(userScans.id, parsedId.data), eq(userScans.userId, user.id)),
-      )
-      .limit(1)
-  )[0];
-  if (!scan) return new NextResponse(null, { status: 404 });
+  // 不存在与不属于本人都走这里：一律 404，不透露资源是否存在。
+  const assetKey = await getOwnedUserScanAssetKey({
+    scanId: parsedId.data,
+    userId: user.id,
+  });
+  if (!assetKey) return new NextResponse(null, { status: 404 });
 
   try {
-    const bytes = await readFile(userScanAssetPath(scan.assetKey));
+    const bytes = await readFile(userScanAssetPath(assetKey));
 
     return new Response(bytes, {
       headers: {

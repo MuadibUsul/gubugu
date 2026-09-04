@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { goods, postImages, posts, ratings, userGoods } from '@/drizzle/schema';
@@ -163,7 +163,16 @@ export async function getUserProfilePageData(
           .from(userGoods)
           .innerJoin(goods, eq(userGoods.goodsId, goods.id))
           .where(
-            and(eq(userGoods.userId, userId), eq(goods.status, 'published')),
+            and(
+              eq(userGoods.userId, userId),
+              eq(goods.status, 'published'),
+              // 公开视角只给已点亮的拥有项。owned 但未点亮只是「收进谷柜、待确认
+              // 实物」，愿望与可换也都不构成公开拥有——这条边界在服务端划，而不是
+              // 指望每个展示组件各自记得过滤。本人视角保留全部状态。
+              ...(viewerMode === 'self'
+                ? []
+                : [eq(userGoods.status, 'owned'), isNotNull(userGoods.litAt)]),
+            ),
           )
           .orderBy(desc(userGoods.updatedAt)),
         db
