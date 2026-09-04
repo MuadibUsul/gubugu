@@ -2,11 +2,45 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { ImageResponse } from 'next/og';
+import sharp from 'sharp';
 import { z } from 'zod';
 
 import { formatGoodsTypeLabel } from '@/lib/catalog-labels';
 import { toSafeShareImageUrl } from '@/lib/goods-image';
+import { catalogAssetPath } from '@/server/catalog-crawler/image-store';
 import { getGoodsDetailPageData } from '@/server/data';
+
+// ImageResponse (Satori) 只认 PNG/JPEG，不支持 WebP —— 而爬取入库的目录图都是
+// .webp。这里统一用 sharp 把主图转成 PNG data URI 再喂给卡片：本地 catalog-assets
+// 直接读盘，其余走 SSRF 白名单后 fetch。转换失败则回退到占位版式。
+async function loadShareImagePng(
+  rawUrl: string | null | undefined,
+): Promise<string | null> {
+  if (!rawUrl) return null;
+
+  try {
+    let bytes: Buffer | null = null;
+
+    const localMatch = rawUrl.match(/\/catalog-assets\/([^/?#]+)$/);
+    if (localMatch) {
+      bytes = await readFile(catalogAssetPath(decodeURIComponent(localMatch[1])));
+    } else {
+      const safeUrl = toSafeShareImageUrl(rawUrl);
+      if (!safeUrl) return null;
+      const res = await fetch(safeUrl);
+      if (!res.ok) return null;
+      bytes = Buffer.from(await res.arrayBuffer());
+    }
+
+    const png = await sharp(bytes)
+      .resize({ width: 1000, height: 1000, fit: 'inside', withoutEnlargement: true })
+      .png()
+      .toBuffer();
+    return `data:image/png;base64,${png.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -79,9 +113,9 @@ export async function GET(
 
   const primaryImage =
     goods.images.find((image) => image.isPrimary) ?? goods.images[0];
-  // ImageResponse fetches images on the server. Reuse the existing image
-  // allowlist so an arbitrary catalog URL cannot turn this route into SSRF.
-  const imageUrl = toSafeShareImageUrl(primaryImage?.imageUrl);
+  // 主图转 PNG data URI（见 loadShareImagePng）：Satori 不支持 WebP，直接喂原图会让
+  // 整张分享卡渲染失败、请求挂起。转换内部已复用 SSRF 白名单。
+  const imageUrl = await loadShareImagePng(primaryImage?.imageUrl);
   const primaryCharacter =
     goods.characters.find((character) => character.isPrimary) ??
     goods.characters[0];
