@@ -48,7 +48,6 @@ function SheetEntry({
         <h3 className="text-[14.5px] leading-snug transition-colors group-hover:text-[var(--shu)]">
           {item.name}
         </h3>
-        <span className="sku-code">{item.skuCode}</span>
 
         <div className="mt-auto pt-2">
           {item.isLit ? (

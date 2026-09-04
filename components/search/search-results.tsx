@@ -113,9 +113,9 @@ export function SearchResults({
       <header className="flex flex-col gap-4 pb-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
-            <p className="section-kicker">检索结果</p>
-            <h2 className="font-heading text-foreground text-[clamp(28px,3.2vw,38px)] leading-tight">
-              {result.query ? `“${result.query}”` : '全部商品'}
+            <p className="section-kicker hidden sm:inline-flex">检索结果</p>
+            <h2 className="font-heading text-foreground text-[clamp(17px,4.6vw,38px)] leading-tight">
+              {result.query ? `“${result.query}”` : '全部谷库'}
             </h2>
           </div>
 

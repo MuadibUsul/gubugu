@@ -35,7 +35,6 @@ export function TradeListingCard({ listing }: { listing: TradeListingView }) {
             {listing.goods.name}
           </h3>
         </Link>
-        <p className="num mt-1 truncate">{listing.goods.skuCode}</p>
         <p className="text-muted-foreground mt-3 line-clamp-2 text-[13px] leading-relaxed">
           {listing.description}
         </p>

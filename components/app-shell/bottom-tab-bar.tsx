@@ -78,7 +78,7 @@ const TABS: Tab[] = [
     ),
   },
   {
-    href: '/me',
+    href: '/me/collection',
     label: '我',
     match: (p) => p === '/me' || p.startsWith('/me/') || p.startsWith('/users'),
     icon: (
@@ -96,7 +96,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="底部导航"
-      className="app-tabbar fixed inset-x-0 bottom-0 z-50 border-t border-[var(--rule)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur md:hidden"
+      className="app-tabbar fixed inset-x-0 bottom-0 z-50 border-t border-[var(--rule)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur"
     >
       <ul className="mx-auto grid max-w-[560px] grid-cols-5 items-end px-2">
         {TABS.map((tab) => {

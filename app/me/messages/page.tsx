@@ -22,10 +22,28 @@ export default async function MessagesPage({
     searchParams,
   ]);
   const feedback = one(query.message);
+  const totalUnread = conversations.reduce(
+    (sum, conversation) => sum + (conversation.unreadCount || 0),
+    0,
+  );
 
   return (
-    <main className="mx-auto w-full max-w-[980px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <section className="relative overflow-hidden rounded-[26px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--sky-soft),color-mix(in_oklab,var(--violet-soft)_72%,var(--surface)))] px-5 py-7 sm:px-8 sm:py-9">
+    <main className="mx-auto w-full max-w-[980px] px-4 pt-4 pb-24 sm:px-6 md:px-8 md:pt-8">
+      <div className="mb-2 flex items-center gap-3 border-b border-[var(--rule-2)] pb-3">
+        <Link aria-label="返回" className="flex-none text-[var(--ink-2)]" href="/me">
+          <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
+            <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z" />
+          </svg>
+        </Link>
+        <h1 className="flex-1 text-[17px] font-bold">私信</h1>
+        {totalUnread ? (
+          <span className="text-muted-foreground text-[12px]">
+            {totalUnread} 条未读
+          </span>
+        ) : null}
+      </div>
+
+      <section className="hidden">
         <p className="section-kicker">一对一沟通</p>
         <h1 className="mt-3 text-[clamp(30px,4vw,44px)]">私信</h1>
         <p className="text-muted-foreground mt-3 max-w-[62ch] text-sm">

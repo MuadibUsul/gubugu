@@ -9,8 +9,8 @@ import {
   HomeContentsFallback,
   HomeContentsSection,
 } from '@/components/home/home-contents';
+import { MobileAppHeader } from '@/components/app-shell/mobile-app-header';
 import { HomeFrontispiece } from '@/components/home/home-frontispiece';
-import { HomeIndexSection } from '@/components/home/home-index';
 import { HomeLeaderboardSection } from '@/components/home/home-leaderboard-band';
 import {
   HomeMarketFallback,
@@ -59,7 +59,7 @@ function buildSlides(
       id: item.id,
       kicker: item.ip.name,
       title: item.name,
-      desc: item.skuCode,
+      desc: item.ip.name,
       href: `/goods/${item.slug}`,
       imageUrl: item.primaryImageUrl,
     }));
@@ -91,9 +91,11 @@ export default async function Home() {
 
   return (
     <main
-      className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-20 sm:px-6 md:px-8 md:pt-8"
+      className="mx-auto w-full max-w-[1240px] px-4 pt-0 pb-20 sm:px-6 md:px-8 md:pt-8"
       data-can-scan={canScan ? 'true' : 'false'}
     >
+      <MobileAppHeader />
+
       <HomeFrontispiece
         featuredItems={frontispiece.featuredItems}
         goodsCount={frontispiece.goodsCount}
@@ -112,14 +114,12 @@ export default async function Home() {
       </Suspense>
 
       <Suspense fallback={<HomeAccessionsFallback />}>
-        <HomeAccessionsSection viewerId={authUser?.id} />
+        <HomeAccessionsSection />
       </Suspense>
 
       <Suspense fallback={null}>
         <HomeLeaderboardSection />
       </Suspense>
-
-      <HomeIndexSection />
     </main>
   );
 }

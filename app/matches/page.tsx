@@ -59,17 +59,14 @@ function DirectMatchCard({ match }: { match: DirectMatchView }) {
   const requestedGoods = match.viewerReceives[0];
 
   return (
-    <article className="panel-float rounded-[20px] border border-[var(--rule)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="section-kicker">换谷匹配度</p>
-          <p className="font-heading text-[40px] leading-none text-[var(--shu)]">
-            {match.score}
-            <span className="ml-1 text-[18px] text-[var(--ink-3)]">/100</span>
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-[15px] font-medium">{match.otherLabel}</p>
+    <article className="panel-float rounded-[20px] border border-[var(--rule)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)] sm:p-5">
+      {/* 卡头：对方 + 双向匹配分（对齐设计稿）。 */}
+      <div className="flex items-center gap-2">
+        <span className="grid size-[26px] shrink-0 place-items-center rounded-full bg-[var(--violet-soft)] text-[11px] font-bold text-[var(--violet)]">
+          {match.otherLabel.slice(0, 1)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12px] font-medium">{match.otherLabel}</p>
           {match.otherHandle ? (
             <Link
               className="num hover:text-[var(--shu)]"
@@ -79,16 +76,49 @@ function DirectMatchCard({ match }: { match: DirectMatchView }) {
             </Link>
           ) : null}
         </div>
+        <span className="rounded-[2px] border border-[var(--kin)] px-[7px] py-1 text-[11px] font-medium text-[var(--kin)]">
+          双向 {match.score}
+        </span>
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div>
-          <p className="lbl mb-2">你将得到</p>
-          <GoodsRow items={match.viewerReceives} />
+      {/* 她出 ⇄ 想要你的：图对图（对齐设计稿）。 */}
+      <div className="mt-3 flex items-center gap-2.5">
+        <div className="flex-1">
+          <p className="lbl">她出</p>
+          {match.viewerReceives[0] ? (
+            <GoodsCardArt
+              alt={match.viewerReceives[0].name}
+              className="mt-1.5 aspect-square rounded-[3px]"
+              imageUrl={match.viewerReceives[0].primaryImageUrl}
+              sizes="120px"
+            />
+          ) : null}
+          <p className="mt-1.5 line-clamp-1 text-[12px]">
+            {match.viewerReceives[0]?.name ?? '—'}
+          </p>
         </div>
-        <div>
-          <p className="lbl mb-2">你需要提供</p>
-          <GoodsRow items={match.otherReceives} />
+        <svg
+          className="mt-4 flex-none"
+          width="18"
+          height="18"
+          viewBox="0 0 256 256"
+          fill="var(--violet)"
+        >
+          <path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z" />
+        </svg>
+        <div className="flex-1">
+          <p className="lbl">想要你的</p>
+          {match.otherReceives[0] ? (
+            <GoodsCardArt
+              alt={match.otherReceives[0].name}
+              className="mt-1.5 aspect-square rounded-[3px]"
+              imageUrl={match.otherReceives[0].primaryImageUrl}
+              sizes="120px"
+            />
+          ) : null}
+          <p className="mt-1.5 line-clamp-1 text-[12px]">
+            {match.otherReceives[0]?.name ?? '—'}
+          </p>
         </div>
       </div>
 
@@ -275,8 +305,37 @@ export default async function MatchesPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <section className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_72%,var(--surface)))] px-5 py-8 sm:px-8 sm:py-10">
+    <main className="mx-auto w-full max-w-[1240px] px-4 pt-4 pb-24 sm:px-6 md:px-8 md:pt-8">
+      <div>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h1 className="text-[19px] font-bold">换谷</h1>
+          <Link
+            className="text-[12px] font-medium text-[var(--shu)]"
+            href="/matches/new"
+          >
+            发布换谷帖
+          </Link>
+        </div>
+        <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <a className="chip chip--on px-[11px] py-[5px] text-[11.5px]" href="#matching">
+            匹配我的
+          </a>
+          <a className="chip px-[11px] py-[5px] text-[11.5px]" href="#plaza">
+            全部帖子
+          </a>
+          <a className="chip px-[11px] py-[5px] text-[11.5px]" href="#mine">
+            我的提案
+          </a>
+          <Link
+            className="chip px-[11px] py-[5px] text-[11.5px]"
+            href="/me/exchanges"
+          >
+            履约中 {waitingForViewer.length}
+          </Link>
+        </div>
+      </div>
+
+      <section className="hidden">
         <span className="absolute -top-24 right-[8%] size-64 rounded-full bg-[color-mix(in_oklab,var(--violet)_9%,transparent)] blur-3xl" />
         <div className="relative min-w-0">
           <p className="section-kicker">谷布谷 · 以物换物中心</p>
@@ -342,11 +401,11 @@ export default async function MatchesPage({
         </Link>
       </nav>
 
-      <section className="scroll-mt-24 py-14" id="plaza">
+      <section className="scroll-mt-24 py-9 md:py-14" id="plaza">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="section-kicker">换谷广场</p>
-            <h2 className="mt-3 text-[clamp(28px,3.4vw,40px)]">
+            <h2 className="mt-3 text-[clamp(17px,4.6vw,40px)]">
               看看大家拿出了什么
             </h2>
           </div>
@@ -372,13 +431,13 @@ export default async function MatchesPage({
       </section>
 
       <section
-        className="scroll-mt-24 border-t border-[var(--rule)] py-14"
+        className="scroll-mt-24 border-t border-[var(--rule)] py-9 md:py-14"
         id="mine"
       >
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="section-kicker">我的换谷工作台</p>
-            <h2 className="mt-3 text-[clamp(28px,3.4vw,40px)]">
+            <h2 className="mt-3 text-[clamp(17px,4.6vw,40px)]">
               该处理的，一眼看到
             </h2>
           </div>
@@ -472,49 +531,26 @@ export default async function MatchesPage({
         )}
       </section>
 
+      {/* 双向 / 三方合成一个「为你匹配」区，类型只用卡上的小标签区分，不再拆两个区域。 */}
       <section
-        className="scroll-mt-24 border-t border-[var(--rule)] py-14"
+        className="scroll-mt-24 border-t border-[var(--rule)] py-9 md:py-14"
         id="matching"
       >
         <div className="min-w-0">
-          <p className="section-kicker">双向合拍</p>
-          <h2 className="mt-3 mb-7 text-[clamp(28px,3.4vw,40px)]">
-            彼此都想要
-          </h2>
-          {direct.length > 0 ? (
-            <div
-              className={`grid gap-5 ${direct.length > 1 ? 'lg:grid-cols-2' : ''}`}
-            >
+          <h2 className="text-[clamp(16px,4.6vw,40px)]">为你匹配</h2>
+          {direct.length > 0 || threeParty.length > 0 ? (
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
               {direct.map((match) => (
                 <DirectMatchCard key={match.otherUserId} match={match} />
               ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <strong>还没有双向匹配</strong>
-              把更多谷子标记为「愿意交换」，并把想要的谷子加入愿望单，匹配引擎就能为你牵线。
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="border-border border-t py-14">
-        <div className="min-w-0">
-          <p className="section-kicker">三方循环</p>
-          <h2 className="mt-3 mb-7 text-[clamp(28px,3.4vw,40px)]">
-            多走一步，也能换到
-          </h2>
-          {threeParty.length > 0 ? (
-            <div className="grid gap-4 lg:grid-cols-2">
               {threeParty.map((cycle, index) => (
                 <ThreePartyCard cycle={cycle} key={index} />
               ))}
             </div>
           ) : (
-            <div className="empty-state">
-              <strong>暂无三方循环</strong>
-              当出现「你想要 B 的、B 想要 C 的、C
-              想要你的」这种环时，会在这里出现三方换谷方案。
+            <div className="empty-state mt-4">
+              <strong>暂无匹配</strong>
+              把更多谷子标记「可换」、想要的加入愿望单，匹配引擎会为你牵线（双向或三方）。
             </div>
           )}
         </div>

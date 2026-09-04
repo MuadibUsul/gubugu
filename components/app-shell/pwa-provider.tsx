@@ -37,9 +37,15 @@ export function PwaProvider() {
     const ua = navigator.userAgent;
     const isIos = /iphone|ipad|ipod/i.test(ua);
     const isSafari = /safari/i.test(ua) && !/crios|fxios|android/i.test(ua);
-    if (isIos && isSafari) setIosHint(true);
+    const hintFrame =
+      isIos && isSafari
+        ? window.requestAnimationFrame(() => setIosHint(true))
+        : null;
 
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      if (hintFrame !== null) window.cancelAnimationFrame(hintFrame);
+    };
   }, []);
 
   if (!deferred && !iosHint) return null;
@@ -59,7 +65,11 @@ export function PwaProvider() {
   return (
     <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-[60] mx-auto max-w-[560px] px-4 md:bottom-4">
       <div className="flex items-center gap-3 rounded-[16px] border border-[var(--rule)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-float)]">
-        <img alt="" className="size-9 rounded-[10px]" src="/icons/icon-192.png" />
+        <img
+          alt=""
+          className="size-9 rounded-[10px]"
+          src="/icons/icon-192.png"
+        />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">把谷布谷装进主屏</p>
           <p className="text-muted-foreground mt-0.5 text-xs leading-snug">

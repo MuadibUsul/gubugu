@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { z } from 'zod';
 
 import { SearchFilters } from '@/components/search/search-filters';
 import { SearchResults } from '@/components/search/search-results';
-import type { SearchPageControls } from '@/components/search/search-query';
+import {
+  formatGoodsTypeLabel,
+  type SearchPageControls,
+} from '@/components/search/search-query';
 import {
   getSingleSearchParamValue,
   getMultiSearchParamValues,
@@ -71,6 +75,14 @@ function normalizeSearchControls(
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const controls = normalizeSearchControls(resolvedSearchParams);
+  const hasFacets = Boolean(
+    controls.query ||
+      controls.ipSlug ||
+      controls.characterSlug ||
+      controls.seriesSlug ||
+      controls.goodsType ||
+      controls.tagSlugs.length,
+  );
   const [authUser, canScan] = await Promise.all([
     getAuthUser(),
     isMobileRequest(),
@@ -100,22 +112,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8"
       data-can-scan={canScan ? 'true' : 'false'}
     >
-      <form
-        action="/search"
-        className="relative overflow-hidden rounded-[26px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_72%,var(--surface)))] px-5 py-7 sm:px-8 sm:py-9"
-      >
-        <span className="absolute -top-24 right-[8%] size-60 rounded-full bg-[color-mix(in_oklab,var(--violet)_8%,transparent)] blur-3xl" />
+      <form action="/search" className="py-3">
         <div className="relative min-w-0">
-          <p className="section-kicker">公共谷库 · 全站 SKU 图鉴</p>
-          <h1 className="mt-3 text-[clamp(32px,4vw,48px)] leading-[1.12]">
-            整座图鉴，每一件都以原色陈列。
-          </h1>
-          <p className="text-muted-foreground mt-3 text-sm">
-            公共谷库只管浏览全站 SKU，所以每件都上色；点亮留给谷柜——扫描实物确认
-            SKU 后，那件才在你的收藏里由灰转彩。
-          </p>
-
-          <div className="mt-6 flex max-w-[680px] rounded-[18px] border border-[var(--rule)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-card)] focus-within:border-[var(--shu)]">
+          <div className="flex rounded-[10px] border border-[var(--rule)] bg-[var(--surface)] p-1.5 focus-within:border-[var(--shu)]">
             <input
               aria-label="搜索谷子"
               autoComplete="off"
@@ -135,8 +134,54 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         </div>
       </form>
 
+      {/* 筛选胶囊条（对齐设计稿「谷库」）：全部 + 维度快捷入口。 */}
+      <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <Link
+          className={`chip flex-none px-[11px] py-[5px] text-[11.5px] ${hasFacets ? '' : 'chip--on'}`}
+          href="/search"
+        >
+          全部
+        </Link>
+        {['IP', '角色', '系列', '类型'].map((label) => (
+          <a
+            className="chip flex-none px-[11px] py-[5px] text-[11.5px]"
+            href="#filters"
+            key={label}
+          >
+            {label}
+          </a>
+        ))}
+      </div>
+
+      {/* 发现区（从首页迁来）：按类型逛谷 + 排行榜入口。有搜索/筛选时收起，只看结果。 */}
+      {!hasFacets && (pageData?.filterOptions?.goodsTypes.length ?? 0) > 0 ? (
+        <section className="mt-4">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[15px] font-medium">按类型逛谷</h2>
+            <Link
+              className="flex-none text-[12px] font-medium text-[var(--shu)]"
+              href="/leaderboard"
+            >
+              收藏排行榜 →
+            </Link>
+          </div>
+          <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+            {pageData?.filterOptions?.goodsTypes.map((type) => (
+              <Link
+                className="chip flex-none px-[11px] py-[6px] text-[11.5px]"
+                href={`/search?goodsType=${encodeURIComponent(type.value)}`}
+                key={type.value}
+              >
+                {formatGoodsTypeLabel(type.value)}{' '}
+                <span className="ml-1 opacity-60">{type.goodsCount}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section className="grid gap-6 py-9 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-        <div className="min-w-0 lg:order-1">
+        <div className="min-w-0 scroll-mt-16 lg:order-1" id="filters">
           <SearchFilters
             controls={controls}
             filterOptions={pageData?.filterOptions}

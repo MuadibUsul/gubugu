@@ -1,51 +1,41 @@
 import Link from 'next/link';
 
+import { RemoteImage } from '@/components/ui/remote-image';
 import { listHotIps, type HomeHotIp } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
-function ContentsRow({ ip, index }: { ip: HomeHotIp; index: number }) {
-  const tones = [
-    'bg-[var(--shu-soft)] border-[color:color-mix(in_oklab,var(--shu)_18%,var(--rule))]',
-    'bg-[var(--violet-soft)] border-[color:color-mix(in_oklab,var(--violet)_18%,var(--rule))]',
-    'bg-[var(--sky-soft)] border-[color:color-mix(in_oklab,var(--sky)_18%,var(--rule))]',
-  ] as const;
-
+// 热门作品：一排作品封面缩略（对齐设计稿）。横向滚动，点开进入作品页。
+function ContentsThumb({ ip }: { ip: HomeHotIp }) {
   return (
-    <Link
-      className={`panel-float group relative min-h-[154px] overflow-hidden rounded-[20px] border p-5 ${tones[index % tones.length]}`}
-      href={`/ips/${ip.slug}`}
-    >
-      <span className="absolute -right-3 -bottom-5 font-mono text-[76px] leading-none font-black text-[var(--ink)]/[0.035]">
-        {String(index + 1).padStart(2, '0')}
-      </span>
-
-      <span className="relative block min-w-0">
-        <span className="num">IP · {String(index + 1).padStart(2, '0')}</span>
-        <span className="font-heading mt-3 block text-[20px] leading-tight font-bold transition-colors group-hover:text-[var(--shu)]">
-          {ip.name}
-        </span>
-        {ip.nameLocalized && ip.nameLocalized !== ip.name ? (
-          <span className="text-muted-foreground mt-1 block text-[13px]">
-            {ip.nameLocalized}
+    <Link className="group w-[84px] flex-none" href={`/ips/${ip.slug}`}>
+      <div className="goods-card__art aspect-square rounded-[6px] border border-[var(--rule)]">
+        {ip.coverImageUrl ? (
+          <RemoteImage
+            alt={ip.name}
+            className="goods-card__art-image"
+            sizes="84px"
+            src={ip.coverImageUrl}
+          />
+        ) : (
+          <span className="grid size-full place-items-center text-[20px] text-[var(--ink-3)]">
+            {ip.name.slice(0, 1)}
           </span>
-        ) : null}
-        <span className="text-muted-foreground mt-4 block text-[12px]">
-          {ip.goodsCount} 件谷子 · {ip.characterCount} 个角色 · {ip.seriesCount}{' '}
-          个系列
-        </span>
-      </span>
-      <span className="absolute top-5 right-5 text-[var(--shu)]">↗</span>
+        )}
+      </div>
+      <p className="mt-2 line-clamp-1 text-center text-[11.5px] font-medium transition-colors group-hover:text-[var(--shu)]">
+        {ip.name}
+      </p>
     </Link>
   );
 }
 
 export function HomeContentsFallback() {
   return (
-    <div className="py-14">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, index) => (
+    <div className="py-9 md:py-16">
+      <div className="flex gap-[9px] overflow-hidden">
+        {Array.from({ length: 5 }).map((_, index) => (
           <div
-            className="bg-muted h-[154px] animate-pulse rounded-[20px]"
+            className="bg-muted size-[84px] animate-pulse rounded-[6px]"
             key={index}
           />
         ))}
@@ -59,7 +49,7 @@ export async function HomeContentsSection() {
   let failed = false;
 
   try {
-    ips = await listHotIps({ limit: 6 });
+    ips = await listHotIps({ limit: 12 });
   } catch (error) {
     if (!isDatabaseAccessConfigurationError(error)) {
       console.error(error);
@@ -68,41 +58,33 @@ export async function HomeContentsSection() {
     failed = true;
   }
 
+  if (failed || ips.length === 0) {
+    return null;
+  }
+
   return (
-    <section className="py-16">
+    <section className="py-9 md:py-16" aria-label="热门作品">
       <div className="min-w-0">
         <div className="flex items-end justify-between gap-5">
           <div>
-            <p className="section-kicker">从喜欢的作品出发</p>
-            <h2 className="mt-3 text-[clamp(28px,3.4vw,40px)]">热门作品</h2>
+            <p className="section-kicker hidden md:inline-flex">
+              从喜欢的作品出发
+            </p>
+            <h2 className="text-[clamp(16px,4.6vw,40px)] md:mt-3">热门作品</h2>
           </div>
-          {ips.length > 0 ? (
-            <Link
-              className="text-muted-foreground text-sm font-semibold hover:text-[var(--shu)]"
-              href="/search"
-            >
-              浏览全部 →
-            </Link>
-          ) : null}
+          <Link
+            className="text-muted-foreground shrink-0 text-[11.5px] font-semibold hover:text-[var(--shu)]"
+            href="/search"
+          >
+            浏览全部 →
+          </Link>
         </div>
 
-        {failed ? (
-          <div className="empty-state mt-6">
-            <strong>目次暂时读不出来</strong>
-            数据源不可用，稍后刷新再试。
-          </div>
-        ) : ips.length === 0 ? (
-          <div className="empty-state mt-6">
-            <strong>还没有收录任何作品</strong>
-            第一部作品录入之后，它会出现在这里。
-          </div>
-        ) : (
-          <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {ips.map((ip, index) => (
-              <ContentsRow index={index} ip={ip} key={ip.id} />
-            ))}
-          </div>
-        )}
+        <div className="mt-3 flex gap-[9px] overflow-x-auto pb-1 md:mt-7 [scrollbar-width:none]">
+          {ips.map((ip) => (
+            <ContentsThumb ip={ip} key={ip.id} />
+          ))}
+        </div>
       </div>
     </section>
   );

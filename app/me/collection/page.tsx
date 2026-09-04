@@ -1,33 +1,76 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { z } from 'zod';
 
-import { UserCollectionHeader } from '@/components/user/user-collection-header';
-import {
-  UserCollectionSheet,
-  type CollectionStatusFilter,
-} from '@/components/user/user-collection-sheet';
-import { UserPhotoStrip } from '@/components/user/user-photo-strip';
 import { RemoteImage } from '@/components/ui/remote-image';
 import { getSingleSearchParamValue } from '@/lib/search-params';
 import { requireAuthUser } from '@/server/auth/session';
-import { getUserProfilePageData } from '@/server/data';
+import {
+  getUserProfilePageData,
+  type UserProfileGoodsCard,
+} from '@/server/data';
 import { countUnlockedAchievements } from '@/server/data/achievements';
+import { listExchangesForUser } from '@/server/data/exchanges';
+import { getFollowCounts } from '@/server/data/follows';
+import { countUnreadMessages } from '@/server/data/messages';
+import { listNotificationsForUser } from '@/server/data/notifications';
 import { listUserScans } from '@/server/data/user-scans';
 
 export const metadata: Metadata = {
-  title: '我的收藏',
-  description: '当前登录用户的收藏帖。',
+  title: '我的谷柜',
+  description: '当前登录用户的谷柜、完成度与未鉴定收藏。',
 };
 
 export const dynamic = 'force-dynamic';
 
+type StatusFilter = 'owned' | 'wanted' | 'exchange';
+
 const statusSchema = z
   .enum(['owned', 'wanted', 'exchange'])
-  .default('owned') satisfies z.ZodType<CollectionStatusFilter>;
+  .default('owned') satisfies z.ZodType<StatusFilter>;
 
 type MyCollectionPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+// 大数用 1.2k 记法，和设计稿一致。
+function fmt(n: number) {
+  return n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n);
+}
+
+// 谷柜墙的一格：只放图。已拥有里未点亮的转灰，点亮的原色 + 一圈金边。
+function WallCell({
+  item,
+  status,
+}: {
+  item: UserProfileGoodsCard;
+  status: StatusFilter;
+}) {
+  const lit = Boolean(item.litAt);
+  const gray = status === 'owned' && !lit;
+  return (
+    <Link
+      aria-label={`${item.name}，${lit ? '已点亮' : status === 'owned' ? '未点亮' : ''}`}
+      className="goods-card__art aspect-[3/4] overflow-hidden rounded-[2px]"
+      href={`/goods/${item.slug}`}
+      style={
+        status === 'owned' && lit
+          ? { boxShadow: '0 0 0 1px var(--kin)' }
+          : undefined
+      }
+    >
+      {item.primaryImageUrl ? (
+        <RemoteImage
+          alt={item.name}
+          className="goods-card__art-image"
+          sizes="33vw"
+          src={item.primaryImageUrl}
+          style={gray ? { filter: 'grayscale(1) contrast(.86) opacity(.62)' } : undefined}
+        />
+      ) : null}
+    </Link>
+  );
+}
 
 export default async function MyCollectionPage({
   searchParams,
@@ -38,66 +81,172 @@ export default async function MyCollectionPage({
     getSingleSearchParamValue(resolved.status) ?? undefined,
   );
 
-  const [data, badgeCount, scans] = await Promise.all([
-    getUserProfilePageData({ userId: user.id, viewerMode: 'self' }),
-    countUnlockedAchievements(user.id),
-    listUserScans(user.id),
-  ]);
+  const [data, badgeCount, scans, follow, exchanges, unreadMessages, notifications] =
+    await Promise.all([
+      getUserProfilePageData({ userId: user.id, viewerMode: 'self' }),
+      countUnlockedAchievements(user.id),
+      listUserScans(user.id),
+      getFollowCounts(user.id),
+      listExchangesForUser({ userId: user.id, limit: 24 }),
+      countUnreadMessages(user.id),
+      listNotificationsForUser({ userId: user.id, limit: 48 }),
+    ]);
+
+  const { summary } = data;
+  const activeExchangeCount = exchanges.filter(
+    (item) => !['completed', 'cancelled'].includes(item.status),
+  ).length;
+  const unreadNotifCount = notifications.filter((item) => !item.readAt).length;
+  const wallItems = data.goods[status];
+
+  const stats = [
+    { value: fmt(summary.cabinetCount), label: '谷柜', gold: false },
+    { value: fmt(follow.following), label: '关注', gold: false },
+    { value: fmt(follow.followers), label: '粉丝', gold: false },
+    { value: fmt(badgeCount), label: '徽章', gold: true },
+  ];
+
+  const actions = [
+    { label: '换谷', count: activeExchangeCount, href: '/matches' },
+    { label: '私信', count: unreadMessages, href: '/me/messages' },
+    { label: '通知', count: unreadNotifCount, href: '/me/notifications' },
+  ];
+
+  const chips: { label: string; count: number; status?: StatusFilter; href: string }[] = [
+    { label: '已点亮', count: summary.litCount, status: 'owned', href: '/me/collection' },
+    { label: '想要', count: summary.wantedCount, status: 'wanted', href: '/me/collection?status=wanted' },
+    { label: '可换', count: summary.exchangeCount, status: 'exchange', href: '/me/collection?status=exchange' },
+    { label: '未鉴定', count: scans.length, href: '#unverified' },
+  ];
 
   return (
-    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <UserCollectionHeader
-        badgeCount={badgeCount}
-        badgesHref={user.handle ? `/users/${user.handle}/badges` : undefined}
-        data={data}
-        displayName={user.displayLabel}
-        eyebrow="收集册"
-        handle={user.handle ?? user.email ?? null}
-        railLabel="我的收藏"
-      />
-
-      <section className="py-14">
-        <div className="min-w-0">
-          <p className="section-kicker">收藏一览</p>
-          <h2 className="mt-3 mb-7 text-[clamp(28px,3.4vw,40px)]">
-            我的收藏清单
-          </h2>
-          <UserCollectionSheet
-            basePath="/me/collection"
-            data={data}
-            status={status}
-          />
+    <main className="mx-auto w-full max-w-[720px] px-4 pt-4 pb-24 sm:px-6">
+      {/* 头部：头像 + 名字 + 看公开主页 */}
+      <div className="flex items-center gap-3">
+        <div className="grid size-[52px] flex-none place-items-center rounded-full bg-[var(--shu-soft)] text-[18px] font-bold text-[var(--shu)]">
+          {user.displayLabel.slice(0, 1)}
         </div>
-      </section>
-
-      {scans.length > 0 ? (
-        <section className="pb-14">
-          <p className="section-kicker">未鉴定收藏 · 仅自己可见</p>
-          <h2 className="mt-3 mb-5 text-[clamp(20px,3vw,28px)]">
-            扫到但未匹配官方的谷子
-          </h2>
-          <p className="text-muted-foreground mb-5 max-w-[46ch] text-sm">
-            这些已收进你的谷柜，但因为没匹配到官方谷子（可能是盗版、二创或未收录），不会在公开主页展示。
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-medium">{user.displayLabel}</p>
+          <p className="text-muted-foreground mt-0.5 truncate text-[11px]">
+            {user.handle ? `@${user.handle}` : (user.email ?? '')}
           </p>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {scans.map((scan) => (
+        </div>
+        {user.handle ? (
+          <Link
+            className="flex-none rounded-[3px] border border-[var(--rule)] px-3 py-2 text-[12px] text-[var(--ink-2)]"
+            href={`/users/${user.handle}`}
+          >
+            看公开主页
+          </Link>
+        ) : null}
+      </div>
+
+      {/* 统计：谷柜 / 关注 / 粉丝 / 徽章 */}
+      <div className="mt-3.5 flex">
+        {stats.map((s) => (
+          <div className="flex-1 text-center" key={s.label}>
+            <p
+              className="font-heading text-[16px] leading-none font-semibold"
+              style={s.gold ? { color: 'var(--kin)' } : undefined}
+            >
+              {s.value}
+            </p>
+            <p className="text-muted-foreground mt-1 text-[11px]">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 操作：换谷 / 私信 / 通知 */}
+      <div className="mt-4 flex gap-2">
+        {actions.map((a) => (
+          <Link
+            className="flex-1 rounded-[3px] border border-[var(--rule)] py-2.5 text-center text-[12px] text-[var(--ink-2)]"
+            href={a.href}
+            key={a.label}
+          >
+            {a.label}
+            {a.count ? ` ${a.count}` : ''}
+          </Link>
+        ))}
+      </div>
+
+      {/* 状态胶囊：已点亮 / 想要 / 可换 / 未鉴定 */}
+      <div className="mt-[18px] flex gap-1.5 overflow-x-auto border-b border-[var(--rule)] pb-2.5 [scrollbar-width:none]">
+        {chips.map((c) => {
+          const active = c.status
+            ? c.status === status
+            : false;
+          return (
+            <Link
+              className={`chip flex-none px-[11px] py-[5px] text-[11.5px] ${active ? 'chip--on' : ''}`}
+              href={c.href}
+              key={c.label}
+            >
+              {c.label} {c.count}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* 完成度行 */}
+      <div className="mt-3 flex items-center gap-2">
+        <p className="text-muted-foreground text-[11px]">
+          完成度 {summary.litProgressPercentage}% · {summary.trackedGoodsCount}{' '}
+          追踪
+        </p>
+        <span className="h-px flex-1 bg-[var(--rule)]" />
+        <Link className="text-[11px] text-[var(--shu)]" href="/me/profile">
+          加收藏边框
+        </Link>
+      </div>
+
+      {/* 谷柜墙：三列，仅图，点亮原色 / 未点亮转灰 */}
+      {wallItems.length ? (
+        <div className="mt-3 grid grid-cols-3 gap-[5px]">
+          {wallItems.map((item) => (
+            <WallCell item={item} key={item.id} status={status} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state mt-3">
+          <strong>这一栏还没有收藏</strong>
+          去图鉴里标一下状态，它就会出现在这里。
+        </div>
+      )}
+
+      {/* 未鉴定收藏 · 仅自己可见 */}
+      {scans.length > 0 ? (
+        <section className="mt-5 border-t border-[var(--rule)] pt-4" id="unverified">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[15px] font-medium">未鉴定收藏 · 仅自己可见</p>
+            <span className="text-muted-foreground text-[11px]">
+              {scans.length}
+            </span>
+          </div>
+          <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+            {scans.slice(0, 6).map((scan) => (
               <div
-                className="relative aspect-square overflow-hidden rounded-[12px] border border-[var(--rule)] bg-[var(--sunken)]"
+                className="goods-card__art h-[78px] w-[62px] flex-none rounded-[2px] border border-dashed border-[var(--rule)]"
                 key={scan.id}
               >
                 <RemoteImage
                   alt="未鉴定收藏"
-                  className="size-full object-cover"
-                  sizes="120px"
+                  className="goods-card__art-image"
+                  sizes="62px"
                   src={scan.imageUrl}
+                  style={{ filter: 'grayscale(1) contrast(.86) opacity(.62)' }}
                 />
               </div>
             ))}
+            {scans.length > 6 ? (
+              <div className="flex h-[78px] w-[62px] flex-none items-center justify-center rounded-[2px] border border-dashed border-[var(--rule)] text-[11px] text-[var(--ink-3)]">
+                +{scans.length - 6}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
-
-      <UserPhotoStrip items={data.recentPhotoEntries} />
     </main>
   );
 }

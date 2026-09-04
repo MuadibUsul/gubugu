@@ -77,7 +77,6 @@ function SheetEntry({
         <h3 className="line-clamp-2 text-[13px] leading-5 transition-colors group-hover:text-[var(--shu)] sm:text-[14.5px]">
           {item.name}
         </h3>
-        <span className="sku-code">{item.skuCode}</span>
         <span className="text-muted-foreground text-[12.5px]">
           {item.ip.name}
         </span>

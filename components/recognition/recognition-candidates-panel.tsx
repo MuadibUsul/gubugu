@@ -222,9 +222,6 @@ export function RecognitionCandidatesPanel({
                 <h3 className="text-foreground mt-2 text-xl leading-tight font-semibold">
                   {confirmedCandidate.goods.name}
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))]">
-                  {confirmedCandidate.goods.skuCode}
-                </p>
               </div>
             ) : null}
           </div>

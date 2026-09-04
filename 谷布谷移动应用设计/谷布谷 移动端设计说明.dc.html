@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-382c8f42-1ab7-41ae-bbc5-f0d200c84239/styles.css">
+<script src="_ds/nocturne-382c8f42-1ab7-41ae-bbc5-f0d200c84239/_ds_bundle.js"></script>
+<style>body{margin:0;background:var(--color-bg)}a{color:var(--color-accent-300);text-decoration:none}a:hover{color:var(--color-accent)}</style>
+</helmet>
+<div style="max-width:900px;margin:0 auto;padding:56px 32px 96px;font-family:var(--font-body);color:var(--color-text)">
+  <p style="font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-neutral-400);margin:0 0 12px">GUBUGU · Mobile · 设计说明 v0</p>
+  <h1 style="font-family:var(--font-heading);font-weight:500;font-size:40px;line-height:1.15;margin:0 0 8px">谷布谷 移动端</h1>
+  <p style="font-size:15px;line-height:1.7;color:var(--color-neutral-300);margin:0 0 40px;max-width:60ch">收藏身份优先：谷柜主页 + Feed 是主场，相机点亮是最短路径的入口，换谷是关系的兑现。以下是我开工前的假设与设计系统，先过一遍再往下画。</p>
+
+  <div style="height:1px;background:linear-gradient(90deg,transparent,var(--color-neutral-700) 48px,var(--color-neutral-700) calc(100% - 48px),transparent);margin:0 0 36px"></div>
+
+  <h2 style="font-family:var(--font-heading);font-weight:500;font-size:22px;margin:0 0 16px">1 · 已确认的输入</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0 0 40px">
+    <div class="card" style="padding:16px"><p class="card-kicker" style="margin:0 0 6px">导航</p><p class="card-body" style="margin:0">4 Tab：首页 / 换谷 / 消息 / 我的。相机放在首页头部主入口，不占 Tab。</p></div>
+    <div class="card" style="padding:16px"><p class="card-kicker" style="margin:0 0 6px">主张</p><p class="card-body" style="margin:0">收藏身份与社交炫耀 —— 谷柜是可分享的资产页。</p></div>
+    <div class="card" style="padding:16px"><p class="card-kicker" style="margin:0 0 6px">语气</p><p class="card-body" style="margin:0">圈内口语：谷友、蹲谷、点亮、开柜、换谷。</p></div>
+    <div class="card" style="padding:16px"><p class="card-kicker" style="margin:0 0 6px">形态</p><p class="card-body" style="margin:0">Android 边框，静态高保真 + 关键流程可点击。</p></div>
+  </div>
+
+  <h2 style="font-family:var(--font-heading);font-weight:500;font-size:22px;margin:0 0 16px">2 · 我的假设（请纠正）</h2>
+  <ol style="font-size:14px;line-height:1.85;color:var(--color-neutral-300);margin:0 0 40px;padding-left:22px">
+    <li><strong style="color:var(--color-text)">视觉语言用 Nocturne</strong>，不沿用仓库现有的暖红/金「典藏图鉴」皮。结构、交互与文案沿用仓库真实实现；只换色板与字体。若要保留原皮，说一声我改。</li>
+    <li><strong style="color:var(--color-text)">「点亮」是唯一计入进度的动作</strong>：owned + lit_at。手动标记「已拥有」只入柜、不点亮，UI 必须能一眼分清（实心 / 描边）。</li>
+    <li><strong style="color:var(--color-text)">谷库无限下滑流</strong>：搜索页与图鉴页都是瀑布/网格无限流，筛选收进吸顶胶囊条，不做分页。</li>
+    <li><strong style="color:var(--color-text)">状态模型三选多</strong>：已拥有 / 想要 / 可交换 可同时成立，详情页做三态并列而非单选。</li>
+    <li><strong style="color:var(--color-text)">换谷永不涉现金</strong>，报价界面里没有金额字段，只有物换物与最多三次反提计数。</li>
+    <li><strong style="color:var(--color-text)">识别结果必须人工确认</strong>，UI 不暗示自动准确；置信度用分数 + 中文档位（高度接近 / 较高可能 / 可作为候选 / 信号偏弱）。</li>
+  </ol>
+
+  <h2 style="font-family:var(--font-heading);font-weight:500;font-size:22px;margin:0 0 16px">3 · 屏幕清单（12 流程）</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:0 0 16px">
+    <span class="tag tag-accent">首页 IA</span>
+    <span class="tag tag-outline">谷库无限流 + 筛选</span>
+    <span class="tag tag-outline">SKU 详情</span>
+    <span class="tag tag-accent">谷柜 / 完成度</span>
+    <span class="tag tag-accent">相机取景 → 候选 → 点亮</span>
+    <span class="tag tag-accent">换谷匹配卡 / 报价协商</span>
+    <span class="tag tag-outline">换谷广场发帖</span>
+    <span class="tag tag-outline">Feed / 关注</span>
+    <span class="tag tag-outline">私信会话</span>
+    <span class="tag tag-outline">成就 / 角色收藏圈 / 排行</span>
+    <span class="tag tag-outline">通知中心</span>
+    <span class="tag tag-outline">登录注册</span>
+    <span class="tag tag-outline">分享谷卡</span>
+  </div>
+  <p style="font-size:13px;line-height:1.7;color:var(--color-neutral-400);margin:0 0 40px">实心标签 = 会给多方案对比（谷柜可视化形态、识别确认交互、换谷卡片与报价流程、首页信息架构），其余各一版。</p>
+
+  <h2 style="font-family:var(--font-heading);font-weight:500;font-size:22px;margin:0 0 16px">4 · 下一步</h2>
+  <p style="font-size:14px;line-height:1.8;color:var(--color-neutral-300);margin:0 0 24px;max-width:60ch">先出首页 IA 的两个方向 + 谷柜的两种可视化形态放在安卓边框里给你挑，定下来后再铺满剩余屏幕与可点击流程。</p>
+  <p style="font-size:13px;color:var(--color-neutral-400);margin:0">缺的素材：真实谷子官图。我会先用占位块，你给一批图我替换。</p>
+</div>
+</x-dc>
+</body>
+</html>

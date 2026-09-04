@@ -41,8 +41,10 @@ export function MessageThread({
       <header className="border-b border-[var(--rule)] px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="section-kicker">私信</p>
-            <h1 className="mt-1 truncate text-[22px]">{thread.partnerLabel}</h1>
+            <p className="section-kicker hidden sm:inline-flex">私信</p>
+            <h1 className="truncate text-[17px] sm:mt-1 sm:text-[22px]">
+              {thread.partnerLabel}
+            </h1>
             {thread.partnerHandle ? (
               <Link
                 className="num mt-1 inline-block hover:text-[var(--shu)]"

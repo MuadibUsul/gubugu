@@ -43,11 +43,11 @@ export function UserCollectionHeader({
     <section className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_74%,var(--surface)))] p-5 shadow-[var(--shadow-card)] sm:p-8 lg:p-10">
       <span className="absolute -top-24 right-[8%] size-64 rounded-full bg-[color-mix(in_oklab,var(--violet)_9%,transparent)] blur-3xl" />
       <div className="relative min-w-0">
-        <p className="section-kicker">
+        <p className="section-kicker hidden sm:inline-flex">
           {eyebrow} · {railLabel}
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h1 className="text-[clamp(32px,4vw,48px)] leading-[1.12]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:mt-4">
+          <h1 className="text-[clamp(21px,5vw,48px)] leading-[1.12]">
             {displayName}
           </h1>
           {badgesHref ? (

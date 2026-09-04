@@ -202,16 +202,13 @@ export default async function MyExchangesPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <section className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--exchange-soft),color-mix(in_oklab,var(--violet-soft)_74%,var(--surface)))] p-5 sm:p-8">
-        <p className="section-kicker">我的换谷工作台</p>
-        <h1 className="mt-3 text-[clamp(30px,4vw,46px)]">
-          从出价到履约，都在这里
-        </h1>
-        <p className="text-muted-foreground mt-3 max-w-[68ch] text-sm leading-relaxed">
-          协商中只认正式方案；接受后进入双方独立寄出、收货与评价。全程不涉及现金支付。
+    <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
+      <section className="border-b border-[var(--rule-2)] pb-4">
+        <h1 className="text-[19px] font-bold">我的换谷单</h1>
+        <p className="text-muted-foreground mt-1 text-[12px] leading-relaxed">
+          协商只认正式方案 · 接受后双方独立寄出/收货/评价 · 全程不涉现金。
         </p>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             ['我的发布', tradeActivity.listings.length],
             ['协商中', pendingOffers.length],
@@ -242,7 +239,7 @@ export default async function MyExchangesPage({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="section-kicker">发布与协商</p>
-            <h2 className="mt-2 text-[clamp(26px,3vw,36px)]">成交之前</h2>
+            <h2 className="mt-2 text-[clamp(16px,4.6vw,36px)]">成交之前</h2>
           </div>
           <Link
             className="text-sm font-semibold text-[var(--shu)]"
@@ -347,7 +344,7 @@ export default async function MyExchangesPage({
 
       <section className="border-t border-[var(--rule)] py-12">
         <p className="section-kicker">履约记录</p>
-        <h2 className="mt-2 mb-6 text-[clamp(26px,3vw,36px)]">成交之后</h2>
+        <h2 className="mt-2 mb-6 text-[clamp(16px,4.6vw,36px)]">成交之后</h2>
         <div className="min-w-0 space-y-3">
           {exchanges.length === 0 ? (
             <div className="empty-state">
@@ -479,7 +476,7 @@ export default async function MyExchangesPage({
       <section className="border-border border-t py-12">
         <div className="min-w-0 space-y-3">
           <p className="section-kicker">三方循环</p>
-          <h2 className="mt-2 text-[clamp(26px,3vw,36px)]">协调提案</h2>
+          <h2 className="mt-2 text-[clamp(16px,4.6vw,36px)]">协调提案</h2>
           {coordinationItems.length ? (
             coordinationItems.map((item) => (
               <article className="panel p-5" key={item.id}>

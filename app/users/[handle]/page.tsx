@@ -52,27 +52,6 @@ export async function generateMetadata({
   };
 }
 
-function StatTile({
-  value,
-  label,
-  tone,
-}: {
-  value: number | string;
-  label: string;
-  tone: string;
-}) {
-  return (
-    <div className="rounded-[14px] border border-white/20 bg-white/[0.08] px-3 py-3.5 text-center">
-      <span className={`num block text-[26px] leading-none font-extrabold ${tone}`}>
-        {value}
-      </span>
-      <span className="mt-1.5 block text-[11px] font-semibold text-white/80">
-        {label}
-      </span>
-    </div>
-  );
-}
-
 export default async function UserPage({
   params,
   searchParams,
@@ -117,84 +96,85 @@ export default async function UserPage({
   ] as const;
 
   return (
-    <main className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      {/* 二次元橱窗式主页头图：饱和渐变 + 光晕，展陈这位收藏者的身份与战绩。 */}
-      <section className="relative isolate overflow-hidden rounded-[22px] p-6 text-[var(--paper)] shadow-[var(--shadow-card)] sm:p-9 lg:p-11">
-        {/* 青黛档案封面：深靛底、亚光，不用发光与强渐变。 */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(155deg,var(--violet),color-mix(in_oklab,var(--violet)_60%,var(--ink)))]" />
-        <div className="absolute inset-0 -z-10 border border-white/10" />
-
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-          <div className="font-heading grid size-24 shrink-0 place-items-center rounded-[20px] bg-white/12 text-[44px] font-black ring-1 ring-white/30 sm:size-28">
+    <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
+      {/* 紧凑身份头（抖音/B 站式密度）：小头像 + 名字 + 一行数据，不做大封面。 */}
+      <section>
+        <div className="flex items-center gap-3">
+          <div className="grid size-14 shrink-0 place-items-center rounded-full bg-[var(--shu-soft)] text-[20px] font-bold text-[var(--shu)]">
             {initial}
           </div>
-
           <div className="min-w-0 flex-1">
-            {profile.accentTitle ? (
-              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold tracking-wide">
-                ✦ {profile.accentTitle}
-              </span>
-            ) : null}
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="font-heading text-[clamp(30px,4.4vw,50px)] leading-[1.06] font-black">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-[17px] font-bold">
                 {profile.displayName}
               </h1>
-              <Link
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[12px] font-bold transition-colors hover:bg-white/20"
-                href={`/users/${profile.handle}/badges`}
-              >
-                🏅 徽章 {badgeCount} →
-              </Link>
+              {profile.accentTitle ? (
+                <span className="flex-none rounded-[3px] border border-[var(--kin)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--kin)]">
+                  {profile.accentTitle}
+                </span>
+              ) : null}
             </div>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-white/85">
-              <span className="num">{formatProfileHandle(profile.handle)}</span>
-              {profile.city ? <span>· {profile.city}</span> : null}
-              <span>
-                · {followCounts.followers} 关注者 · {reputation.reviewCount} 条评价
-              </span>
+            <p className="text-muted-foreground mt-0.5 truncate text-[11px]">
+              {formatProfileHandle(profile.handle)}
+              {profile.city ? ` · ${profile.city}` : ''} ·{' '}
+              {followCounts.followers} 粉丝 · {reputation.reviewCount} 评价
             </p>
-            {profile.bio ? (
-              <p className="mt-3 max-w-[60ch] text-[14px] leading-relaxed text-white/90">
-                {profile.bio}
-              </p>
-            ) : null}
-
-            {viewer && !isSelf ? (
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <FollowButton
-                  followingId={profile.userId}
-                  isFollowing={following}
-                  nextPath={`/users/${profile.handle}`}
-                />
-                <form action={startConversationAction}>
-                  <input
-                    name="recipientId"
-                    type="hidden"
-                    value={profile.userId}
-                  />
-                  <input name="contextType" type="hidden" value="profile" />
-                  <input
-                    name="nextPath"
-                    type="hidden"
-                    value={`/users/${profile.handle}`}
-                  />
-                  <Button type="submit" variant="outline">
-                    私信
-                  </Button>
-                </form>
-              </div>
-            ) : null}
           </div>
+          {viewer && !isSelf ? (
+            <div className="flex flex-none items-center gap-2">
+              <FollowButton
+                followingId={profile.userId}
+                isFollowing={following}
+                nextPath={`/users/${profile.handle}`}
+              />
+              <form action={startConversationAction}>
+                <input name="recipientId" type="hidden" value={profile.userId} />
+                <input name="contextType" type="hidden" value="profile" />
+                <input
+                  name="nextPath"
+                  type="hidden"
+                  value={`/users/${profile.handle}`}
+                />
+                <Button size="sm" type="submit" variant="outline">
+                  私信
+                </Button>
+              </form>
+            </div>
+          ) : null}
         </div>
 
-        <div className="mt-7 grid grid-cols-3 gap-2.5 sm:gap-3 lg:grid-cols-5">
+        {profile.bio ? (
+          <p className="text-muted-foreground mt-2 text-[12px] leading-relaxed">
+            {profile.bio}
+          </p>
+        ) : null}
+
+        {/* 数据条 */}
+        <div className="mt-3 flex items-center border-y border-[var(--rule)] py-2.5">
           {statTiles.map((tile) => (
-            <StatTile
+            <Link
+              className="flex-1 text-center"
+              href={
+                tile.label === '徽章'
+                  ? `/users/${profile.handle}/badges`
+                  : `/users/${profile.handle}`
+              }
               key={tile.label}
-              label={tile.label}
-              tone={tile.tone}
-              value={tile.value}
-            />
+            >
+              <span
+                className="font-heading block text-[16px] leading-none font-semibold"
+                style={
+                  tile.label === '已点亮' || tile.label === '徽章'
+                    ? { color: 'var(--kin)' }
+                    : undefined
+                }
+              >
+                {tile.value}
+              </span>
+              <span className="text-muted-foreground mt-1 block text-[11px]">
+                {tile.label}
+              </span>
+            </Link>
           ))}
         </div>
       </section>
@@ -205,7 +185,7 @@ export default async function UserPage({
           <div className="flex items-baseline justify-between gap-4">
             <div>
               <p className="section-kicker">可换 · 换谷板</p>
-              <h2 className="mt-2 text-[clamp(22px,3vw,32px)]">TA 的换谷板</h2>
+              <h2 className="mt-2 text-[clamp(16px,4.6vw,32px)]">TA 的换谷板</h2>
             </div>
             <Link
               className="text-[13px] font-semibold text-[var(--shu)] hover:underline"
@@ -229,7 +209,7 @@ export default async function UserPage({
       <section className="mt-14">
         <div className="min-w-0">
           <p className="section-kicker">公开收藏</p>
-          <h2 className="mt-2 mb-7 text-[clamp(22px,3vw,32px)]">收藏清单</h2>
+          <h2 className="mt-2 mb-7 text-[clamp(16px,4.6vw,32px)]">收藏清单</h2>
           <UserCollectionSheet
             basePath={`/users/${profile.handle}`}
             data={data}

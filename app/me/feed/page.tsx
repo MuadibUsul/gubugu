@@ -20,12 +20,12 @@ export default async function FeedPage({
   );
   const items = await listFollowingFeed({ userId: user.id, page });
   return (
-    <main className="mx-auto w-full max-w-[980px] px-5 pt-14 pb-24 md:px-10">
-      <section className="border-border border-b pb-12">
-        <p className="lbl">关注</p>
-        <h1 className="mt-3 text-[clamp(28px,3.8vw,44px)]">收藏动态</h1>
-      </section>
-      <section className="py-8">
+    <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
+      <div className="border-b border-[var(--rule-2)] pb-3">
+        <h1 className="text-[19px] font-bold">谷友动态</h1>
+        <p className="text-muted-foreground mt-1 text-[12px]">你关注的谷友最近的点亮与换谷。</p>
+      </div>
+      <section className="py-5">
         {items.length ? (
           <div className="space-y-3">
             {items.map((item) => (

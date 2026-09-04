@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 
+import { GoodsShareCard } from '@/components/goods/goods-share-card';
 import {
   userGoodsStatusMeta,
-  userGoodsStatusValues,
   type UserGoodsStatus,
 } from '@/lib/user-goods-status';
 import {
@@ -22,52 +22,73 @@ type GoodsStatusActionsProps = {
   statusDetails: UserGoodsStateSnapshot['statuses'];
   goodsId: string;
   goodsSlug: string;
+  goodsName: string;
   isAuthenticated: boolean;
   isWatching: boolean;
   updateFeedback?: 'saved' | 'reserved' | 'unlit' | 'active';
-  userLabel: string | null;
 };
 
-const actionLabels = {
-  owned: '收藏进谷柜',
-  wanted: '想要',
-  exchange: '可以交换',
-} as const satisfies Record<UserGoodsStatus, string>;
+const CELL =
+  'flex flex-col items-center justify-center gap-1 rounded-[10px] border py-2 text-[11px] font-medium transition-colors disabled:opacity-40';
+const CELL_OFF = 'border-[var(--rule)] text-[var(--ink-2)]';
 
-function StatusButton({
-  active,
-  label,
+const ICONS: Record<'scan' | UserGoodsStatus, ReactNode> = {
+  scan: (
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z" />
+    </svg>
+  ),
+  owned: (
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Z" />
+    </svg>
+  ),
+  wanted: (
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M178,32c-20.65,0-38.73,8.88-50,23.89C116.73,40.88,98.65,32,78,32A62.07,62.07,0,0,0,16,94c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,220.66,240,164,240,94A62.07,62.07,0,0,0,178,32Z" />
+    </svg>
+  ),
+  exchange: (
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z" />
+    </svg>
+  ),
+};
+
+const ACTIVE_CLASS: Record<UserGoodsStatus, string> = {
+  owned: 'border-[var(--violet)] bg-[var(--violet-soft)] text-[var(--violet)]',
+  wanted: 'border-[var(--want)] bg-[var(--want-soft)] text-[var(--want)]',
+  exchange:
+    'border-[var(--exchange)] bg-[var(--exchange-soft)] text-[var(--exchange)]',
+};
+
+const STATUS_LABEL: Record<UserGoodsStatus, string> = {
+  owned: '收藏',
+  wanted: '想要',
+  exchange: '交换',
+};
+
+function StatusCell({
   status,
-  unavailable = false,
+  active,
+  disabled = false,
 }: {
-  active: boolean;
-  label: string;
   status: UserGoodsStatus;
-  unavailable?: boolean;
+  active: boolean;
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
-  const activeClass = {
-    owned:
-      'border-[var(--violet)] bg-[var(--violet-soft)] text-[var(--violet)]',
-    wanted: 'border-[var(--want)] bg-[var(--want-soft)] text-[var(--want)]',
-    exchange:
-      'border-[var(--exchange)] bg-[var(--exchange-soft)] text-[var(--exchange)]',
-  }[status];
-
   return (
     <button
       aria-pressed={active}
-      className={
-        active
-          ? `rounded-[var(--radius)] border px-4 py-2 text-[14px] font-medium disabled:opacity-60 ${activeClass}`
-          : 'border-input text-muted-foreground hover:border-rule-2 hover:text-foreground rounded-[var(--radius)] border px-4 py-2 text-[14px] disabled:opacity-60'
-      }
-      disabled={pending || (unavailable && !active)}
+      className={`${CELL} ${active ? ACTIVE_CLASS[status] : CELL_OFF}`}
+      disabled={pending || disabled}
       name="status"
       type="submit"
       value={status}
     >
-      {label}
+      {ICONS[status]}
+      <span>{STATUS_LABEL[status]}</span>
     </button>
   );
 }
@@ -77,10 +98,10 @@ export function GoodsStatusActions({
   statusDetails,
   goodsId,
   goodsSlug,
+  goodsName,
   isAuthenticated,
   isWatching,
   updateFeedback,
-  userLabel,
 }: GoodsStatusActionsProps) {
   const nextPath = `/goods/${goodsSlug}`;
 
@@ -112,83 +133,66 @@ export function GoodsStatusActions({
   }
 
   return (
-    <div className="border-border border-t pt-6">
-      <div className="flex items-baseline justify-between gap-4">
-        <p className="lbl">收藏状态</p>
-        <span className="lbl">{userLabel ?? '已登录'}</span>
-      </div>
+    <div className="pt-1">
+      {/* 一行图标：扫描 / 收藏 / 想要 / 交换 / 分享 */}
+      <form action={formAction}>
+        <input name="goodsId" type="hidden" value={goodsId} />
+        <input name="nextPath" type="hidden" value={nextPath} />
+        <div className="grid grid-cols-5 gap-1.5">
+          <Link
+            aria-label="扫描点亮"
+            className={`scan-only ${CELL} border-[var(--shu)] text-[var(--shu)]`}
+            href="/recognition"
+          >
+            {ICONS.scan}
+            <span>扫描</span>
+          </Link>
+          <StatusCell
+            active={state.activeStatuses.includes('owned')}
+            status="owned"
+          />
+          <StatusCell
+            active={state.activeStatuses.includes('wanted')}
+            status="wanted"
+          />
+          <StatusCell
+            active={state.activeStatuses.includes('exchange')}
+            disabled={!isLit && !state.activeStatuses.includes('exchange')}
+            status="exchange"
+          />
+          <GoodsShareCard
+            goodsName={goodsName}
+            goodsSlug={goodsSlug}
+            triggerClassName={`${CELL} ${CELL_OFF}`}
+          />
+        </div>
+      </form>
 
-      <div className="mt-3 flex min-h-[34px] items-center gap-3">
+      <p className="mt-3 text-[12.5px]">
         {isLit ? (
-          <>
-            <span className="seal seal--inline">亮</span>
-            <span className="state state--lit">已通过实物识别点亮</span>
-          </>
+          <span className="state state--lit">已通过实物识别点亮</span>
         ) : inCabinet ? (
           <span className="state state--wanted">已入谷柜 · 等待扫描点亮</span>
         ) : (
           <span className="state state--off">还没有收藏进谷柜</span>
         )}
+      </p>
 
-        {state.activeStatuses
-          .filter((status) => status !== 'owned')
-          .map((status) => (
-            <span className="lbl" key={status}>
-              {userGoodsStatusMeta[status].label}
-            </span>
-          ))}
-      </div>
-
-      <form action={formAction} className="mt-5">
-        <input name="goodsId" type="hidden" value={goodsId} />
-        <input name="nextPath" type="hidden" value={nextPath} />
-
-        <div className="flex flex-wrap gap-2">
-          {userGoodsStatusValues.map((status) => (
-            <StatusButton
-              active={state.activeStatuses.includes(status)}
-              key={status}
-              label={actionLabels[status]}
-              status={status}
-              unavailable={status === 'exchange' && !isLit}
-            />
-          ))}
-        </div>
-
-        {state.message ? (
-          <p
-            className={
-              state.status === 'error'
-                ? 'mt-4 text-[13px] text-[var(--destructive)]'
-                : 'text-muted-foreground mt-4 text-[13px]'
-            }
-          >
-            {state.message}
-          </p>
-        ) : null}
-      </form>
-
-      {!isLit ? (
-        <div className="scan-only mt-4 rounded-[16px] border border-[var(--violet)]/30 bg-[var(--violet-soft)] p-4">
-          <p className="text-sm font-semibold text-[var(--violet)]">
-            扫描现实中的谷子，点亮这枚收藏
-          </p>
-          <p className="text-muted-foreground mt-1 text-[12.5px] leading-relaxed">
-            普通收藏只会收入谷柜并保持灰色；识别确认后才计入完成度并开放换谷。
-          </p>
-          <Link
-            aria-label={`扫描实物并点亮 ${goodsSlug}`}
-            className="mt-3 inline-flex min-h-11 items-center rounded-[13px] bg-[var(--violet)] px-4 text-sm font-semibold text-white"
-            href="/recognition"
-          >
-            去扫描点亮 →
-          </Link>
-        </div>
+      {state.message ? (
+        <p
+          className={
+            state.status === 'error'
+              ? 'mt-2 text-[13px] text-[var(--destructive)]'
+              : 'text-muted-foreground mt-2 text-[13px]'
+          }
+        >
+          {state.message}
+        </p>
       ) : null}
 
       {state.activeStatuses.includes('exchange') ? (
         <Link
-          className="mt-4 flex min-h-11 items-center justify-center rounded-[14px] bg-[var(--exchange)] px-4 text-sm font-semibold text-white"
+          className="mt-4 flex min-h-11 items-center justify-center rounded-[12px] bg-[var(--exchange)] px-4 text-sm font-semibold text-white"
           href={`/matches/new?goodsId=${goodsId}`}
         >
           用这件谷子发布换谷帖 →

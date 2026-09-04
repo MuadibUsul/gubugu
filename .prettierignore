@@ -2,6 +2,9 @@
 node_modules
 coverage
 pnpm-lock.yaml
+android/**/build
+android/app/src/main/assets
+谷布谷移动应用设计
 
 # Generated artifacts. drizzle-kit and next rewrite these in their own format,
 # so formatting them here just makes the next `db:generate` / build flip the

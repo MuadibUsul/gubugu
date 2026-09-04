@@ -5,7 +5,14 @@ const eslintConfig = [
   ...nextCoreWebVitals,
   ...nextTypeScript,
   {
-    ignores: ['.next/**', 'node_modules/**', 'coverage/**'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'coverage/**',
+      'android/**/build/**',
+      'android/app/src/main/assets/**',
+      '谷布谷移动应用设计/**',
+    ],
   },
 ];
 

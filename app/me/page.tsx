@@ -144,34 +144,28 @@ export default async function MePage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-[1120px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <section className="relative overflow-hidden rounded-[26px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_76%,var(--surface)))] px-5 py-7 sm:px-8 sm:py-9">
-        <span className="absolute -top-24 right-[7%] size-64 rounded-full bg-[color-mix(in_oklab,var(--violet)_9%,transparent)] blur-3xl" />
-        <div className="relative flex items-center gap-4 sm:gap-6">
-          <div className="grid size-16 shrink-0 place-items-center rounded-[20px] bg-[linear-gradient(145deg,var(--shu),var(--violet))] text-2xl font-extrabold text-white shadow-[0_16px_35px_-20px_var(--shu)] sm:size-20 sm:text-3xl">
-            {user.displayLabel.slice(0, 1)}
-          </div>
-          <div className="min-w-0">
-            <p className="section-kicker">我的收藏空间</p>
-            <h1 className="mt-3 pr-10 text-[clamp(28px,3.8vw,44px)] leading-tight">
-              {user.displayLabel}
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              今天也来整理喜欢的东西。
-            </p>
-          </div>
-          <form action={signOutAction} className="absolute top-0 right-0">
-            <button
-              className="text-muted-foreground rounded-full px-3 py-2 text-sm hover:bg-[var(--surface)] hover:text-[var(--shu)]"
-              type="submit"
-            >
-              退出
-            </button>
-          </form>
+    <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
+      <div className="flex items-center gap-3">
+        <div className="grid size-12 shrink-0 place-items-center rounded-full bg-[var(--shu-soft)] text-[18px] font-bold text-[var(--shu)]">
+          {user.displayLabel.slice(0, 1)}
         </div>
-      </section>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-[16px] font-bold">{user.displayLabel}</h1>
+          <p className="text-muted-foreground mt-0.5 text-[11px]">
+            今天也来整理喜欢的东西。
+          </p>
+        </div>
+        <form action={signOutAction}>
+          <button
+            className="text-muted-foreground rounded-[3px] border border-[var(--rule)] px-3 py-1.5 text-[12px] hover:text-[var(--shu)]"
+            type="submit"
+          >
+            退出
+          </button>
+        </form>
+      </div>
 
-      <section className="grid gap-4 py-8 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 py-5 lg:grid-cols-4">
         {primaryEntries.map((entry) => (
           <Link
             className="panel-float group rounded-[20px] border border-[var(--rule)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)]"

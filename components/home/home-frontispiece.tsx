@@ -19,39 +19,30 @@ export function HomeFrontispiece({
   viewerStates,
 }: HomeFrontispieceProps) {
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(135deg,color-mix(in_oklab,var(--surface)_94%,var(--shu-soft)),color-mix(in_oklab,var(--surface)_88%,var(--violet-soft)))] px-5 py-7 shadow-[var(--shadow-card)] sm:px-8 sm:py-9 lg:grid lg:min-h-[510px] lg:grid-cols-[minmax(0,1.08fr)_minmax(390px,.92fr)] lg:items-center lg:gap-10 lg:px-12 lg:py-10">
+    <section className="hidden">
       <span className="absolute -top-20 -left-16 size-56 rounded-full bg-[color-mix(in_oklab,var(--shu)_9%,transparent)] blur-3xl" />
       <span className="absolute -right-20 -bottom-28 size-72 rounded-full bg-[color-mix(in_oklab,var(--violet)_10%,transparent)] blur-3xl" />
 
       <div className="relative min-w-0">
         <p className="section-kicker">二次元周边图鉴</p>
-        <h1 className="mt-5 max-w-[680px] text-[clamp(32px,4.4vw,54px)] leading-[1.08] text-balance">
-          <span className="block">把喜欢的角色，</span>
-          <span className="block">
-            <span className="whitespace-nowrap text-[var(--shu)]">
-              认真收进
-            </span>
-            <span className="whitespace-nowrap">自己的世界。</span>
-          </span>
+        <h1 className="mt-3 max-w-[560px] text-[clamp(21px,3.2vw,32px)] leading-[1.2] font-bold text-balance">
+          把喜欢的角色，
+          <span className="text-[var(--shu)]">收进自己的世界</span>。
         </h1>
 
-        <p className="text-muted-foreground mt-5 max-w-[56ch] text-[15px] sm:text-base">
-          公共谷库里的每一件都以原色陈列。收进谷柜后，扫描手中的实物确认 SKU，那件才在你的收藏里由灰转彩。
-        </p>
-
-        <div className="mt-7 max-w-[620px]">
+        <div className="mt-5 max-w-[620px]">
           <HomePrimarySearch />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <span className="chip gap-2 px-3.5 py-2">
-            <b className="text-foreground text-base">{goodsCount}</b> 件谷子
+        <div className="mt-4 flex flex-wrap items-center gap-2.5 text-sm">
+          <span className="chip gap-1.5 px-3 py-1.5">
+            <b className="text-foreground">{goodsCount}</b> 件谷子
           </span>
-          <span className="chip gap-2 px-3.5 py-2">
-            <b className="text-foreground text-base">{ipCount}</b> 部作品
+          <span className="chip gap-1.5 px-3 py-1.5">
+            <b className="text-foreground">{ipCount}</b> 部作品
           </span>
           <Link
-            className="scan-only chip px-3.5 py-2 font-semibold text-[var(--violet)]"
+            className="scan-only chip px-3 py-1.5 font-semibold text-[var(--violet)]"
             href="/recognition"
           >
             扫描点亮 →
@@ -60,7 +51,7 @@ export function HomeFrontispiece({
       </div>
 
       <div
-        className="relative mt-10 hidden min-h-[410px] lg:block"
+        className="relative mt-6 hidden min-h-[300px] lg:mt-0 lg:block"
         aria-label="最近收录的周边"
       >
         {featuredItems.slice(0, 3).map((item, index) => {

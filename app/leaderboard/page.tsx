@@ -130,20 +130,17 @@ export default async function LeaderboardPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-[900px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <section className="relative overflow-hidden rounded-[26px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--kin-soft),color-mix(in_oklab,var(--violet-soft)_70%,var(--surface)))] px-5 py-7 sm:px-8">
-        <p className="section-kicker">谁的谷柜最亮</p>
-        <h1 className="mt-3 text-[clamp(30px,4vw,46px)] leading-[1.12]">
-          收藏排行榜
-        </h1>
-        <p className="text-muted-foreground mt-3 max-w-[52ch] text-sm">
-          只统计经实物扫描点亮的收藏，且仅公开资料参与排名。从多个维度看看谁走在前面。
+    <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
+      <div className="pb-1">
+        <h1 className="text-[19px] font-bold">收藏排行榜</h1>
+        <p className="text-muted-foreground mt-1 text-[12px]">
+          只统计实物扫描点亮的收藏 · 仅公开资料参与
         </p>
-      </section>
+      </div>
 
       <nav
         aria-label="榜单维度"
-        className="mt-6 flex flex-wrap gap-2"
+        className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]"
       >
         {leaderboardBoards.map((item) => {
           const active = item.dimension === dimension;

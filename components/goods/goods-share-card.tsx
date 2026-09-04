@@ -7,11 +7,17 @@ import { Button } from '@/components/ui/button';
 type GoodsShareCardProps = {
   goodsName: string;
   goodsSlug: string;
+  /** 传入后触发器渲染成动作图标格（用于详情页的一行图标）。 */
+  triggerClassName?: string;
 };
 
 type PendingAction = 'share' | 'save' | 'copy' | null;
 
-export function GoodsShareCard({ goodsName, goodsSlug }: GoodsShareCardProps) {
+export function GoodsShareCard({
+  goodsName,
+  goodsSlug,
+  triggerClassName,
+}: GoodsShareCardProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const fileRef = useRef<File | null>(null);
   const filePromiseRef = useRef<Promise<File> | null>(null);
@@ -172,21 +178,41 @@ export function GoodsShareCard({ goodsName, goodsSlug }: GoodsShareCardProps) {
     }
   }
 
+  const shareIcon = (
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,0,0,176,160Z" />
+    </svg>
+  );
+
   return (
     <>
-      <Button
-        aria-label={`分享「${goodsName}」谷卡`}
-        className="w-full sm:ml-auto sm:w-auto"
-        onClick={openDialog}
-        onFocus={() => void prepareShareFile().catch(() => undefined)}
-        onPointerEnter={() => void prepareShareFile().catch(() => undefined)}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        <span aria-hidden="true">↗</span>
-        分享谷卡
-      </Button>
+      {triggerClassName ? (
+        <button
+          aria-label={`分享「${goodsName}」谷卡`}
+          className={triggerClassName}
+          onClick={openDialog}
+          onFocus={() => void prepareShareFile().catch(() => undefined)}
+          onPointerEnter={() => void prepareShareFile().catch(() => undefined)}
+          type="button"
+        >
+          {shareIcon}
+          <span>分享</span>
+        </button>
+      ) : (
+        <Button
+          aria-label={`分享「${goodsName}」谷卡`}
+          className="w-full sm:ml-auto sm:w-auto"
+          onClick={openDialog}
+          onFocus={() => void prepareShareFile().catch(() => undefined)}
+          onPointerEnter={() => void prepareShareFile().catch(() => undefined)}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <span aria-hidden="true">↗</span>
+          分享谷卡
+        </Button>
+      )}
 
       <dialog
         aria-describedby="goods-share-description"

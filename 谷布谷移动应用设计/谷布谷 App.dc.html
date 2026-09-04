@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+:root{
+  --paper:#f7f1e5;--surf:#fcf8ee;--ink:#242424;--ink-2:#6a635a;--ink-3:#9a9287;
+  --line:#e4dbc8;--line-2:#efe7d6;--red:#c94b4b;--indigo:#486581;--gold:#a8894f;
+  --sans:'PingFang SC','HarmonyOS Sans SC','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;
+  --serif:'Songti SC','Source Han Serif SC','Noto Serif SC','Yu Mincho','Hiragino Mincho ProN',serif;
+}
+[data-theme="dark"]{
+  --paper:#1a1917;--surf:#232120;--ink:#f0eadf;--ink-2:#a9a29a;--ink-3:#7c756c;
+  --line:#3a3631;--line-2:#2c2927;--red:#e0705f;--indigo:#7d9cb8;--gold:#c9a765;
+}
+body{margin:0;background:#e8e0d0;font-family:var(--sans)}
+a{color:var(--red);text-decoration:none}a:hover{color:var(--gold)}
+@keyframes scanline{0%{transform:translateY(0);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateY(300px);opacity:0}}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:.9}}
+@keyframes stamp{0%{transform:scale(1.5) rotate(-14deg);opacity:0}60%{transform:scale(.96) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+.scr{background:var(--paper);min-height:100%;display:flex;flex-direction:column;font-family:var(--sans);color:var(--ink)}
+.im{background-size:cover;background-position:center;background-color:var(--line-2)}
+.gray{filter:grayscale(1) contrast(.86) opacity(.62)}
+.tabbar{display:flex;align-items:flex-end;border-top:1px solid var(--line);background:var(--surf);padding:0 2px}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 7px;font:400 10px/1 var(--sans);color:var(--ink-3);min-height:48px;box-sizing:border-box;cursor:pointer;background:none;border:0}
+.tab.on{color:var(--red)}
+.h1{font:600 20px/1.25 var(--serif);margin:0;color:var(--ink)}
+.h2{font:600 15px/1.3 var(--serif);margin:0;color:var(--ink)}
+.lbl{font:500 10px/1 var(--sans);letter-spacing:.16em;color:var(--ink-3);margin:0}
+.t1{font:400 12.5px/1.45 var(--sans);color:var(--ink);margin:6px 0 2px}
+.t2{font:400 11px/1.35 var(--sans);color:var(--ink-2);margin:0}
+.chip{padding:5px 11px;border-radius:3px;border:1px solid var(--line);background:var(--surf);font:400 11.5px/1 var(--sans);color:var(--ink-2);white-space:nowrap;cursor:pointer}
+.chip.on{border-color:var(--red);color:var(--red);background:color-mix(in srgb,var(--red) 7%,var(--surf))}
+.btn{border:1px solid var(--red);background:transparent;color:var(--red);font:500 13px/1 var(--sans);padding:10px 16px;border-radius:3px;cursor:pointer;min-height:40px}
+.btn:hover{background:color-mix(in srgb,var(--red) 8%,transparent)}
+.btn-q{border-color:var(--line);color:var(--ink-2)}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:4px}
+.rule{height:1px;background:var(--line)}
+.seal{width:74px;height:74px;border-radius:999px;border:2.5px solid var(--red);color:var(--red);display:flex;align-items:center;justify-content:center;font:600 30px/1 var(--serif);animation:stamp .45s cubic-bezier(.2,1.2,.3,1) both}
+</style>
+</helmet>
+
+<div class="scr" data-theme="{{ theme }}" style="width:100%">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ frameDark }}" hint-size="428,908">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div class="scr" data-screen-label="首页">
+  <div style="position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 14px 10px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:10px">
+    <svg width="26" height="26" viewBox="0 0 32 32" style="flex:none">
+      <circle cx="16" cy="16" r="14" fill="var(--red)" stroke="var(--gold)" stroke-width="1.6"/>
+      <path d="M20.6 8.4a8.2 8.2 0 100 15.2 9.4 9.4 0 010-15.2Z" fill="#f7f1e5"/>
+      <path d="M11.4 12.6l1.1 2.6 2.6 1.1-2.6 1.1-1.1 2.6-1.1-2.6L7.7 16.3l2.6-1.1Z" fill="var(--gold)"/>
+    </svg>
+    <div style="flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surf);border-radius:3px;padding:8px 10px">
+      <svg width="15" height="15" viewBox="0 0 256 256" fill="var(--ink-3)"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
+      <span style="font:400 12.5px/1 var(--sans);color:var(--ink-3)">搜角色、系列、SKU</span>
+    </div>
+    <div style="position:relative;flex:none">
+      <svg width="21" height="21" viewBox="0 0 256 256" fill="var(--ink-2)"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg>
+      <span style="position:absolute;top:0;right:0;width:6px;height:6px;border-radius:999px;background:var(--red)"></span>
+    </div>
+  </div>
+
+  <div style="padding:12px 14px 0">
+    <div class="im" style="height:132px;border-radius:4px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/05/25/388da59198ab7c3fe6bea4112dd122aa_3788171504744435733.jpeg);position:relative">
+      <span style="position:absolute;left:8px;bottom:8px;background:rgba(20,18,16,.62);color:#f7f1e5;font:400 10px/1 var(--sans);padding:4px 7px;border-radius:2px">广告位 · 星穹铁道三周年</span>
+      <span style="position:absolute;right:8px;bottom:8px;display:flex;gap:4px">
+        <i style="width:12px;height:2px;background:#f7f1e5;display:block"></i><i style="width:5px;height:2px;background:rgba(247,241,229,.5);display:block"></i><i style="width:5px;height:2px;background:rgba(247,241,229,.5);display:block"></i>
+      </span>
+    </div>
+  </div>
+
+  <div style="padding:20px 14px 0;display:flex;align-items:baseline;justify-content:space-between">
+    <p class="h2">换谷市场</p>
+    <span style="font:400 11.5px/1 var(--sans);color:var(--red)" onClick="{{ goExchange }}">进市场</span>
+  </div>
+  <div style="display:flex;gap:9px;padding:10px 14px 0;overflow:hidden">
+    <div class="card" style="width:172px;flex:none;padding:9px">
+      <div style="display:flex;gap:7px;align-items:center">
+        <div class="im" style="width:44px;height:44px;border-radius:3px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/0cf81fc2fd37d5fd9fc83dec71dbf8c9_4190506926520740656.jpeg)"></div>
+        <svg width="14" height="14" viewBox="0 0 256 256" fill="var(--indigo)" style="flex:none"><path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z"/></svg>
+        <div class="im" style="width:44px;height:44px;border-radius:3px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/164f5fdfdfd9b6f877659f6e4cc7aeb0_622242295318592167.jpeg)"></div>
+      </div>
+      <p class="t1" style="margin-top:8px">流萤立牌 ⇄ 银狼咕卡</p>
+      <p class="t2">星见 · 信誉 4.9</p>
+    </div>
+    <div class="card" style="width:172px;flex:none;padding:9px">
+      <div style="display:flex;gap:7px;align-items:center">
+        <div class="im" style="width:44px;height:44px;border-radius:3px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2024/04/28/c2272cb75490d93c6cf49d8ca55766be_1015974276450682122.jpeg)"></div>
+        <svg width="14" height="14" viewBox="0 0 256 256" fill="var(--indigo)" style="flex:none"><path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z"/></svg>
+        <div class="im" style="width:44px;height:44px;border-radius:3px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/03/01/1c0cd8ee868a6c3cd68f07a581341006_1221177060045715279.jpeg)"></div>
+      </div>
+      <p class="t1" style="margin-top:8px">三月七吧唧 ⇄ 任意特典</p>
+      <p class="t2">阿岐 · 信誉 4.7</p>
+    </div>
+  </div>
+
+  <div style="padding:22px 14px 0"><p class="h2">热门作品</p></div>
+  <div style="display:flex;gap:9px;padding:10px 14px 0;overflow:hidden">
+    <div style="width:84px;flex:none">
+      <div class="im" style="height:84px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/ca8c039f8e9b17dcc483a124704b7de1_3356791309485294312.jpeg)"></div>
+      <p class="t1" style="text-align:center;font-size:11.5px">星穹铁道</p>
+    </div>
+    <div style="width:84px;flex:none">
+      <div class="im" style="height:84px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/a20239934459db46ee797cc9fac6c669_1950240138906694217.jpeg)"></div>
+      <p class="t1" style="text-align:center;font-size:11.5px">原神</p>
+    </div>
+    <div style="width:84px;flex:none">
+      <div class="im" style="height:84px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/d143eddfa583a90d51316ccc081da62d_647876341881798982.jpeg)"></div>
+      <p class="t1" style="text-align:center;font-size:11.5px">绝区零</p>
+    </div>
+    <div style="width:84px;flex:none">
+      <div class="im" style="height:84px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/d7a537bbf9d22ad099e9ba6092106210_9027057144466206283.jpeg)"></div>
+      <p class="t1" style="text-align:center;font-size:11.5px">崩坏3</p>
+    </div>
+  </div>
+
+  <div style="padding:22px 14px 0;display:flex;align-items:baseline;justify-content:space-between">
+    <p class="h2">最近收录</p>
+    <span style="font:400 11.5px/1 var(--sans);color:var(--red)" onClick="{{ goLibrary }}">全部谷库</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 14px 0">
+    <div>
+      <div class="im" style="height:112px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/02/09/cf5f2c309c7ea0ac8f32e08ec3742d6b_3156752912177270796.jpeg)"></div>
+      <p class="t1">银狼 咕卡</p><p class="t2">咕卡 · 特典</p>
+    </div>
+    <div>
+      <div class="im" style="height:112px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/14/96f8437247c3d4c13a99a1e74aa766bb_4196794284025781353.jpeg)"></div>
+      <p class="t1">三月七 立牌</p><p class="t2">立牌 · 亚克力</p>
+    </div>
+    <div>
+      <div class="im" style="height:112px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/01/15/7e966a70c7b7f80e231223c992ff445e_3442928816936282263.jpeg)"></div>
+      <p class="t1">流萤 挂件</p><p class="t2">挂件 · 金属</p>
+    </div>
+  </div>
+
+  <div style="padding:22px 14px 0"><p class="h2">收藏排行 · 本周</p></div>
+  <div style="padding:8px 14px 0;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-2)">
+      <span style="font:600 13px/1 var(--serif);color:var(--gold);width:16px">1</span>
+      <div class="im" style="width:30px;height:30px;border-radius:999px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/05/10/ff3c32b25672611fe763d3eefa52e666_2846834623134778014.jpeg)"></div>
+      <div style="flex:1;min-width:0"><p style="font:400 12.5px/1.3 var(--sans);margin:0">鹿野</p><p class="t2">点亮 412 · 星穹铁道</p></div>
+      <span style="font:400 11px/1 var(--sans);color:var(--ink-3)">98%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-2)">
+      <span style="font:600 13px/1 var(--serif);color:var(--ink-3);width:16px">2</span>
+      <div class="im" style="width:30px;height:30px;border-radius:999px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2022/01/25/f6242249abcd611020a0cf9d195b2470_9213552127811764054.jpeg)"></div>
+      <div style="flex:1;min-width:0"><p style="font:400 12.5px/1.3 var(--sans);margin:0">星见</p><p class="t2">点亮 388 · 绝区零</p></div>
+      <span style="font:400 11px/1 var(--sans);color:var(--ink-3)">91%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0">
+      <span style="font:600 13px/1 var(--serif);color:var(--ink-3);width:16px">3</span>
+      <div class="im" style="width:30px;height:30px;border-radius:999px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/03/01/1c0cd8ee868a6c3cd68f07a581341006_1221177060045715279.jpeg)"></div>
+      <div style="flex:1;min-width:0"><p style="font:400 12.5px/1.3 var(--sans);margin:0">阿岐</p><p class="t2">点亮 355 · 原神</p></div>
+      <span style="font:400 11px/1 var(--sans);color:var(--ink-3)">86%</span>
+    </div>
+  </div>
+  <div style="height:22px"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLibrary }}">
+<div class="scr" data-screen-label="谷库">
+  <div style="position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 14px 10px;border-bottom:1px solid var(--line-2)">
+    <div style="display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surf);border-radius:3px;padding:8px 10px">
+      <svg width="15" height="15" viewBox="0 0 256 256" fill="var(--ink-3)"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
+      <span style="font:400 12.5px/1 var(--sans);color:var(--ink-3)">搜 SKU / 角色 / 系列</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px;overflow:hidden">
+      <span class="chip on">全部</span><span class="chip">IP</span><span class="chip">角色</span><span class="chip">系列</span><span class="chip">类型</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 0">
+    <div>
+      <div class="im" style="height:158px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/05/25/388da59198ab7c3fe6bea4112dd122aa_3788171504744435733.jpeg)"></div>
+      <p class="t1">流萤 生日会徽章</p><p class="t2">吧唧 · 58mm</p>
+    </div>
+    <div>
+      <div class="im" style="height:186px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/02/09/cf5f2c309c7ea0ac8f32e08ec3742d6b_3156752912177270796.jpeg)"></div>
+      <p class="t1">银狼 咕卡 特典</p><p class="t2">咕卡 · 限定</p>
+    </div>
+    <div>
+      <div class="im" style="height:170px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/14/96f8437247c3d4c13a99a1e74aa766bb_4196794284025781353.jpeg)"></div>
+      <p class="t1">三月七 亚克力立牌</p><p class="t2">立牌 · 15cm</p>
+    </div>
+    <div>
+      <div class="im" style="height:140px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/01/15/7e966a70c7b7f80e231223c992ff445e_3442928816936282263.jpeg)"></div>
+      <p class="t1">流萤 金属挂件</p><p class="t2">挂件 · 合金</p>
+    </div>
+    <div>
+      <div class="im" style="height:150px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/c4a19f4c71a8cddc37c63b91b0ee635f_5474772752774225201.jpeg)"></div>
+      <p class="t1">崩坏3 十周年套装</p><p class="t2">套装 · 限定</p>
+    </div>
+    <div>
+      <div class="im" style="height:176px;border-radius:3px;border:1px solid var(--line);background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2024/04/28/c2272cb75490d93c6cf49d8ca55766be_1015974276450682122.jpeg)"></div>
+      <p class="t1">绝区零 主题吧唧</p><p class="t2">吧唧 · 75mm</p>
+    </div>
+  </div>
+  <p style="text-align:center;font:400 11px/1 var(--sans);color:var(--ink-3);padding:18px 0 20px;margin:0">下滑加载更多</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ isScan }}">
+<div data-screen-label="扫描" style="background:#14120f;min-height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden">
+  <div class="im" style="position:absolute;inset:0;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/8b16f7418272df14290a8acb6a09ecfa_9102068825191592186.jpeg);filter:brightness(.5) saturate(.8)"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,transparent 24%,rgba(20,18,15,.82) 68%)"></div>
+
+  <div style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
+    <button class="tab" style="min-height:auto;padding:0;color:#f7f1e5;flex:none" onClick="{{ goHome }}">
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="#f7f1e5"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+    </button>
+    <span style="font:500 12.5px/1 var(--sans);color:rgba(247,241,229,.82);letter-spacing:.08em">扫谷点亮</span>
+    <span style="width:22px"></span>
+  </div>
+
+  <div style="position:relative;flex:1;display:flex;align-items:center;justify-content:center">
+    <div style="width:252px;height:308px;position:relative">
+      <div style="position:absolute;inset:0;border-radius:6px;box-shadow:0 0 0 1px rgba(247,241,229,.14) inset"></div>
+      <i style="position:absolute;top:-1px;left:-1px;width:26px;height:26px;border-top:2px solid var(--gold);border-left:2px solid var(--gold);border-top-left-radius:6px"></i>
+      <i style="position:absolute;top:-1px;right:-1px;width:26px;height:26px;border-top:2px solid var(--gold);border-right:2px solid var(--gold);border-top-right-radius:6px"></i>
+      <i style="position:absolute;bottom:-1px;left:-1px;width:26px;height:26px;border-bottom:2px solid var(--gold);border-left:2px solid var(--gold);border-bottom-left-radius:6px"></i>
+      <i style="position:absolute;bottom:-1px;right:-1px;width:26px;height:26px;border-bottom:2px solid var(--gold);border-right:2px solid var(--gold);border-bottom-right-radius:6px"></i>
+      <sc-if value="{{ scanBusy }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute;left:8px;right:8px;top:4px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 18px 2px rgba(168,137,79,.55);animation:scanline 2.2s ease-in-out infinite"></div>
+      </sc-if>
+    </div>
+  </div>
+
+  <sc-if value="{{ scanIdle }}" hint-placeholder-val="{{ true }}">
+  <div style="position:relative;padding:0 20px 26px;text-align:center">
+    <p style="font:400 12.5px/1.7 var(--sans);color:rgba(247,241,229,.7);margin:0 0 18px">把谷子放进框里 · 拍一张就会自动比对官方谷库</p>
+    <button onClick="{{ startScan }}" style="width:66px;height:66px;border-radius:999px;border:2px solid var(--gold);background:rgba(201,75,75,.92);display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
+      <svg width="26" height="26" viewBox="0 0 256 256" fill="#f7f1e5"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg>
+    </button>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ scanBusy }}">
+  <div style="position:relative;padding:0 20px 40px;text-align:center">
+    <p style="font:500 14px/1.5 var(--sans);color:#f7f1e5;margin:0 0 6px;animation:pulse 1.4s ease-in-out infinite">识别中…</p>
+    <p style="font:400 11.5px/1.6 var(--sans);color:rgba(247,241,229,.6);margin:0">正在与官方谷库比对特征</p>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ scanLit }}">
+  <div style="position:relative;background:var(--surf);border-top:1px solid var(--line);padding:18px 16px 22px">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div class="im" style="width:78px;height:96px;border-radius:3px;border:1px solid var(--gold);flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/8b16f7418272df14290a8acb6a09ecfa_9102068825191592186.jpeg)"></div>
+      <div style="flex:1;min-width:0">
+        <p class="lbl" style="color:var(--gold)">已点亮</p>
+        <p class="h1" style="font-size:17px;margin:7px 0 4px">流萤 生日会亚克力立牌</p>
+        <p class="t2">星穹铁道 · 立牌 · 官方收录</p>
+        <p style="font:400 11.5px/1.6 var(--sans);color:var(--ink-2);margin:9px 0 0">已自动入柜，并可在你的公开主页展示。</p>
+      </div>
+      <div class="seal" style="flex:none">真</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" style="flex:1" onClick="{{ goMe }}">看我的谷柜</button>
+      <button class="btn btn-q" style="flex:1" onClick="{{ resetScan }}">继续扫</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ scanUnlit }}">
+  <div style="position:relative;background:var(--surf);border-top:1px solid var(--line);padding:18px 16px 22px">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div class="im gray" style="width:78px;height:96px;border-radius:3px;border:1px dashed var(--line);flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/d7a537bbf9d22ad099e9ba6092106210_9027057144466206283.jpeg)"></div>
+      <div style="flex:1;min-width:0">
+        <p class="lbl">未鉴定收藏</p>
+        <p class="h1" style="font-size:17px;margin:7px 0 4px">没在官方谷库里找到它</p>
+        <p style="font:400 11.5px/1.6 var(--sans);color:var(--ink-2);margin:6px 0 0">已存进你的谷柜「未鉴定」一栏，<strong style="font-weight:500;color:var(--ink)">仅自己可见</strong>，不计入完成度，也不出现在公开主页。</p>
+      </div>
+      <div class="seal" style="flex:none;border-color:var(--ink-3);color:var(--ink-3);font-size:24px">未</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-q" style="flex:1" onClick="{{ goMe }}">去未鉴定栏</button>
+      <button class="btn" style="flex:1" onClick="{{ resetScan }}">重扫一次</button>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isExchange }}">
+<div class="scr" data-screen-label="换谷">
+  <div style="position:sticky;top:0;z-index:5;background:var(--paper);padding:12px 14px 10px;border-bottom:1px solid var(--line-2)">
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <p class="h1">换谷</p>
+      <span style="font:400 11.5px/1 var(--sans);color:var(--red)">发布换谷帖</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px;overflow:hidden">
+      <span class="chip on">匹配我的</span><span class="chip">全部帖子</span><span class="chip">我的提案</span><span class="chip">履约中 2</span>
+    </div>
+  </div>
+
+  <div style="padding:12px 14px 0;display:flex;flex-direction:column;gap:10px">
+    <div class="card" style="padding:12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="im" style="width:26px;height:26px;border-radius:999px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2022/01/25/f6242249abcd611020a0cf9d195b2470_9213552127811764054.jpeg)"></div>
+        <div style="flex:1;min-width:0"><p style="font:400 12px/1.3 var(--sans);margin:0">星见</p><p class="t2">信誉 4.9 · 完成 23 次</p></div>
+        <span style="font:500 11px/1 var(--sans);color:var(--gold);border:1px solid var(--gold);padding:4px 7px;border-radius:2px">双向 92</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <div style="flex:1">
+          <p class="lbl">她出</p>
+          <div class="im" style="height:96px;border-radius:3px;margin-top:6px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/02/09/cf5f2c309c7ea0ac8f32e08ec3742d6b_3156752912177270796.jpeg)"></div>
+          <p class="t1">银狼 咕卡 特典</p>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 256 256" fill="var(--indigo)" style="flex:none;margin-top:14px"><path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z"/></svg>
+        <div style="flex:1">
+          <p class="lbl">想要你的</p>
+          <div class="im" style="height:96px;border-radius:3px;margin-top:6px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/0cf81fc2fd37d5fd9fc83dec71dbf8c9_4190506926520740656.jpeg)"></div>
+          <p class="t1">流萤 亚克力立牌</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" style="flex:1">发起提案</button>
+        <button class="btn btn-q" style="flex:none" onClick="{{ goChat }}">私信</button>
+      </div>
+      <p style="font:400 10.5px/1.5 var(--sans);color:var(--ink-3);margin:10px 0 0">纯以物易物 · 不涉及金额 · 反提最多 3 次</p>
+    </div>
+
+    <div class="card" style="padding:12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="im" style="width:26px;height:26px;border-radius:999px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/03/01/1c0cd8ee868a6c3cd68f07a581341006_1221177060045715279.jpeg)"></div>
+        <div style="flex:1;min-width:0"><p style="font:400 12px/1.3 var(--sans);margin:0">阿岐</p><p class="t2">信誉 4.7 · 完成 11 次</p></div>
+        <span style="font:500 11px/1 var(--sans);color:var(--indigo);border:1px solid var(--indigo);padding:4px 7px;border-radius:2px">三方 78</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <div style="flex:1">
+          <p class="lbl">他出</p>
+          <div class="im" style="height:96px;border-radius:3px;margin-top:6px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2024/04/28/c2272cb75490d93c6cf49d8ca55766be_1015974276450682122.jpeg)"></div>
+          <p class="t1">绝区零 主题吧唧</p>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 256 256" fill="var(--indigo)" style="flex:none;margin-top:14px"><path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z"/></svg>
+        <div style="flex:1">
+          <p class="lbl">想要你的</p>
+          <div class="im" style="height:96px;border-radius:3px;margin-top:6px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/c4a19f4c71a8cddc37c63b91b0ee635f_5474772752774225201.jpeg)"></div>
+          <p class="t1">崩坏3 十周年套装</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" style="flex:1">发起提案</button>
+        <button class="btn btn-q" style="flex:none" onClick="{{ goChat }}">私信</button>
+      </div>
+    </div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMe }}">
+<div class="scr" data-screen-label="我">
+  <div style="padding:14px 14px 0;display:flex;align-items:center;gap:12px">
+    <div class="im" style="width:52px;height:52px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/05/10/ff3c32b25672611fe763d3eefa52e666_2846834623134778014.jpeg)"></div>
+    <div style="flex:1;min-width:0">
+      <p style="font:500 15px/1.2 var(--sans);margin:0">鹿野</p>
+      <p class="t2" style="margin-top:3px">@luye · 星穹铁道 / 咕卡</p>
+    </div>
+    <button class="btn btn-q" style="padding:8px 12px;font-size:12px" onClick="{{ goProfile }}">看公开主页</button>
+  </div>
+
+  <div style="display:flex;padding:14px 14px 0">
+    <div style="flex:1;text-align:center"><p style="font:600 16px/1 var(--serif);margin:0">128</p><p class="t2" style="margin-top:4px">谷柜</p></div>
+    <div style="flex:1;text-align:center"><p style="font:600 16px/1 var(--serif);margin:0">86</p><p class="t2" style="margin-top:4px">关注</p></div>
+    <div style="flex:1;text-align:center"><p style="font:600 16px/1 var(--serif);margin:0">1.2k</p><p class="t2" style="margin-top:4px">粉丝</p></div>
+    <div style="flex:1;text-align:center"><p style="font:600 16px/1 var(--serif);margin:0;color:var(--gold)">7</p><p class="t2" style="margin-top:4px">徽章</p></div>
+  </div>
+
+  <div style="display:flex;gap:8px;padding:16px 14px 0">
+    <button class="btn btn-q" style="flex:1;padding:9px 0;font-size:12px" onClick="{{ goExchange }}">换谷 2</button>
+    <button class="btn btn-q" style="flex:1;padding:9px 0;font-size:12px" onClick="{{ goMessages }}">私信 3</button>
+    <button class="btn btn-q" style="flex:1;padding:9px 0;font-size:12px">通知</button>
+  </div>
+
+  <div style="display:flex;gap:6px;padding:18px 14px 10px;border-bottom:1px solid var(--line);overflow:hidden">
+    <span class="chip on">已点亮 128</span><span class="chip">想要 63</span><span class="chip">可换 24</span><span class="chip">未鉴定 9</span>
+  </div>
+
+  <div style="display:flex;align-items:baseline;gap:8px;padding:12px 14px 0">
+    <p class="t2">完成度 31% · 402 追踪</p>
+    <span style="flex:1;height:1px;background:var(--line)"></span>
+    <span style="font:400 11px/1 var(--sans);color:var(--red)">加收藏边框</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:12px 14px 0">
+    <div class="im" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/05/25/388da59198ab7c3fe6bea4112dd122aa_3788171504744435733.jpeg);box-shadow:0 0 0 1px var(--gold)"></div>
+    <div class="im" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/02/09/cf5f2c309c7ea0ac8f32e08ec3742d6b_3156752912177270796.jpeg)"></div>
+    <div class="im gray" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/14/96f8437247c3d4c13a99a1e74aa766bb_4196794284025781353.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/01/15/7e966a70c7b7f80e231223c992ff445e_3442928816936282263.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2024/04/28/c2272cb75490d93c6cf49d8ca55766be_1015974276450682122.jpeg);box-shadow:0 0 0 1px var(--gold)"></div>
+    <div class="im gray" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/05/10/ff3c32b25672611fe763d3eefa52e666_2846834623134778014.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/c4a19f4c71a8cddc37c63b91b0ee635f_5474772752774225201.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/164f5fdfdfd9b6f877659f6e4cc7aeb0_622242295318592167.jpeg)"></div>
+    <div class="im gray" style="aspect-ratio:3/4;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/d143eddfa583a90d51316ccc081da62d_647876341881798982.jpeg)"></div>
+  </div>
+
+  <div style="padding:18px 14px 0">
+    <div class="rule"></div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;padding:12px 0 0">
+      <p class="h2">未鉴定收藏 · 仅自己可见</p>
+      <span class="t2">9</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px;overflow:hidden">
+      <div class="im gray" style="width:62px;height:78px;border-radius:2px;border:1px dashed var(--line);flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/d7a537bbf9d22ad099e9ba6092106210_9027057144466206283.jpeg)"></div>
+      <div class="im gray" style="width:62px;height:78px;border-radius:2px;border:1px dashed var(--line);flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/a20239934459db46ee797cc9fac6c669_1950240138906694217.jpeg)"></div>
+      <div class="im gray" style="width:62px;height:78px;border-radius:2px;border:1px dashed var(--line);flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/ca8c039f8e9b17dcc483a124704b7de1_3356791309485294312.jpeg)"></div>
+      <div style="width:62px;height:78px;border-radius:2px;border:1px dashed var(--line);flex:none;display:flex;align-items:center;justify-content:center;font:400 11px/1 var(--sans);color:var(--ink-3)">+6</div>
+    </div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}">
+<div class="scr" data-screen-label="公开主页">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px 0">
+    <button class="tab" style="min-height:auto;padding:0;flex:none;color:var(--ink-2)" onClick="{{ goMe }}">
+      <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
+    </button>
+    <span style="font:500 13px/1 var(--sans);color:var(--ink-2)">@luye</span>
+  </div>
+
+  <div style="padding:14px 14px 0;display:flex;align-items:center;gap:12px">
+    <div class="im" style="width:52px;height:52px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/05/10/ff3c32b25672611fe763d3eefa52e666_2846834623134778014.jpeg)"></div>
+    <div style="flex:1;min-width:0">
+      <p style="font:500 15px/1.2 var(--sans);margin:0">鹿野</p>
+      <p class="t2" style="margin-top:3px">128 点亮 · 1.2k 粉丝 · 7 徽章</p>
+    </div>
+    <button class="btn" style="padding:8px 14px;font-size:12px">关注</button>
+  </div>
+
+  <p style="font:400 12px/1.6 var(--sans);color:var(--ink-2);padding:10px 14px 0;margin:0">只放扫过实物、匹配上官方的。星穹铁道全收集进行中。</p>
+
+  <div style="display:flex;gap:6px;padding:14px 14px 10px;border-bottom:1px solid var(--line);overflow:hidden">
+    <span class="chip on">藏品墙</span><span class="chip">系列</span><span class="chip">徽章</span><span class="chip">可换</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:10px 14px 0">
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/05/25/388da59198ab7c3fe6bea4112dd122aa_3788171504744435733.jpeg);position:relative"><span style="position:absolute;right:4px;top:4px;width:14px;height:14px;border-radius:999px;border:1px solid var(--gold);background:rgba(20,18,15,.45);color:#f0d9a8;font:600 8px/14px var(--serif);text-align:center">真</span></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/02/09/cf5f2c309c7ea0ac8f32e08ec3742d6b_3156752912177270796.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/14/96f8437247c3d4c13a99a1e74aa766bb_4196794284025781353.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/01/15/7e966a70c7b7f80e231223c992ff445e_3442928816936282263.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2024/04/28/c2272cb75490d93c6cf49d8ca55766be_1015974276450682122.jpeg);position:relative"><span style="position:absolute;right:4px;top:4px;width:14px;height:14px;border-radius:999px;border:1px solid var(--gold);background:rgba(20,18,15,.45);color:#f0d9a8;font:600 8px/14px var(--serif);text-align:center">真</span></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/c4a19f4c71a8cddc37c63b91b0ee635f_5474772752774225201.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/164f5fdfdfd9b6f877659f6e4cc7aeb0_622242295318592167.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/07/21/0cf81fc2fd37d5fd9fc83dec71dbf8c9_4190506926520740656.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/ca8c039f8e9b17dcc483a124704b7de1_3356791309485294312.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2025/10/17/d7a537bbf9d22ad099e9ba6092106210_9027057144466206283.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/a20239934459db46ee797cc9fac6c669_1950240138906694217.jpeg)"></div>
+    <div class="im" style="aspect-ratio:3/4;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/04/13/d143eddfa583a90d51316ccc081da62d_647876341881798982.jpeg)"></div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMessages }}">
+<div class="scr" data-screen-label="私信列表">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px 12px;border-bottom:1px solid var(--line-2)">
+    <button class="tab" style="min-height:auto;padding:0;flex:none;color:var(--ink-2)" onClick="{{ goMe }}">
+      <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
+    </button>
+    <p class="h1" style="font-size:17px;flex:1">私信</p>
+    <span class="t2">3 条未读</span>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <div onClick="{{ goChat }}" style="display:flex;gap:11px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line-2);cursor:pointer">
+      <div class="im" style="width:44px;height:44px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2022/01/25/f6242249abcd611020a0cf9d195b2470_9213552127811764054.jpeg)"></div>
+      <div style="flex:1;min-width:0">
+        <p style="font:500 13px/1.3 var(--sans);margin:0">星见</p>
+        <p class="t2" style="margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">那我出银狼咕卡换你的流萤立牌？</p>
+      </div>
+      <div style="text-align:right;flex:none">
+        <p class="t2" style="font-size:10.5px">09:12</p>
+        <span style="display:inline-block;margin-top:6px;min-width:16px;height:16px;border-radius:999px;background:var(--red);color:#f7f1e5;font:500 10px/16px var(--sans);text-align:center;padding:0 4px">2</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:11px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line-2)">
+      <div class="im" style="width:44px;height:44px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/03/01/1c0cd8ee868a6c3cd68f07a581341006_1221177060045715279.jpeg)"></div>
+      <div style="flex:1;min-width:0">
+        <p style="font:500 13px/1.3 var(--sans);margin:0">阿岐</p>
+        <p class="t2" style="margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">好的，周末发货，到了我点确认</p>
+      </div>
+      <div style="text-align:right;flex:none">
+        <p class="t2" style="font-size:10.5px">昨天</p>
+        <span style="display:inline-block;margin-top:6px;min-width:16px;height:16px;border-radius:999px;background:var(--red);color:#f7f1e5;font:500 10px/16px var(--sans);text-align:center;padding:0 4px">1</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:11px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line-2)">
+      <div class="im" style="width:44px;height:44px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2023/05/10/ff3c32b25672611fe763d3eefa52e666_2846834623134778014.jpeg)"></div>
+      <div style="flex:1;min-width:0">
+        <p style="font:500 13px/1.3 var(--sans);margin:0">谷友小组 · 咕卡交流</p>
+        <p class="t2" style="margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">十周年那套有人凑齐了吗</p>
+      </div>
+      <p class="t2" style="font-size:10.5px;flex:none">周一</p>
+    </div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isChat }}">
+<div class="scr" data-screen-label="气泡聊天">
+  <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line-2);background:var(--surf)">
+    <button class="tab" style="min-height:auto;padding:0;flex:none;color:var(--ink-2)" onClick="{{ goMessages }}">
+      <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
+    </button>
+    <div class="im" style="width:30px;height:30px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2022/01/25/f6242249abcd611020a0cf9d195b2470_9213552127811764054.jpeg)"></div>
+    <div style="flex:1;min-width:0"><p style="font:500 13px/1.2 var(--sans);margin:0">星见</p><p class="t2" style="font-size:10.5px;margin-top:2px">信誉 4.9 · 双向匹配 92</p></div>
+    <svg width="20" height="20" viewBox="0 0 256 256" fill="var(--ink-3)"><path d="M156,128a28,28,0,1,1-28-28A28,28,0,0,1,156,128ZM48,100a28,28,0,1,0,28,28A28,28,0,0,0,48,100Zm160,0a28,28,0,1,0,28,28A28,28,0,0,0,208,100Z"/></svg>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;gap:12px;padding:16px 14px 0">
+    <p style="text-align:center;font:400 10.5px/1 var(--sans);color:var(--ink-3);margin:0">今天 09:04</p>
+
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <div class="im" style="width:26px;height:26px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2022/01/25/f6242249abcd611020a0cf9d195b2470_9213552127811764054.jpeg)"></div>
+      <div style="max-width:74%;background:var(--surf);border:1px solid var(--line);border-radius:3px 12px 12px 12px;padding:9px 12px">
+        <p style="font:400 12.5px/1.6 var(--sans);margin:0">看到你柜里点亮了流萤立牌，还愿意换吗</p>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end">
+      <div style="max-width:74%;background:color-mix(in srgb,var(--red) 10%,var(--surf));border:1px solid color-mix(in srgb,var(--red) 34%,var(--line));border-radius:12px 3px 12px 12px;padding:9px 12px">
+        <p style="font:400 12.5px/1.6 var(--sans);margin:0">在的，你有银狼那张特典咕卡吗</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <div class="im" style="width:26px;height:26px;border-radius:999px;flex:none;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2022/01/25/f6242249abcd611020a0cf9d195b2470_9213552127811764054.jpeg)"></div>
+      <div style="max-width:74%;background:var(--surf);border:1px solid var(--line);border-radius:3px 12px 12px 12px;padding:8px;width:180px">
+        <div class="im" style="height:120px;border-radius:2px;background-image:url(https://act-webstatic.mihoyo.com/upload/mall/2026/02/09/cf5f2c309c7ea0ac8f32e08ec3742d6b_3156752912177270796.jpeg)"></div>
+        <p style="font:400 12px/1.4 var(--sans);margin:8px 2px 2px">银狼 咕卡 特典</p>
+        <p class="t2" style="margin:0 2px 2px">我柜里 · 已点亮</p>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end">
+      <div style="max-width:82%;background:var(--surf);border:1px solid var(--gold);border-radius:12px 3px 12px 12px;padding:10px 12px">
+        <p class="lbl" style="color:var(--gold)">换谷提案 · 待她确认</p>
+        <p style="font:400 12.5px/1.6 var(--sans);margin:7px 0 0">流萤 亚克力立牌 ⇄ 银狼 咕卡 特典</p>
+        <p class="t2" style="margin-top:5px">反提剩 3 次 · 不涉及金额</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:var(--surf)">
+    <svg width="22" height="22" viewBox="0 0 256 256" fill="var(--ink-3)" style="flex:none"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208ZM88,96a12,12,0,1,1,12-12A12,12,0,0,1,88,96Zm120,64v48H48V176l40-40,29.66,29.66a8,8,0,0,0,11.31,0L152,140.69Z"/></svg>
+    <div style="flex:1;border:1px solid var(--line);border-radius:999px;padding:9px 13px;background:var(--paper)">
+      <span style="font:400 12.5px/1 var(--sans);color:var(--ink-3)">发消息…</span>
+    </div>
+    <svg width="22" height="22" viewBox="0 0 256 256" fill="var(--red)" style="flex:none"><path d="M231.4,44.34s0,.1,0,.15l-58.2,191.94a15.88,15.88,0,0,1-14,11.51q-.69.06-1.38.06a15.86,15.86,0,0,1-14.42-9.15l-38.13-80a4,4,0,0,1,.79-4.62l53.44-53.43a8,8,0,0,0-11.31-11.32L94.7,143a4,4,0,0,1-4.65.79L10.21,105.71a16,16,0,0,1,2.47-29.8l191.94-58.2.15,0A16,16,0,0,1,231.4,44.34Z"/></svg>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
+<div class="tabbar">
+  <button class="tab {{ homeCls }}" onClick="{{ goHome }}">
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor"><path d="M218.83,103.77l-80-75.48a1.14,1.14,0,0,1-.11-.11,16,16,0,0,0-21.53,0l-.11.11L37.17,103.77A16,16,0,0,0,32,115.55V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V160h32v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V115.55A16,16,0,0,0,218.83,103.77ZM208,208H160V160a16,16,0,0,0-16-16H112a16,16,0,0,0-16,16v48H48V115.55l.11-.1L128,40l79.9,75.43.11.1Z"/></svg>首页
+  </button>
+  <button class="tab {{ libCls }}" onClick="{{ goLibrary }}">
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor"><path d="M230.91,172A8,8,0,0,1,228,182.91l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,36,169.09l92,53.65,92-53.65A8,8,0,0,1,230.91,172ZM220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09ZM24,80a8,8,0,0,1,4-6.91l96-56a8,8,0,0,1,8.06,0l96,56a8,8,0,0,1,0,13.82l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,24,80Zm23.88,0L128,126.74,208.12,80,128,33.26Z"/></svg>谷库
+  </button>
+  <button class="tab" onClick="{{ goScan }}" style="flex:none;width:76px;padding-bottom:7px">
+    <span style="width:50px;height:50px;border-radius:999px;background:var(--red);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 3px 10px rgba(36,36,36,.18)">
+      <svg width="23" height="23" viewBox="0 0 256 256" fill="#f7f1e5"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg>
+    </span>
+    <span style="margin-top:2px">扫描</span>
+  </button>
+  <button class="tab {{ exCls }}" onClick="{{ goExchange }}">
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z"/></svg>换谷
+  </button>
+  <button class="tab {{ meCls }}" onClick="{{ goMe }}">
+    <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>我
+  </button>
+</div>
+</sc-if>
+
+</x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:460,&quot;height&quot;:940},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light' | 'dark'&quot;,&quot;section&quot;:&quot;外观&quot;}}">
+class Component extends DCLogic {
+  state = { screen: 'home', scan: 'idle' };
+
+  go(screen) { return () => this.setState({ screen, scan: 'idle' }); }
+
+  startScan = () => {
+    this.setState({ scan: 'busy' });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => {
+      // alternate matched / unmatched so both result states are reachable
+      this._alt = !this._alt;
+      this.setState({ scan: this._alt ? 'lit' : 'unlit' });
+    }, 1800);
+  };
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  renderVals() {
+    const s = this.state.screen;
+    const theme = this.props.theme ?? 'light';
+    return {
+      theme,
+      frameDark: theme === 'dark',
+      isHome: s === 'home', isLibrary: s === 'library', isScan: s === 'scan',
+      isExchange: s === 'exchange', isMe: s === 'me', isProfile: s === 'profile',
+      isMessages: s === 'messages', isChat: s === 'chat',
+      showTabs: s !== 'scan',
+      homeCls: s === 'home' ? 'on' : '',
+      libCls: s === 'library' ? 'on' : '',
+      exCls: s === 'exchange' ? 'on' : '',
+      meCls: (s === 'me' || s === 'profile' || s === 'messages' || s === 'chat') ? 'on' : '',
+      scanIdle: s === 'scan' && this.state.scan === 'idle',
+      scanBusy: s === 'scan' && this.state.scan === 'busy',
+      scanLit: s === 'scan' && this.state.scan === 'lit',
+      scanUnlit: s === 'scan' && this.state.scan === 'unlit',
+      goHome: this.go('home'), goLibrary: this.go('library'), goScan: this.go('scan'),
+      goExchange: this.go('exchange'), goMe: this.go('me'), goProfile: this.go('profile'),
+      goMessages: this.go('messages'), goChat: this.go('chat'),
+      startScan: this.startScan, resetScan: () => this.setState({ scan: 'idle' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

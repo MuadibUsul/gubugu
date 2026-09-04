@@ -32,18 +32,15 @@ export default async function NotificationsPage() {
   const notifications = await listNotificationsForUser({ userId: user.id });
 
   return (
-    <main className="mx-auto w-full max-w-[980px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <section className="relative overflow-hidden rounded-[26px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--kin-soft),color-mix(in_oklab,var(--shu-soft)_70%,var(--surface)))] px-5 py-7 sm:px-8 sm:py-9">
-        <p className="section-kicker">与你有关的进展</p>
-        <h1 className="mt-3 text-[clamp(30px,4vw,44px)] leading-[1.14]">
-          站内通知
-        </h1>
-        <p className="text-muted-foreground mt-3 text-sm">
+    <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
+      <div className="border-b border-[var(--rule-2)] pb-3">
+        <h1 className="text-[19px] font-bold">站内通知</h1>
+        <p className="text-muted-foreground mt-1 text-[12px]">
           出价、议价、私信、履约与举报结果都会留在这里。
         </p>
-      </section>
+      </div>
 
-      <section className="py-8">
+      <section className="py-5">
         {notifications.length === 0 ? (
           <div className="empty-state">
             <strong>暂无通知</strong>

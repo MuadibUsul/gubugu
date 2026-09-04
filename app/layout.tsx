@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 
 import { BottomTabBar } from '@/components/app-shell/bottom-tab-bar';
 import { PwaProvider } from '@/components/app-shell/pwa-provider';
-import { SiteNavigation } from '@/components/layout/site-navigation';
 import { siteConfig } from '@/lib/config/site';
 
 import './globals.css';
@@ -55,9 +54,10 @@ export default function RootLayout({
         >
           跳到主要内容
         </a>
-        <SiteNavigation />
+        {/* App 为唯一标准：不再有桌面顶部导航；内容居中成手机列，宽屏也显示同一套
+            App 界面（底部 Tab + 每屏自带的头部）。 */}
         <div
-          className="pb-[calc(66px+env(safe-area-inset-bottom))] md:pb-0"
+          className="mx-auto w-full max-w-[560px] pb-[calc(66px+env(safe-area-inset-bottom))]"
           id="main-content"
           tabIndex={-1}
         >

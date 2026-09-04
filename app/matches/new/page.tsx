@@ -25,13 +25,11 @@ export default async function NewTradeListingPage({
   const error = one(query.error);
 
   return (
-    <main className="mx-auto w-full max-w-[1040px] px-4 pt-6 pb-24 sm:px-6 md:px-8 md:pt-8">
-      <section className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--exchange-soft),color-mix(in_oklab,var(--violet-soft)_76%,var(--surface)))] px-5 py-8 sm:px-8 sm:py-10">
-        <p className="section-kicker">换谷广场 · 新发布</p>
-        <h1 className="mt-4 text-[clamp(32px,4.6vw,48px)]">发布一张换谷帖</h1>
-        <p className="text-muted-foreground mt-3 max-w-[66ch] text-sm leading-relaxed">
-          只有通过实物识别点亮、并明确设为可换的 SKU
-          才能发布。对方提交正式方案后， 双方最多反提 3 次；接受后才进入履约。
+    <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
+      <section className="border-b border-[var(--rule-2)] pb-3">
+        <h1 className="text-[19px] font-bold">发布换谷帖</h1>
+        <p className="text-muted-foreground mt-1 text-[12px] leading-relaxed">
+          只有已点亮并设为可换的 SKU 才能发布 · 双方最多反提 3 次,接受后进入履约。
         </p>
         <Link
           className="mt-5 inline-flex text-sm font-semibold text-[var(--shu)]"

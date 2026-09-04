@@ -55,10 +55,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <div className="relative flex h-full flex-col">
               <div>
                 <p className="section-kicker">欢迎回来</p>
-                <h1 className="font-heading text-foreground mt-5 max-w-[520px] text-[clamp(38px,5vw,58px)] leading-[1.08] text-balance">
+                <h1 className="font-heading text-foreground mt-3 text-[clamp(22px,6vw,58px)] leading-[1.12] text-balance">
                   {heroTitle}
                 </h1>
-                <p className="text-muted-foreground mt-5 max-w-[46ch]">
+                <p className="text-muted-foreground mt-3 max-w-[46ch] text-sm">
                   喜欢、想要、可换，每一个收藏决定都留在你自己的谷柜里。
                 </p>
               </div>

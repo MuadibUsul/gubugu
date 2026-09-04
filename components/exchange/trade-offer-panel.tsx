@@ -54,7 +54,6 @@ function GoodsTerm({
         >
           {item.name}
         </Link>
-        <p className="num mt-1 truncate">{item.skuCode}</p>
       </div>
     </div>
   );

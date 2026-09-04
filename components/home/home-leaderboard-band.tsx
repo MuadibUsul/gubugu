@@ -15,11 +15,15 @@ export async function HomeLeaderboardSection() {
   if (entries.length === 0) return null;
 
   return (
-    <section className="mt-12" aria-label="收藏排行">
+    <section className="mt-9 md:mt-12" aria-label="收藏排行">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="section-kicker">点亮最多的收藏家</p>
-          <h2 className="mt-3 text-[clamp(24px,3vw,34px)]">收藏排行</h2>
+          <p className="section-kicker hidden md:inline-flex">
+            点亮最多的收藏家
+          </p>
+          <h2 className="text-[clamp(16px,4.6vw,34px)] md:mt-3">
+            收藏排行 <span className="text-[var(--ink-3)] md:hidden">· 本周</span>
+          </h2>
         </div>
         <Link
           className="shrink-0 text-sm font-bold text-[var(--shu)]"

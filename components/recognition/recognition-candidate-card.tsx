@@ -89,9 +89,6 @@ export function RecognitionCandidateCard({
                 <span className="hud-chip px-3 py-1 text-[0.68rem] font-semibold uppercase">
                   候选 {candidate.rank}
                 </span>
-                <span className="hud-chip text-muted-foreground px-3 py-1 text-xs">
-                  {candidate.goods.skuCode}
-                </span>
                 {isConfirmed ? (
                   <span className="hud-chip border-[color:color-mix(in_oklab,var(--primary)_38%,white)] bg-[color:color-mix(in_oklab,var(--primary)_20%,transparent)] px-3 py-1 text-xs font-semibold">
                     已选定

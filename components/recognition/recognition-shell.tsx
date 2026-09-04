@@ -90,14 +90,19 @@ export function RecognitionShell() {
         return;
       }
       setPhase('error');
-      setErrorMessage(error instanceof Error ? error.message : '相机启动失败。');
+      setErrorMessage(
+        error instanceof Error ? error.message : '相机启动失败。',
+      );
     }
   }, [stopCamera]);
 
   // 进入即开相机。
   useEffect(() => {
-    void startCamera();
-    return () => stopCamera();
+    const startFrame = window.requestAnimationFrame(() => void startCamera());
+    return () => {
+      window.cancelAnimationFrame(startFrame);
+      stopCamera();
+    };
   }, [startCamera, stopCamera]);
 
   // 点快门：抓帧 → 上传自动识别入库。
@@ -111,7 +116,17 @@ export function RecognitionShell() {
     canvas.height = 1200;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.drawImage(video, f.sx, f.sy, f.sw, f.sh, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      video,
+      f.sx,
+      f.sy,
+      f.sw,
+      f.sh,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
     const url = canvas.toDataURL('image/jpeg', 0.92);
 
     stopCamera();
@@ -150,7 +165,9 @@ export function RecognitionShell() {
       }
     } catch (error) {
       setPhase('error');
-      setErrorMessage(error instanceof Error ? error.message : '扫描请求失败。');
+      setErrorMessage(
+        error instanceof Error ? error.message : '扫描请求失败。',
+      );
     }
   }, [stopCamera]);
 
@@ -196,7 +213,9 @@ export function RecognitionShell() {
             <span className="scanner__corner scanner__corner--br" />
             {phase === 'live' ? <span className="scanner__sweep" /> : null}
             <p className="scanner__hint">
-              {phase === 'starting' ? '正在启动相机…' : '把谷子放进框里，点下方按钮'}
+              {phase === 'starting'
+                ? '正在启动相机…'
+                : '把谷子放进框里，点下方按钮'}
             </p>
           </div>
         ) : null}

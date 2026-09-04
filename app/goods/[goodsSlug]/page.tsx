@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { CollapsibleSection } from '@/components/layout/collapsible-section';
 import { GoodsCommunityPanel } from '@/components/goods/goods-community-panel';
 import { GoodsGallery } from '@/components/goods/goods-gallery';
-import { GoodsShareCard } from '@/components/goods/goods-share-card';
 import { GoodsSpecTable } from '@/components/goods/goods-spec-table';
 import { RarityBadge } from '@/components/goods/rarity-badge';
 import { GoodsStatusActions } from '@/components/goods/goods-status-actions';
@@ -121,7 +120,7 @@ export default async function GoodsDetailPage({
         </div>
       ) : null}
 
-      <section className="rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(145deg,var(--surface),color-mix(in_oklab,var(--violet-soft)_38%,var(--surface)))] p-5 shadow-[var(--shadow-card)] sm:p-8 lg:p-10">
+      <section className="pt-1">
         <div className="min-w-0">
           <p className="accession flex flex-wrap items-center gap-2">
             <Link
@@ -133,24 +132,17 @@ export default async function GoodsDetailPage({
             <i>· {goods.series.name}</i>
           </p>
 
-          <h1 className="mt-3 max-w-[880px] text-[clamp(30px,4vw,48px)] leading-[1.13] text-balance">
-            {goods.name}
-          </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <p className="chip px-3 py-1.5 font-mono text-[11px]">
-              {goods.skuCode}
-            </p>
-            <span className="chip px-3 py-1.5 text-[11px]">SKU 条目</span>
+          <h1 className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[clamp(18px,5vw,32px)] leading-[1.2] text-balance">
+            <span>{goods.name}</span>
             <RarityBadge
               rarityAverage={
                 data.community.ratingSummary.dimensionAverages.rarityScore
               }
             />
-            <GoodsShareCard goodsName={goods.name} goodsSlug={goods.slug} />
-          </div>
+          </h1>
 
           {goods.description ? (
-            <p className="text-muted-foreground mt-4 max-w-[62ch]">
+            <p className="text-muted-foreground mt-2 text-[13px]">
               {goods.description}
             </p>
           ) : null}
@@ -169,10 +161,10 @@ export default async function GoodsDetailPage({
                   statusDetails={data.viewer.state.statuses}
                   goodsId={goods.id}
                   goodsSlug={goods.slug}
+                  goodsName={goods.name}
                   isAuthenticated={Boolean(authUser)}
                   isWatching={data.viewer.isWatching}
                   updateFeedback={submissionState.collectionUpdate}
-                  userLabel={authUser?.displayLabel ?? null}
                 />
               </div>
             </div>

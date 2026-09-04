@@ -1,73 +1,38 @@
 import Link from 'next/link';
 
 import { GoodsCardArt } from '@/components/goods/goods-card-art';
-import {
-  getGoodsCardViewerStateMap,
-  searchGoodsCatalog,
-  type GoodsCardViewerState,
-} from '@/server/data';
+import { formatGoodsTypeLabel } from '@/components/search/search-query';
+import { searchGoodsCatalog } from '@/server/data';
 import type { GoodsCardData } from '@/server/data/_shared';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
-function AccessionPlate({
-  item,
-  index,
-  viewerState,
-}: {
-  item: GoodsCardData;
-  index: number;
-  viewerState: GoodsCardViewerState;
-}) {
-  const isInCabinet = viewerState.activeStatuses.includes('owned');
-
-  // 公共浏览页统一原色，不做明暗区分；点亮态只在谷柜表达，这里用文字徽标传达。
+// 最近收录：紧凑三列卡（对齐设计稿）——封面图 + 名称 + 类型，一眼扫过。
+function AccessionPlate({ item }: { item: GoodsCardData }) {
   return (
-    <Link
-      aria-label={`${item.name}，${viewerState.isLit ? '已点亮' : isInCabinet ? '已入柜，待点亮' : '未点亮'}`}
-      className="goods-card group min-w-0"
-      href={`/goods/${item.slug}`}
-    >
+    <Link className="group min-w-0" href={`/goods/${item.slug}`}>
       <GoodsCardArt
         alt={item.name}
-        className="aspect-[4/3]"
+        className="aspect-[3/4] rounded-[6px] border border-[var(--rule)]"
         imageUrl={item.primaryImageUrl}
-        sizes="(max-width: 639px) 45vw, (max-width: 1023px) 45vw, 23vw"
-      >
-        <span className="goods-card__no">
-          NEW · {String(index + 1).padStart(2, '0')}
-        </span>
-      </GoodsCardArt>
-
-      <div className="px-2 pt-4 pb-3">
-        <p className="font-heading line-clamp-2 text-[15px] leading-snug font-bold transition-colors group-hover:text-[var(--shu)]">
-          {item.name}
-        </p>
-        <p className="text-muted-foreground mt-2 line-clamp-1 text-[12px]">
-          {item.ip.name}
-        </p>
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="sku-code line-clamp-1">{item.skuCode}</span>
-          <span className="text-sm text-[var(--shu)]">↗</span>
-        </div>
-        <p className="mt-2 text-[10.5px] font-bold text-[var(--violet)] sm:text-[11px]">
-          {viewerState.isLit
-            ? '已点亮'
-            : isInCabinet
-              ? '已入柜 · 待点亮'
-              : '未点亮'}
-        </p>
-      </div>
+        sizes="(max-width: 767px) 31vw, 22vw"
+      />
+      <p className="mt-2 line-clamp-1 text-[12.5px] font-medium transition-colors group-hover:text-[var(--shu)]">
+        {item.name}
+      </p>
+      <p className="text-muted-foreground mt-0.5 line-clamp-1 text-[11px]">
+        {formatGoodsTypeLabel(item.goodsType)} · {item.ip.name}
+      </p>
     </Link>
   );
 }
 
 export function HomeAccessionsFallback() {
   return (
-    <div className="rounded-[28px] bg-[var(--sunken)] p-5 sm:p-8">
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
+    <div className="mt-9 md:mt-0 md:rounded-[28px] md:bg-[var(--sunken)] md:p-8">
+      <div className="grid grid-cols-3 gap-2.5 md:gap-4 lg:grid-cols-4">
+        {Array.from({ length: 6 }).map((_, index) => (
           <div
-            className="bg-muted aspect-[4/3] animate-pulse rounded-[20px]"
+            className="bg-muted aspect-[3/4] animate-pulse rounded-[6px]"
             key={index}
           />
         ))}
@@ -76,23 +41,14 @@ export function HomeAccessionsFallback() {
   );
 }
 
-export async function HomeAccessionsSection({
-  viewerId,
-}: {
-  viewerId?: string;
-}) {
+export async function HomeAccessionsSection() {
   let items: GoodsCardData[] = [];
-  let viewerStates: Record<string, GoodsCardViewerState> = {};
   let failed = false;
 
   try {
-    // 默认排序已是发售日倒序，所以取前 4 条就是最近录入。
-    const results = await searchGoodsCatalog({ pageSize: 4 });
+    // 默认排序已是发售日倒序，所以取前几条就是最近录入。
+    const results = await searchGoodsCatalog({ pageSize: 6 });
     items = results.items;
-    viewerStates = await getGoodsCardViewerStateMap({
-      viewerId,
-      goodsIds: items.map((item) => item.id),
-    });
   } catch (error) {
     if (!isDatabaseAccessConfigurationError(error)) {
       console.error(error);
@@ -102,18 +58,18 @@ export async function HomeAccessionsSection({
   }
 
   return (
-    <section className="rounded-[28px] border border-[var(--rule)] bg-[linear-gradient(145deg,var(--sunken),color-mix(in_oklab,var(--sky-soft)_65%,var(--surface)))] p-5 sm:p-8 lg:p-10">
+    <section className="mt-9 rounded-none border-0 bg-transparent p-0 md:mt-0 md:rounded-[28px] md:border md:border-[var(--rule)] md:bg-[linear-gradient(145deg,var(--sunken),color-mix(in_oklab,var(--sky-soft)_65%,var(--surface)))] md:p-8 lg:p-10">
       <div className="min-w-0">
         <div className="flex items-end justify-between gap-5">
           <div>
-            <p className="section-kicker">本周新鲜入册</p>
-            <h2 className="mt-3 text-[clamp(28px,3.4vw,40px)]">最近收录</h2>
+            <p className="section-kicker hidden md:inline-flex">本周新鲜入册</p>
+            <h2 className="text-[clamp(16px,4.6vw,40px)] md:mt-3">最近收录</h2>
           </div>
           <Link
-            className="text-muted-foreground text-sm font-semibold hover:text-[var(--shu)]"
+            className="shrink-0 text-[11.5px] font-semibold text-[var(--shu)] md:text-sm"
             href="/search"
           >
-            查看全部 →
+            全部谷库 →
           </Link>
         </div>
 
@@ -128,19 +84,9 @@ export async function HomeAccessionsSection({
             录入第一件之后，它会出现在这里。
           </div>
         ) : (
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {items.map((item, index) => (
-              <AccessionPlate
-                index={index}
-                item={item}
-                key={item.id}
-                viewerState={
-                  viewerStates[item.id] ?? {
-                    activeStatuses: [],
-                    isLit: false,
-                  }
-                }
-              />
+          <div className="mt-3 grid grid-cols-3 gap-2.5 md:mt-7 md:gap-4 lg:grid-cols-4">
+            {items.map((item) => (
+              <AccessionPlate item={item} key={item.id} />
             ))}
           </div>
         )}

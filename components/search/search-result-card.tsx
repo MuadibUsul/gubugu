@@ -55,7 +55,6 @@ export function SearchResultCard({
           <Link href={detailsHref}>{item.name}</Link>
         </h3>
 
-        <span className="sku-code truncate">{item.skuCode}</span>
 
         <p className="text-muted-foreground line-clamp-1 text-[11px] sm:text-[12px]">
           {item.ip.name} · {formatGoodsTypeLabel(item.goodsType)}
