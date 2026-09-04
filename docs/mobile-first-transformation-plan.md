@@ -1,6 +1,6 @@
 # 谷布谷移动优先全端改造计划
 
-状态：待执行  
+状态：Phase 0 已完成，Phase 1 进行中  
 制定日期：2026-09-04  
 适用基线：当前 `chore/engineering-foundation` 工作区  
 历史计划：保留根目录 `plan.md` 与 `docs/refactor-execution-plan.md`，不覆盖
@@ -64,9 +64,9 @@
 - 未匹配扫描照片复用了公开、长期缓存的目录图片路由，与“仅本人可见”承诺冲突。
 - 自动点亮与原候选确认流程并存，但缺少统一阈值策略、确认协议和专项测试。
 - 页面与 Route Handler 中出现直接数据库编排，部分逻辑绕过既定数据/服务层。
-- `pnpm lint` 和 `pnpm format:check` 当前失败，生成目录未完整排除。
-- Dockerfile 校验 Sharp 0.33.x，但 `package.json` 使用 0.34.5，生产镜像存在构建失败风险。
-- 构建时数据库不可用会打印真实查询错误后继续以空数据成功构建，容易掩盖部署故障。
+- ~~`pnpm lint` 和 `pnpm format:check` 当前失败，生成目录未完整排除。~~ 已解决。
+- ~~Dockerfile 校验 Sharp 0.33.x，但 `package.json` 使用 0.34.5，生产镜像存在构建失败风险。~~ 已解决：统一到 0.33.5，原因见 Phase 0。
+- ~~构建时数据库不可用会打印真实查询错误后继续以空数据成功构建，容易掩盖部署故障。~~ 已解决：构建前置检查会显式声明降级范围。
 - PRD、架构、状态报告与实际产品能力不一致，尤其是换谷和识别规则。
 
 ## 4. 目标技术架构
@@ -231,14 +231,21 @@ private user assets
 
 目标：先把当前在途改动变成可追踪、可回滚的工作基线。
 
-- [ ] 审核并提交当前未提交 UI 改造，设计导出物与产品源码分开提交。
-- [ ] 更新 `.gitignore`、Prettier 和 ESLint ignore，排除 Android build 与设计工具生成产物。
-- [ ] 修复真实源码 lint/format 错误。
-- [ ] 统一 Sharp 依赖与 Dockerfile CPU 兼容策略，并完成 runner/migrator 镜像构建。
-- [ ] 让 CI 构建不依赖开发机 `.env.local`，明确数据库不可用时哪些页面允许降级。
-- [ ] 建立桌面、移动 Web、Android 三类回归清单。
+- [x] 审核并提交当前未提交 UI 改造。移动端改造已提交（`41ecbb5`）；设计导出物与源码同提交未拆分，`images/`（db:seed 的样图源）尚未入库，见下方备注。
+- [x] 更新 `.gitignore`、Prettier 和 ESLint ignore，排除 Android build 与设计工具生成产物。
+- [x] 修复真实源码 lint/format 错误。
+- [x] 统一 Sharp 依赖与 Dockerfile CPU 兼容策略，并完成 runner/migrator 镜像构建。目标 VPS 的 CPU 只有 x86-64-v1，Sharp 固定在 0.33.5（`pnpm.overrides`），Dockerfile 构建期断言版本，防止升级把线上打挂。
+- [x] 让 CI 构建不依赖开发机 `.env.local`，明确数据库不可用时哪些页面允许降级。`scripts/preflight-build.ts` 在 `next build` 前声明本次构建模式并列出会降级的页面，替代原先那段裸 SQL 报错。
+- [x] 建立桌面、移动 Web、Android 三类回归清单，见 [release-regression-checklist.md](release-regression-checklist.md)。
 
 完成闸门：`format:check`、`lint`、`typecheck`、`test`、`build`、Docker build 全部通过。
+
+> 闸门现状：六项全部通过（测试 42 文件 / 272 条）。
+>
+> 遗留决定：`images/` 是 `pnpm db:seed` 的样图源（`drizzle/seed/local-sample-images.ts`
+> 从这里同步到 `public/local-sample-images/`），约 33MB，目前既未入库、也被
+> `.dockerignore` 排除——这正是生产库 seed 后商品图全是占位 SVG 的原因。入库与否
+> 需产品侧拍板：首发内容按第 8 节走爬虫管线，则样图只是开发便利。
 
 ### Phase 1：隐私与领域不变式
 

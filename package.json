@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
     "dev:lan": "next dev --hostname 0.0.0.0",
-    "build": "next build",
+    "build": "tsx scripts/preflight-build.ts && next build",
     "cap:sync": "cap sync android",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
