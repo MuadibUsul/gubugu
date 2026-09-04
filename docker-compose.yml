@@ -36,9 +36,21 @@ services:
     image: ${MIGRATOR_IMAGE:?MIGRATOR_IMAGE 未设置}
     restart: 'no'
     networks: [internal]
-    mem_limit: 768m
+    # db:embed 要把 CLIP（fp32，约 1GB）加载进来，768m 会 OOM。属一次性任务，
+    # 跑的时候 web 基本空闲，不会挤压同机的 tline。
+    mem_limit: 2048m
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-gubugu}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gubugu}
+      # 这个服务也用来跑一次性任务（db:seed / db:embed，见 DEPLOY.md）。db:embed 要
+      # 加载 CLIP 并读取目录图，因此与 web 共享同样的缓存与资产目录，避免每次重复
+      # 下载 336MB 的模型。NODE_ENV=production 同时保证种子不会写入演示登录凭据。
+      NODE_ENV: production
+      MODEL_CACHE_DIR: /app/.data/models
+      CATALOG_ASSET_DIR: /app/.data/catalog-assets
+      HF_MIRROR: ${HF_MIRROR:-}
+    volumes:
+      - catalog_assets:/app/.data/catalog-assets
+      - model_cache:/app/.data/models
     depends_on:
       postgres:
         condition: service_healthy
