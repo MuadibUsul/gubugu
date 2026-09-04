@@ -1,6 +1,6 @@
 # 谷布谷移动优先全端改造计划
 
-状态：Phase 0、Phase 1 已完成，Phase 2 待开始  
+状态：Phase 0–2 已完成，Phase 3 待开始  
 制定日期：2026-09-04  
 适用基线：当前 `chore/engineering-foundation` 工作区  
 历史计划：保留根目录 `plan.md` 与 `docs/refactor-execution-plan.md`，不覆盖
@@ -271,12 +271,14 @@ private user assets
 
 目标：一套前端代码同时提供原生感移动体验和高效 PC 体验。
 
-- [ ] 重构根布局，移除全局 560px 限制。
-- [ ] 手机显示底部五 Tab；PC 显示顶部导航/上下文导航；两者共享路由。
-- [ ] 将移动设计稿的颜色、字体、间距、圆角、阴影、动效和安全区固化为 token。
-- [ ] 清理重复、冲突和页面私有的全局 CSS；保持暗色主题。
-- [ ] 建立可复用的移动页面头、PC 页面头、内容容器、筛选布局和空状态。
-- [ ] 验证 360/390、768、1024、1280、1440 宽度和 Android WebView。
+- [x] 重构根布局，移除全局 560px 限制。容器改为 560 / 720 / 1240 三档。
+- [x] 手机显示底部五 Tab；PC 显示顶部导航（`components/app-shell/desktop-nav.tsx`）；两者以 1024px 为界互斥，共享同一组路由。桌面导航不含「扫描」——识别是手机专属，服务端对桌面 UA 直接 404。
+- [x] 颜色、字体、间距、圆角、阴影、动效与安全区已是 `:root` 上的 79 个 token，亮/暗两套在 `@theme inline` 中收敛。
+- [x] 清理死代码与冲突：删除 `site-navigation.tsx`、`site-nav-links.tsx`（旧桌面导航，已无人引用）与只为它存在的 `.only-desktop`；globals.css 无重复顶层选择器；暗色主题已在宽屏实测。
+      **未做**：`.scanner__*` 共 348 行页面私有样式仍在 globals.css。它只被 `recognition-shell.tsx` 使用、已用 BEM 前缀实际隔离，而搬进 CSS Module 要改 45 处引用，风险落在最难端到端验证的相机页上。留待 Phase 4 连同扫描体验一起动。
+- [x] 原语齐备：移动页面头 `MobileAppHeader`、PC 顶部导航 `DesktopNav`、内容容器在根布局、空状态 `PageNotice`、筛选布局在谷库页（宽屏侧栏 / 窄屏折叠）。
+      **缺的是采纳率**：仍有 44 处页面自己手写空状态文案。逐页收敛属于 Phase 3，计划本身也要求外壳稳定前不逐页精修。
+- [x] 已在 dev server 上实测 390 / 768 / 1024 / 1280 / 1440：单列+底部 Tab → 平板触控优先 → 顶部导航且无底部 Tab，暗色主题一并验过。**Android WebView 未验**（需真机，见 Phase 7）。
 
 完成闸门：无横向滚动；手机首屏紧凑；PC 不呈现窄屏放大版；键盘和底部 Tab 不遮挡操作。
 

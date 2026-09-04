@@ -333,15 +333,6 @@
 
 /* App 外壳的断点显隐工具。自管而非用 Tailwind 的 md:flex——v4 增量构建偶发不生成该类，
    自定义 CSS 在 dev/prod 都稳。断点 768px 与 Tailwind 的 md 对齐。 */
-.only-desktop {
-  display: none;
-}
-@media (min-width: 768px) {
-  .only-desktop {
-    display: flex;
-  }
-}
-
 /* 日系纸张博物馆：象牙纸底色让藏品图与档案信息作主角，墨黑作字，古典朱红作
    印章式强调（御朱印），古铜金标记珍藏，青黛与雾蓝、樱粉、苔藓作克制的辅助
    识别。材质取向亚光旧纸、轻微年代感，避免玻璃 / 金属 / 霓虹。 */
