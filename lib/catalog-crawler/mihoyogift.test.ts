@@ -12,20 +12,28 @@ import {
 
 describe('isMihoyogiftSource', () => {
   it('识别米游铺主机（含 www 与裸域）', () => {
-    expect(isMihoyogiftSource('https://www.mihoyogift.com/ys/goods?page=1')).toBe(true);
+    expect(
+      isMihoyogiftSource('https://www.mihoyogift.com/ys/goods?page=1'),
+    ).toBe(true);
     expect(isMihoyogiftSource('https://mihoyogift.com/sr/goods')).toBe(true);
-    expect(isMihoyogiftSource('https://www.animate-onlineshop.jp/x')).toBe(false);
+    expect(isMihoyogiftSource('https://www.animate-onlineshop.jp/x')).toBe(
+      false,
+    );
     expect(isMihoyogiftSource('not a url')).toBe(false);
   });
 });
 
 describe('shopCodeFromEntry', () => {
   it('取路径首段为分店代码', () => {
-    expect(shopCodeFromEntry('https://www.mihoyogift.com/ys/goods?categoryId=145')).toBe('ys');
+    expect(
+      shopCodeFromEntry('https://www.mihoyogift.com/ys/goods?categoryId=145'),
+    ).toBe('ys');
     expect(shopCodeFromEntry('https://www.mihoyogift.com/sr/goods')).toBe('sr');
   });
   it('兜底看 shop_code 查询参数', () => {
-    expect(shopCodeFromEntry('https://www.mihoyogift.com/?shop_code=ys')).toBe('ys');
+    expect(shopCodeFromEntry('https://www.mihoyogift.com/?shop_code=ys')).toBe(
+      'ys',
+    );
   });
   it('取不到返回 null', () => {
     expect(shopCodeFromEntry('https://www.mihoyogift.com/')).toBeNull();
@@ -36,7 +44,9 @@ describe('URL builders', () => {
   it('列表接口带 shop_code / order / page / limit', () => {
     const url = new URL(mihoyogiftListUrl('ys', 2, 50));
     expect(url.hostname).toBe('api-mall.mihoyogift.com');
-    expect(url.pathname).toBe('/common/homeishop/v1/goods/search_goods_spu_list');
+    expect(url.pathname).toBe(
+      '/common/homeishop/v1/goods/search_goods_spu_list',
+    );
     expect(url.searchParams.get('shop_code')).toBe('ys');
     expect(url.searchParams.get('order')).toBe('comprehensive');
     expect(url.searchParams.get('page')).toBe('2');
@@ -58,7 +68,11 @@ describe('parseSpuListResponse', () => {
       retcode: 0,
       message: 'OK',
       data: {
-        list: [{ goods_id: '202108021235' }, { goods_id: '300' }, { goods_id: 42 }],
+        list: [
+          { goods_id: '202108021235' },
+          { goods_id: '300' },
+          { goods_id: 42 },
+        ],
         count: 754,
       },
     };
@@ -140,7 +154,10 @@ describe('parseSpuDetailResponse', () => {
       ),
     ).toBeNull();
     expect(
-      parseSpuDetailResponse({ retcode: -1, data: null }, { shopCode: 'ys', goodsId: 'x' }),
+      parseSpuDetailResponse(
+        { retcode: -1, data: null },
+        { shopCode: 'ys', goodsId: 'x' },
+      ),
     ).toBeNull();
   });
 });

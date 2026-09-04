@@ -44,7 +44,8 @@ export function shopCodeFromEntry(entryUrl: string): string | null {
     const url = new URL(entryUrl);
     const first = url.pathname.split('/').filter(Boolean)[0];
     if (first && /^[a-z0-9_-]{1,32}$/i.test(first)) return first.toLowerCase();
-    const param = url.searchParams.get('shop_code') ?? url.searchParams.get('shopCode');
+    const param =
+      url.searchParams.get('shop_code') ?? url.searchParams.get('shopCode');
     if (param && /^[a-z0-9_-]{1,32}$/i.test(param)) return param.toLowerCase();
     return null;
   } catch {
@@ -95,9 +96,11 @@ export function parseSpuListResponse(json: unknown): {
   for (const item of list) {
     const id = item?.goods_id;
     if (typeof id === 'string' && id) goodsIds.push(id);
-    else if (typeof id === 'number' && Number.isFinite(id)) goodsIds.push(String(id));
+    else if (typeof id === 'number' && Number.isFinite(id))
+      goodsIds.push(String(id));
   }
-  const count = typeof body.data.count === 'number' ? body.data.count : goodsIds.length;
+  const count =
+    typeof body.data.count === 'number' ? body.data.count : goodsIds.length;
   return { goodsIds, count };
 }
 
@@ -110,7 +113,11 @@ function cleanText(value: unknown): string | null {
 function collectImages(detail: Record<string, unknown>): string[] {
   const out: string[] = [];
   const push = (value: unknown) => {
-    if (typeof value === 'string' && /^https?:\/\//i.test(value) && !out.includes(value)) {
+    if (
+      typeof value === 'string' &&
+      /^https?:\/\//i.test(value) &&
+      !out.includes(value)
+    ) {
       out.push(value);
     }
   };
@@ -123,13 +130,15 @@ function collectImages(detail: Record<string, unknown>): string[] {
 
 // 价格以「分」为单位（4900 = ¥49.00）；仅正数才折算成金额字符串。
 function priceToAmount(value: unknown): string | null {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0)
+    return null;
   return (value / 100).toFixed(2);
 }
 
 // 开售时间是 Unix 秒；转成 YYYY-MM-DD（UTC）作为发售日期，取不到则 null。
 function saleTimeToDate(value: unknown): string | null {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0)
+    return null;
   const date = new Date(value * 1000);
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }

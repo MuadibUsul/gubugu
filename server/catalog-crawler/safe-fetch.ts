@@ -349,5 +349,9 @@ export async function safeFetchJson<T = unknown>(
 ): Promise<{ url: string; status: number; json: T }> {
   const result = await safeFetch(input, { ...options, kind: 'json' });
   const text = new TextDecoder().decode(result.buffer);
-  return { url: result.url, status: result.status, json: JSON.parse(text) as T };
+  return {
+    url: result.url,
+    status: result.status,
+    json: JSON.parse(text) as T,
+  };
 }

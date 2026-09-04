@@ -107,7 +107,9 @@ async function getLeaderboardUncached(
     })
     .from(userAchievements)
     .groupBy(userAchievements.userId);
-  const badgesByUser = new Map(badgeRows.map((row) => [row.userId, row.badges]));
+  const badgesByUser = new Map(
+    badgeRows.map((row) => [row.userId, row.badges]),
+  );
 
   const enriched = collectionRows.map((row) => {
     const metrics: LeaderboardMetrics = {

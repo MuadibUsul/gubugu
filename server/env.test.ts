@@ -18,6 +18,7 @@ const ENV_KEYS = [
   'RECOGNITION_WARMUP',
   'CATALOG_CRAWLER_SCHEDULER',
   'CATALOG_ASSET_DIR',
+  'USER_SCAN_ASSET_DIR',
 ] as const;
 
 let saved: Record<string, string | undefined>;

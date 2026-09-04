@@ -245,7 +245,8 @@ export default async function CrawlerDraftPage({
               </>
             ) : (
               <p className="text-muted-foreground mt-3 text-sm leading-6">
-                这条没走通 LLM，下方文字为抓取原文，请人工核对翻译，并手动选择系列。
+                这条没走通
+                LLM，下方文字为抓取原文，请人工核对翻译，并手动选择系列。
                 {enrichment.originalName
                   ? ` 原文：${enrichment.originalName}`
                   : ''}

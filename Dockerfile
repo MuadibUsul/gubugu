@@ -62,7 +62,8 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
     MODEL_CACHE_DIR=/app/.data/models \
-    CATALOG_ASSET_DIR=/app/.data/catalog-assets
+    CATALOG_ASSET_DIR=/app/.data/catalog-assets \
+    USER_SCAN_ASSET_DIR=/app/.data/user-scans
 
 # 运行所需：生产依赖、构建产物、静态资源、配置。next start 不需要应用源码
 # （已编译进 .next），但需要 next.config。
@@ -88,7 +89,7 @@ RUN mkdir -p /usr/share/fonts/opentype \
 #  - 整个 .next 都要可写：除 .next/cache（fetch cache）外，ISR 还会把 force-static
 #    路由（如分享卡）的预渲染结果写回 .next/server/app/**。产物以 root 拷入，不授权
 #    就会 EACCES —— 结果无法落盘，每次过期都要重算十几秒。
-RUN mkdir -p /app/.data/models /app/.data/catalog-assets /app/.next/cache \
+RUN mkdir -p /app/.data/models /app/.data/catalog-assets /app/.data/user-scans /app/.next/cache \
     && chown -R node:node /app/.data /app/.next
 
 USER node

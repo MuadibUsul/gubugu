@@ -29,7 +29,8 @@ export default async function NewTradeListingPage({
       <section className="border-b border-[var(--rule-2)] pb-3">
         <h1 className="text-[19px] font-bold">发布换谷帖</h1>
         <p className="text-muted-foreground mt-1 text-[12px] leading-relaxed">
-          只有已点亮并设为可换的 SKU 才能发布 · 双方最多反提 3 次,接受后进入履约。
+          只有已点亮并设为可换的 SKU 才能发布 · 双方最多反提 3
+          次,接受后进入履约。
         </p>
         <Link
           className="mt-5 inline-flex text-sm font-semibold text-[var(--shu)]"

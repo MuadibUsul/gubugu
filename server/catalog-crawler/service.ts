@@ -270,7 +270,9 @@ async function upsertProductDraft(
   }
 }
 
-async function crawlSourceIntoDrafts(source: CrawlerSource): Promise<CrawlTally> {
+async function crawlSourceIntoDrafts(
+  source: CrawlerSource,
+): Promise<CrawlTally> {
   // 米游铺（米哈游官方谷店）是 SPA + JSON API，不解析 HTML，走专用接口爬取。
   if (isMihoyogiftSource(source.entryUrl)) {
     return crawlMihoyogiftIntoDrafts(source);

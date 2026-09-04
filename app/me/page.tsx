@@ -150,7 +150,9 @@ export default async function MePage({
           {user.displayLabel.slice(0, 1)}
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[16px] font-bold">{user.displayLabel}</h1>
+          <h1 className="truncate text-[16px] font-bold">
+            {user.displayLabel}
+          </h1>
           <p className="text-muted-foreground mt-0.5 text-[11px]">
             今天也来整理喜欢的东西。
           </p>

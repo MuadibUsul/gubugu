@@ -210,9 +210,7 @@ export async function listOpenTradeListings(input?: {
         eq(exchangeListings.status, 'open'),
         eq(exchangeListings.moderationStatus, 'approved'),
         eq(exchangeListings.allowCash, false),
-        input?.ownerId
-          ? eq(exchangeListings.userId, input.ownerId)
-          : undefined,
+        input?.ownerId ? eq(exchangeListings.userId, input.ownerId) : undefined,
         exists(
           db
             .select({ id: userGoods.id })

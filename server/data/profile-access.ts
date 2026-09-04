@@ -9,7 +9,9 @@ import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 // Before profiles existed these pages were addressed by demo viewer key
 // (/users/collector). Those URLs still resolve so existing links do not break,
 // but the handle is the canonical address.
-export function resolveDemoViewerFallback(handle: string): ProfileDetail | null {
+export function resolveDemoViewerFallback(
+  handle: string,
+): ProfileDetail | null {
   const viewer =
     handle in demoViewers
       ? demoViewers[handle as keyof typeof demoViewers]

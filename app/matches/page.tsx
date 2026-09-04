@@ -317,7 +317,10 @@ export default async function MatchesPage({
           </Link>
         </div>
         <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
-          <a className="chip chip--on px-[11px] py-[5px] text-[11.5px]" href="#matching">
+          <a
+            className="chip chip--on px-[11px] py-[5px] text-[11.5px]"
+            href="#matching"
+          >
             匹配我的
           </a>
           <a className="chip px-[11px] py-[5px] text-[11.5px]" href="#plaza">

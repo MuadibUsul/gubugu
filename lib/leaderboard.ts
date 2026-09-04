@@ -22,16 +22,36 @@ export type LeaderboardBoard = {
 };
 
 export const leaderboardBoards: readonly LeaderboardBoard[] = [
-  { dimension: 'lit', label: '点亮总数', kicker: '点亮最多的收藏家', unit: '件' },
-  { dimension: 'breadth', label: '品类广度', kicker: '收藏跨越的谷子类型', unit: '类' },
-  { dimension: 'works', label: '作品广度', kicker: '涉猎过的作品数', unit: '部' },
+  {
+    dimension: 'lit',
+    label: '点亮总数',
+    kicker: '点亮最多的收藏家',
+    unit: '件',
+  },
+  {
+    dimension: 'breadth',
+    label: '品类广度',
+    kicker: '收藏跨越的谷子类型',
+    unit: '类',
+  },
+  {
+    dimension: 'works',
+    label: '作品广度',
+    kicker: '涉猎过的作品数',
+    unit: '部',
+  },
   {
     dimension: 'momentum',
     label: '近月势头',
     kicker: '近 30 天点亮件数',
     unit: '件',
   },
-  { dimension: 'badges', label: '徽章收集', kicker: '解锁的成就数量', unit: '枚' },
+  {
+    dimension: 'badges',
+    label: '徽章收集',
+    kicker: '解锁的成就数量',
+    unit: '枚',
+  },
 ];
 
 export const defaultLeaderboardDimension: LeaderboardDimension = 'lit';

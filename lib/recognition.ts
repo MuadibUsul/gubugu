@@ -44,6 +44,7 @@ export const recognitionUploadLimits = {
 } as const;
 
 export const recognitionCandidateDisplayLimit = 5;
+export const recognitionAutoLightThreshold = 0.86;
 export const recognitionStrongMatchThreshold = 0.72;
 export const recognitionWeakMatchThreshold = 0.58;
 export const recognitionAttemptTtlMs = 15 * 60 * 1000;
@@ -64,6 +65,7 @@ export const confirmRecognitionCandidateInputSchema = z
   .object({
     requestId: z.string().uuid(),
     candidateId: z.string().uuid(),
+    scanId: z.string().uuid().optional(),
   })
   .strict();
 

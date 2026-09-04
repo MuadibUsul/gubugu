@@ -17,10 +17,9 @@ export async function listUserScans(
   userId: string,
   limit = 60,
 ): Promise<UserScanItem[]> {
-  return getDb()
+  const rows = await getDb()
     .select({
       id: userScans.id,
-      imageUrl: userScans.imageUrl,
       topScore: userScans.topScore,
       createdAt: userScans.createdAt,
     })
@@ -28,4 +27,9 @@ export async function listUserScans(
     .where(eq(userScans.userId, userId))
     .orderBy(desc(userScans.createdAt))
     .limit(limit);
+
+  return rows.map((row) => ({
+    ...row,
+    imageUrl: `/api/user-scans/${row.id}/image`,
+  }));
 }

@@ -38,6 +38,7 @@ const envSchema = z
     RECOGNITION_WARMUP: z.enum(['0', '1']).default('0'),
     CATALOG_CRAWLER_SCHEDULER: z.enum(['0', '1']).default('1'),
     CATALOG_ASSET_DIR: z.string().min(1).default('.data/catalog-assets'),
+    USER_SCAN_ASSET_DIR: z.string().min(1).default('.data/user-scans'),
   })
   .superRefine((value, ctx) => {
     const isProduction = value.NODE_ENV === 'production';
@@ -156,6 +157,7 @@ const result = envSchema.safeParse({
     process.env.CATALOG_CRAWLER_SCHEDULER,
   ),
   CATALOG_ASSET_DIR: readOptional(process.env.CATALOG_ASSET_DIR),
+  USER_SCAN_ASSET_DIR: readOptional(process.env.USER_SCAN_ASSET_DIR),
 });
 
 if (!result.success) {

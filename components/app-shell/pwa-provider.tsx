@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 // 注册 Service Worker + 安装引导。挂在根 layout（可水合）里。
@@ -65,10 +66,12 @@ export function PwaProvider() {
   return (
     <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-[60] mx-auto max-w-[560px] px-4 md:bottom-4">
       <div className="flex items-center gap-3 rounded-[16px] border border-[var(--rule)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-float)]">
-        <img
+        <Image
           alt=""
           className="size-9 rounded-[10px]"
+          height={36}
           src="/icons/icon-192.png"
+          width={36}
         />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">把谷布谷装进主屏</p>

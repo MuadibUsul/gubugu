@@ -15,7 +15,8 @@ import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 
 export const metadata: Metadata = {
   title: '收藏排行榜',
-  description: '从点亮总数、品类广度、作品广度、近月势头与徽章等维度为公开收藏排名。',
+  description:
+    '从点亮总数、品类广度、作品广度、近月势头与徽章等维度为公开收藏排名。',
 };
 
 type LeaderboardPageProps = {
@@ -165,7 +166,9 @@ export default async function LeaderboardPage({
       <section className="mt-6">
         <div className="mb-3 flex items-baseline justify-between gap-4">
           <h2 className="text-[20px]">{board.label}</h2>
-          <span className="text-muted-foreground text-[13px]">{board.kicker}</span>
+          <span className="text-muted-foreground text-[13px]">
+            {board.kicker}
+          </span>
         </div>
         <div className="rule-kin" />
 

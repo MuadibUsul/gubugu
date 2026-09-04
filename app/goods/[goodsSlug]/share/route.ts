@@ -36,7 +36,9 @@ async function loadShareImageBytes(
     const localMatch = rawUrl.match(/\/catalog-assets\/([^/?#]+)$/);
 
     if (localMatch) {
-      return await readFile(catalogAssetPath(decodeURIComponent(localMatch[1])));
+      return await readFile(
+        catalogAssetPath(decodeURIComponent(localMatch[1])),
+      );
     }
 
     const safeUrl = toSafeShareImageUrl(rawUrl);

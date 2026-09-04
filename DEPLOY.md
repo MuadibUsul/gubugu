@@ -36,6 +36,7 @@ Caddy 自动 HTTPS，靠 GitHub Actions 构建镜像并 SSH 上线。
    下加一条 A 记录：`Host=gubugu`，`Value=104.207.82.85`。放行 `80`、`443`。
    > 用子域而非顶级域，是为了避开 `tlines.tech` 上混着的 Namecheap 停放页 A 记录
    > （`156.154.132.200/133.200`）——那会让流量轮询到停放页并导致证书签发失败。
+
 ---
 
 ## 二、GitHub 仓库配置
@@ -47,13 +48,13 @@ Secrets（想让 CI 自动上线时才需要；手动部署可跳过整节）。
 
 **Secrets（私密，用于 SSH 部署）**
 
-| 名称 | 值 |
-| --- | --- |
-| `VPS_HOST` | VPS IP 或主机名 |
-| `VPS_USER` | SSH 用户（该用户需在 docker 组内） |
+| 名称          | 值                                                  |
+| ------------- | --------------------------------------------------- |
+| `VPS_HOST`    | VPS IP 或主机名                                     |
+| `VPS_USER`    | SSH 用户（该用户需在 docker 组内）                  |
 | `VPS_SSH_KEY` | 私钥全文（对应公钥已加入 VPS 的 `authorized_keys`） |
-| `VPS_PORT` | SSH 端口，非 22 才填 |
-| `DEPLOY_DIR` | VPS 上的部署目录，如 `/opt/gubugu` |
+| `VPS_PORT`    | SSH 端口，非 22 才填                                |
+| `DEPLOY_DIR`  | VPS 上的部署目录，如 `/opt/gubugu`                  |
 
 > GHCR 推拉用内置 `GITHUB_TOKEN`，无需额外 PAT。首次推送后，到
 > Packages 页确认可见性；VPS 用同一 token 在部署时临时登录拉取。
@@ -79,15 +80,15 @@ mkdir -p ~/gubugu && cd ~/gubugu     # 与 DEPLOY_DIR 一致，沿用 tline 的�
 `tline-db-1`（Postgres 16），以及 `caddy-caddy-1`（`caddy:2-alpine` 容器，独占
 80/443，配置来自宿主机 `/opt/caddy/Caddyfile`，只接在共享网络 `web` 上）。
 
-| 资源 | 隔离方式 |
-| --- | --- |
-| 容器 / 卷 | compose 项目名固定 `gubugu`，资源带 `gubugu_` 前缀；应用容器名 `gubugu-app`，与 `tline-*` 无交集 |
-| 网络 | 自有 `gubugu_internal`；只把应用接入既有的 `web`（声明为 `external`，`compose down` 不会删它） |
-| 宿主机端口 | **一个都不占**。Caddy 经 `web` 网络用容器名直连 `gubugu-app:3000`，无需任何端口映射 |
-| 数据库 | 自建 Postgres 只在 `gubugu_internal` 上，`web` 网络够不着；**不碰 `tline-db-1`** |
-| 内存 | 整机 6 GB。web 限 2560m、postgres 限 768m，避免挤垮 tline |
-| 文件 | 只写 `~/gubugu`；数据在命名卷里 |
-| 镜像清理 | 只删 `gubugu-*` 的旧镜像。**绝不可用 `docker image prune -a`** —— tline 有大量按 sha 标记、未运行的镜像，会被一并删除 |
+| 资源       | 隔离方式                                                                                                              |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| 容器 / 卷  | compose 项目名固定 `gubugu`，资源带 `gubugu_` 前缀；应用容器名 `gubugu-app`，与 `tline-*` 无交集                      |
+| 网络       | 自有 `gubugu_internal`；只把应用接入既有的 `web`（声明为 `external`，`compose down` 不会删它）                        |
+| 宿主机端口 | **一个都不占**。Caddy 经 `web` 网络用容器名直连 `gubugu-app:3000`，无需任何端口映射                                   |
+| 数据库     | 自建 Postgres 只在 `gubugu_internal` 上，`web` 网络够不着；**不碰 `tline-db-1`**                                      |
+| 内存       | 整机 6 GB。web 限 2560m、postgres 限 768m，避免挤垮 tline                                                             |
+| 文件       | 只写 `~/gubugu`；数据在命名卷里                                                                                       |
+| 镜像清理   | 只删 `gubugu-*` 的旧镜像。**绝不可用 `docker image prune -a`** —— tline 有大量按 sha 标记、未运行的镜像，会被一并删除 |
 
 ### 反向代理：给现有 Caddy 加一段站点配置
 

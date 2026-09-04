@@ -22,7 +22,8 @@ export async function HomeLeaderboardSection() {
             点亮最多的收藏家
           </p>
           <h2 className="text-[clamp(16px,4.6vw,34px)] md:mt-3">
-            收藏排行 <span className="text-[var(--ink-3)] md:hidden">· 本周</span>
+            收藏排行{' '}
+            <span className="text-[var(--ink-3)] md:hidden">· 本周</span>
           </h2>
         </div>
         <Link
@@ -40,7 +41,7 @@ export async function HomeLeaderboardSection() {
               className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--sunken)]"
               href={`/users/${entry.handle}`}
             >
-              <span className="w-6 shrink-0 text-center text-sm font-bold text-[var(--ink-2)] num">
+              <span className="num w-6 shrink-0 text-center text-sm font-bold text-[var(--ink-2)]">
                 {entry.rank}
               </span>
               <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--shu-soft)] text-sm font-bold text-[var(--shu)]">
@@ -65,7 +66,7 @@ export async function HomeLeaderboardSection() {
                   </span>
                 ) : null}
               </span>
-              <span className="shrink-0 text-sm font-bold text-[var(--shu)] num">
+              <span className="num shrink-0 text-sm font-bold text-[var(--shu)]">
                 {entry.value}
                 <span className="text-muted-foreground ml-0.5 text-xs font-normal">
                   件

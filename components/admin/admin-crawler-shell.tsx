@@ -325,8 +325,8 @@ function SourcesView({ data }: AdminCrawlerShellProps) {
               粘贴链接
             </h2>
             <p className="text-muted-foreground text-sm leading-7">
-              贴一个商品详情页链接：抓取这一页 → 适配器解析 + LLM
-              中文化 → 生成一条待审草稿。逐条人工策展，不发现其它链接。
+              贴一个商品详情页链接：抓取这一页 → 适配器解析 + LLM 中文化 →
+              生成一条待审草稿。逐条人工策展，不发现其它链接。
             </p>
           </div>
           <div className="mt-5">

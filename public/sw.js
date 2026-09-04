@@ -77,11 +77,11 @@ self.addEventListener('fetch', (event) => {
   // 不可变静态资源 / 目录图：cache-first。
   if (isImmutableAsset(url)) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          staleWhileRevalidate(request, RUNTIME_CACHE),
-      ),
+      caches
+        .match(request)
+        .then(
+          (cached) => cached || staleWhileRevalidate(request, RUNTIME_CACHE),
+        ),
     );
     return;
   }

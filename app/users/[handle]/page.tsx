@@ -128,7 +128,11 @@ export default async function UserPage({
                 nextPath={`/users/${profile.handle}`}
               />
               <form action={startConversationAction}>
-                <input name="recipientId" type="hidden" value={profile.userId} />
+                <input
+                  name="recipientId"
+                  type="hidden"
+                  value={profile.userId}
+                />
                 <input name="contextType" type="hidden" value="profile" />
                 <input
                   name="nextPath"
@@ -185,7 +189,9 @@ export default async function UserPage({
           <div className="flex items-baseline justify-between gap-4">
             <div>
               <p className="section-kicker">可换 · 换谷板</p>
-              <h2 className="mt-2 text-[clamp(16px,4.6vw,32px)]">TA 的换谷板</h2>
+              <h2 className="mt-2 text-[clamp(16px,4.6vw,32px)]">
+                TA 的换谷板
+              </h2>
             </div>
             <Link
               className="text-[13px] font-semibold text-[var(--shu)] hover:underline"

@@ -26,7 +26,7 @@ export function CollapsibleSection({
 }: CollapsibleSectionProps) {
   return (
     <details className="group" open={defaultOpen}>
-      <summary className="marker:hidden flex cursor-pointer list-none items-center gap-4 py-2 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-4 py-2 marker:hidden [&::-webkit-details-marker]:hidden">
         <div className="min-w-0 flex-1">
           {kicker ? <p className="section-kicker">{kicker}</p> : null}
           <div className="mt-1 flex items-center gap-3">

@@ -30,7 +30,11 @@ export default async function MessagesPage({
   return (
     <main className="mx-auto w-full max-w-[980px] px-4 pt-4 pb-24 sm:px-6 md:px-8 md:pt-8">
       <div className="mb-2 flex items-center gap-3 border-b border-[var(--rule-2)] pb-3">
-        <Link aria-label="返回" className="flex-none text-[var(--ink-2)]" href="/me">
+        <Link
+          aria-label="返回"
+          className="flex-none text-[var(--ink-2)]"
+          href="/me"
+        >
           <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
             <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z" />
           </svg>

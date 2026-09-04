@@ -137,7 +137,10 @@ export async function enrichCatalogProduct(
     });
 
     if (!response.ok) {
-      return { status: 'failed', reason: `LLM 接口返回 HTTP ${response.status}` };
+      return {
+        status: 'failed',
+        reason: `LLM 接口返回 HTTP ${response.status}`,
+      };
     }
 
     const body = chatCompletionSchema.safeParse(await response.json());

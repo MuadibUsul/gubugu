@@ -13,6 +13,8 @@ type RemoteImageProps = {
   style?: CSSProperties;
   /** Set on art above the fold; opts out of lazy loading. */
   priority?: boolean;
+  /** Fetch directly in the browser so authenticated image routes receive cookies. */
+  privateSource?: boolean;
 };
 
 /**
@@ -31,8 +33,9 @@ export function RemoteImage({
   className = '',
   style,
   priority = false,
+  privateSource = false,
 }: RemoteImageProps) {
-  if (isOptimizableImageUrl(src)) {
+  if (!privateSource && isOptimizableImageUrl(src)) {
     return (
       <Image
         alt={alt}

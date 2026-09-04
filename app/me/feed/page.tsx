@@ -23,7 +23,9 @@ export default async function FeedPage({
     <main className="mx-auto w-full px-4 pt-4 pb-24 sm:px-6">
       <div className="border-b border-[var(--rule-2)] pb-3">
         <h1 className="text-[19px] font-bold">谷友动态</h1>
-        <p className="text-muted-foreground mt-1 text-[12px]">你关注的谷友最近的点亮与换谷。</p>
+        <p className="text-muted-foreground mt-1 text-[12px]">
+          你关注的谷友最近的点亮与换谷。
+        </p>
       </div>
       <section className="py-5">
         {items.length ? (

@@ -27,7 +27,11 @@
 .scanner__scrim {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 80% at 50% 42%, transparent 46%, rgba(0, 0, 0, 0.55) 100%);
+  background: radial-gradient(
+    120% 80% at 50% 42%,
+    transparent 46%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
   pointer-events: none;
 }
 .scanner__top {
@@ -74,10 +78,34 @@
   height: 26px;
   border: 3px solid var(--shu);
 }
-.scanner__corner--tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-top-left-radius: 12px; }
-.scanner__corner--tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; border-top-right-radius: 12px; }
-.scanner__corner--bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; border-bottom-left-radius: 12px; }
-.scanner__corner--br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: 12px; }
+.scanner__corner--tl {
+  top: -1px;
+  left: -1px;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: 12px;
+}
+.scanner__corner--tr {
+  top: -1px;
+  right: -1px;
+  border-left: 0;
+  border-bottom: 0;
+  border-top-right-radius: 12px;
+}
+.scanner__corner--bl {
+  bottom: -1px;
+  left: -1px;
+  border-right: 0;
+  border-top: 0;
+  border-bottom-left-radius: 12px;
+}
+.scanner__corner--br {
+  bottom: -1px;
+  right: -1px;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: 12px;
+}
 .scanner__sweep {
   position: absolute;
   left: 6%;
@@ -88,10 +116,20 @@
   animation: scanner-sweep 2.2s ease-in-out infinite;
 }
 @keyframes scanner-sweep {
-  0% { top: 6%; opacity: 0; }
-  12% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { top: 92%; opacity: 0; }
+  0% {
+    top: 6%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    top: 92%;
+    opacity: 0;
+  }
 }
 .scanner__hint {
   position: absolute;
@@ -123,10 +161,20 @@
   animation: scanner-pulse 1s ease-out infinite;
 }
 @keyframes scanner-pulse {
-  0% { transform: scale(0.7); opacity: 0.9; }
-  100% { transform: scale(1.7); opacity: 0; }
+  0% {
+    transform: scale(0.7);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
 }
-.scanner__msg { font-size: 14px; line-height: 1.6; max-width: 34ch; }
+.scanner__msg {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 34ch;
+}
 .scanner__retry,
 .scanner__rescan {
   border: 0;
@@ -178,9 +226,21 @@
   justify-content: space-between;
   gap: 12px;
 }
-.scanner__sheet-title { font-size: 15px; font-weight: 700; }
-.scanner__error { color: var(--shu); font-size: 13px; margin-top: 8px; }
-.scanner__list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.scanner__sheet-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.scanner__error {
+  color: var(--shu);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.scanner__list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .scanner__cand {
   display: flex;
   align-items: center;
@@ -193,7 +253,9 @@
   cursor: pointer;
   text-align: left;
 }
-.scanner__cand:disabled { opacity: 0.6; }
+.scanner__cand:disabled {
+  opacity: 0.6;
+}
 .scanner__cand-art {
   width: 56px;
   height: 56px;
@@ -202,7 +264,11 @@
   flex: none;
   background: var(--sunken);
 }
-.scanner__cand-go { font-size: 13px; font-weight: 700; flex: none; }
+.scanner__cand-go {
+  font-size: 13px;
+  font-weight: 700;
+  flex: none;
+}
 
 /* 自动扫描结果卡 */
 .scanner__result-badge {
@@ -214,7 +280,9 @@
   color: var(--ink-2);
   letter-spacing: 0.02em;
 }
-.scanner__result-badge--ok { color: var(--shu); }
+.scanner__result-badge--ok {
+  color: var(--shu);
+}
 .scanner__result-title {
   margin-top: 8px;
   font-size: 18px;
@@ -227,7 +295,9 @@
   line-height: 1.6;
   color: var(--ink-2);
 }
-.scanner__result-sub--lead { margin-top: 10px; }
+.scanner__result-sub--lead {
+  margin-top: 10px;
+}
 .scanner__result-actions {
   margin-top: 16px;
   display: flex;
@@ -256,7 +326,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .scanner__sweep,
-  .scanner__pulse { animation: none; }
+  .scanner__pulse {
+    animation: none;
+  }
 }
 
 /* App 外壳的断点显隐工具。自管而非用 Tailwind 的 md:flex——v4 增量构建偶发不生成该类，

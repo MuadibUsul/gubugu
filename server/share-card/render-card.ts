@@ -26,7 +26,14 @@ const PHOTO_BOX = {
 };
 
 const TITLE = { x: 70, top: 1112, maxWidth: WIDTH - 140, maxLines: 2 };
-const PILLS = { x: 70, y: 1215, height: 42, gap: 12, padding: 34, fontSize: 18 };
+const PILLS = {
+  x: 70,
+  y: 1215,
+  height: 42,
+  gap: 12,
+  padding: 34,
+  fontSize: 18,
+};
 
 export type ShareCardInput = {
   /** 主图原始字节（任意 sharp 能解码的格式）。为空时用占位版式。 */

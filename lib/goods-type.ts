@@ -34,13 +34,15 @@ export const GOODS_TYPES: readonly GoodsTypeDef[] = [
     key: 'standee',
     zh: '立牌',
     en: 'Standee',
-    match: /アクリルスタンド|アクスタ|acrylic\s*stand|立牌|スタンドポップ|スタンド|standee|台座/i,
+    match:
+      /アクリルスタンド|アクスタ|acrylic\s*stand|立牌|スタンドポップ|スタンド|standee|台座/i,
   },
   {
     key: 'charm',
     zh: '挂件',
     en: 'Charm',
-    match: /アクリルキーホルダー|アクキー|キーホルダー|keychain|挂件|钥匙扣|charm|ラバスト|ストラップ|rubber\s*strap|strap/i,
+    match:
+      /アクリルキーホルダー|アクキー|キーホルダー|keychain|挂件|钥匙扣|charm|ラバスト|ストラップ|rubber\s*strap|strap/i,
   },
   {
     key: 'shikishi',
@@ -52,7 +54,8 @@ export const GOODS_TYPES: readonly GoodsTypeDef[] = [
     key: 'card',
     zh: '卡片',
     en: 'Card',
-    match: /ブロマイド|bromide|トレーディングカード|トレカ|trading\s*card|クリアカード|clear\s*card|透卡|小卡|写真|photo\s*card|photo\s*set|收藏卡|カード/i,
+    match:
+      /ブロマイド|bromide|トレーディングカード|トレカ|trading\s*card|クリアカード|clear\s*card|透卡|小卡|写真|photo\s*card|photo\s*set|收藏卡|カード/i,
   },
   {
     key: 'figure',
@@ -76,7 +79,9 @@ export const GOODS_TYPE_KEYS: readonly GoodsTypeKey[] = [
 /**
  * 从一段线索（商品名 / 原始类型）判定类型，形态优先；匹配不到归「其他」。
  */
-export function classifyGoodsType(hint: string | null | undefined): GoodsTypeKey {
+export function classifyGoodsType(
+  hint: string | null | undefined,
+): GoodsTypeKey {
   const text = (hint ?? '').trim();
   if (!text) return 'other';
   return GOODS_TYPES.find((t) => t.match.test(text))?.key ?? 'other';

@@ -89,7 +89,7 @@ export async function HomeMarketSection() {
         </Link>
       </div>
 
-      <div className="mt-3 flex snap-x gap-[9px] overflow-x-auto pb-1 md:mt-5 [scrollbar-width:none]">
+      <div className="mt-3 flex snap-x gap-[9px] overflow-x-auto pb-1 [scrollbar-width:none] md:mt-5">
         {listings.map((listing) => (
           <MarketCard key={listing.id} listing={listing} />
         ))}

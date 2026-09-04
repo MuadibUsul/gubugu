@@ -150,7 +150,8 @@ describe('parseCatalogPage — neogate 站点适配器', () => {
 describe('parseCatalogPage — animate-onlineshop 站点适配器', () => {
   // animate 商品页 og:type=article、无 Product JSON-LD；商品信息在内联脚本与 og:title，
   // 商品图以 JAN 作前缀。适配器接住它，排除促销 banner 与别的 JAN 的关联商品图。
-  const cdn = 'https://tc-animate.techorus-cdn.com/resize_image/resize_image.php';
+  const cdn =
+    'https://tc-animate.techorus-cdn.com/resize_image/resize_image.php';
   const html = `
     <head>
       <meta property="og:type" content="article">
@@ -236,7 +237,10 @@ describe('parseCatalogListing — neogate 商品列表', () => {
   it('returns null on a non-listing path even when related product cards exist', () => {
     // 商品页也带「相关商品」card-intext-inner；路径门控让它不被误当成列表页。
     expect(
-      parseCatalogListing(listingHtml, 'https://www.neogate.jp/geass_holoeye3/'),
+      parseCatalogListing(
+        listingHtml,
+        'https://www.neogate.jp/geass_holoeye3/',
+      ),
     ).toBeNull();
   });
 

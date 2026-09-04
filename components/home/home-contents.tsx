@@ -80,7 +80,7 @@ export async function HomeContentsSection() {
           </Link>
         </div>
 
-        <div className="mt-3 flex gap-[9px] overflow-x-auto pb-1 md:mt-7 [scrollbar-width:none]">
+        <div className="mt-3 flex gap-[9px] overflow-x-auto pb-1 [scrollbar-width:none] md:mt-7">
           {ips.map((ip) => (
             <ContentsThumb ip={ip} key={ip.id} />
           ))}

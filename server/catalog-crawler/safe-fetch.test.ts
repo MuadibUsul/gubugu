@@ -88,7 +88,10 @@ describe('crawler safe fetch', () => {
       async (input: string | URL | Request, init?: RequestInit) => {
         const url = new URL(input instanceof Request ? input.url : input);
         const headers = new Headers(init?.headers);
-        seen.push({ url: url.toString(), referer: headers.get('referer') ?? undefined });
+        seen.push({
+          url: url.toString(),
+          referer: headers.get('referer') ?? undefined,
+        });
         const contentType = url.pathname.endsWith('.webp')
           ? 'image/webp'
           : 'text/html; charset=utf-8';
@@ -118,10 +121,14 @@ describe('crawler safe fetch', () => {
         headers: { 'content-type': 'text/plain; charset=utf-8' },
       })) as typeof fetch;
 
-    const result = await safeFetchJson<{ retcode: number; data: { count: number } }>(
-      'https://api.example.com/list',
-      { allowedHosts: ['api.example.com'], fetchImpl: jsonImpl, resolveHost: publicResolver },
-    );
+    const result = await safeFetchJson<{
+      retcode: number;
+      data: { count: number };
+    }>('https://api.example.com/list', {
+      allowedHosts: ['api.example.com'],
+      fetchImpl: jsonImpl,
+      resolveHost: publicResolver,
+    });
     expect(result.json.retcode).toBe(0);
     expect(result.json.data.count).toBe(7);
 

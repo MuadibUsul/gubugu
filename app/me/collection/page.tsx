@@ -35,7 +35,9 @@ type MyCollectionPageProps = {
 
 // 大数用 1.2k 记法，和设计稿一致。
 function fmt(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n);
+  return n >= 1000
+    ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`
+    : String(n);
 }
 
 // 谷柜墙的一格：只放图。已拥有里未点亮的转灰，点亮的原色 + 一圈金边。
@@ -65,7 +67,11 @@ function WallCell({
           className="goods-card__art-image"
           sizes="33vw"
           src={item.primaryImageUrl}
-          style={gray ? { filter: 'grayscale(1) contrast(.86) opacity(.62)' } : undefined}
+          style={
+            gray
+              ? { filter: 'grayscale(1) contrast(.86) opacity(.62)' }
+              : undefined
+          }
         />
       ) : null}
     </Link>
@@ -81,16 +87,23 @@ export default async function MyCollectionPage({
     getSingleSearchParamValue(resolved.status) ?? undefined,
   );
 
-  const [data, badgeCount, scans, follow, exchanges, unreadMessages, notifications] =
-    await Promise.all([
-      getUserProfilePageData({ userId: user.id, viewerMode: 'self' }),
-      countUnlockedAchievements(user.id),
-      listUserScans(user.id),
-      getFollowCounts(user.id),
-      listExchangesForUser({ userId: user.id, limit: 24 }),
-      countUnreadMessages(user.id),
-      listNotificationsForUser({ userId: user.id, limit: 48 }),
-    ]);
+  const [
+    data,
+    badgeCount,
+    scans,
+    follow,
+    exchanges,
+    unreadMessages,
+    notifications,
+  ] = await Promise.all([
+    getUserProfilePageData({ userId: user.id, viewerMode: 'self' }),
+    countUnlockedAchievements(user.id),
+    listUserScans(user.id),
+    getFollowCounts(user.id),
+    listExchangesForUser({ userId: user.id, limit: 24 }),
+    countUnreadMessages(user.id),
+    listNotificationsForUser({ userId: user.id, limit: 48 }),
+  ]);
 
   const { summary } = data;
   const activeExchangeCount = exchanges.filter(
@@ -112,10 +125,30 @@ export default async function MyCollectionPage({
     { label: '通知', count: unreadNotifCount, href: '/me/notifications' },
   ];
 
-  const chips: { label: string; count: number; status?: StatusFilter; href: string }[] = [
-    { label: '已点亮', count: summary.litCount, status: 'owned', href: '/me/collection' },
-    { label: '想要', count: summary.wantedCount, status: 'wanted', href: '/me/collection?status=wanted' },
-    { label: '可换', count: summary.exchangeCount, status: 'exchange', href: '/me/collection?status=exchange' },
+  const chips: {
+    label: string;
+    count: number;
+    status?: StatusFilter;
+    href: string;
+  }[] = [
+    {
+      label: '已点亮',
+      count: summary.litCount,
+      status: 'owned',
+      href: '/me/collection',
+    },
+    {
+      label: '想要',
+      count: summary.wantedCount,
+      status: 'wanted',
+      href: '/me/collection?status=wanted',
+    },
+    {
+      label: '可换',
+      count: summary.exchangeCount,
+      status: 'exchange',
+      href: '/me/collection?status=exchange',
+    },
     { label: '未鉴定', count: scans.length, href: '#unverified' },
   ];
 
@@ -174,9 +207,7 @@ export default async function MyCollectionPage({
       {/* 状态胶囊：已点亮 / 想要 / 可换 / 未鉴定 */}
       <div className="mt-[18px] flex gap-1.5 overflow-x-auto border-b border-[var(--rule)] pb-2.5 [scrollbar-width:none]">
         {chips.map((c) => {
-          const active = c.status
-            ? c.status === status
-            : false;
+          const active = c.status ? c.status === status : false;
           return (
             <Link
               className={`chip flex-none px-[11px] py-[5px] text-[11.5px] ${active ? 'chip--on' : ''}`}
@@ -217,7 +248,10 @@ export default async function MyCollectionPage({
 
       {/* 未鉴定收藏 · 仅自己可见 */}
       {scans.length > 0 ? (
-        <section className="mt-5 border-t border-[var(--rule)] pt-4" id="unverified">
+        <section
+          className="mt-5 border-t border-[var(--rule)] pt-4"
+          id="unverified"
+        >
           <div className="flex items-baseline justify-between">
             <p className="text-[15px] font-medium">未鉴定收藏 · 仅自己可见</p>
             <span className="text-muted-foreground text-[11px]">
@@ -233,6 +267,7 @@ export default async function MyCollectionPage({
                 <RemoteImage
                   alt="未鉴定收藏"
                   className="goods-card__art-image"
+                  privateSource
                   sizes="62px"
                   src={scan.imageUrl}
                   style={{ filter: 'grayscale(1) contrast(.86) opacity(.62)' }}

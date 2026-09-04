@@ -40,7 +40,7 @@ V1 明确不是人民币 C2C 市场：不包含支付、托管、仲裁、存款
 | 采集爬虫   | 自研白名单爬虫 + LLM 结构化中文化（deepseek-chat）          |
 | 测试       | Vitest，共 40 个 `*.test.ts` 文件                           |
 | 质量工具   | ESLint、Prettier、TypeScript、RLS / 换谷 / 点亮验证脚本     |
-| 包管理     | pnpm                                                       |
+| 包管理     | pnpm                                                        |
 
 仓库规模：约 64 个 `app/` 路由与 API 文件、60 个 `components/` 组件、79 个 `lib/` 文件、78 个 `server/` 文件、44 张数据库表、16 个 Server Action 模块。
 
@@ -145,19 +145,19 @@ Client Form / Server Form
 
 ## 3. 数据模型（44 张表）
 
-| 分类         | 表                                                                                                                        |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| 图鉴         | `ips`, `characters`, `series`, `goods`                                                                                    |
-| 图鉴关系     | `goods_images`, `goods_image_embeddings`, `tags`, `goods_tags`, `goods_characters`                                        |
-| 用户         | `profiles`, `local_auth_accounts`, `follows`, `user_goods`, `user_scans`                                                  |
-| 识别         | `recognition_attempts`                                                                                                    |
-| 社区         | `catalog_submissions`, `posts`, `post_images`, `ratings`                                                                  |
-| 采集爬虫     | `crawler_sources`, `crawler_runs`, `crawler_drafts`, `crawler_crawl_progress`                                             |
-| 换谷         | `exchange_listings`, `exchange_offers`, `exchange_offer_revisions`, `exchanges`, `exchange_reviews`, `coordination_proposals` |
-| 私信         | `direct_conversations`, `direct_messages`, `user_blocks`                                                                  |
-| 安全与通知   | `notifications`, `reports`, `goods_watches`                                                                               |
-| 成就         | `achievements`, `user_achievements`                                                                                       |
-| 历史兼容     | `listings`, `listing_photos`, `want_orders`, `orders`, `payments`, `market_transactions`（无运行时入口）                 |
+| 分类       | 表                                                                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 图鉴       | `ips`, `characters`, `series`, `goods`                                                                                        |
+| 图鉴关系   | `goods_images`, `goods_image_embeddings`, `tags`, `goods_tags`, `goods_characters`                                            |
+| 用户       | `profiles`, `local_auth_accounts`, `follows`, `user_goods`, `user_scans`                                                      |
+| 识别       | `recognition_attempts`                                                                                                        |
+| 社区       | `catalog_submissions`, `posts`, `post_images`, `ratings`                                                                      |
+| 采集爬虫   | `crawler_sources`, `crawler_runs`, `crawler_drafts`, `crawler_crawl_progress`                                                 |
+| 换谷       | `exchange_listings`, `exchange_offers`, `exchange_offer_revisions`, `exchanges`, `exchange_reviews`, `coordination_proposals` |
+| 私信       | `direct_conversations`, `direct_messages`, `user_blocks`                                                                      |
+| 安全与通知 | `notifications`, `reports`, `goods_watches`                                                                                   |
+| 成就       | `achievements`, `user_achievements`                                                                                           |
+| 历史兼容   | `listings`, `listing_photos`, `want_orders`, `orders`, `payments`, `market_transactions`（无运行时入口）                      |
 
 ## 4. 项目路径
 
@@ -261,15 +261,15 @@ docs/                    # 产品与工程文档
 
 ## 5. 常用命令
 
-| 命令                    | 作用                                        |
-| ----------------------- | ------------------------------------------- |
-| `pnpm dev`              | 本地开发（127.0.0.1:3000）                  |
-| `pnpm build` / `start`  | 生产构建与启动                              |
-| `pnpm lint` / `typecheck` | 静态检查                                  |
-| `pnpm test`             | Vitest 单测                                 |
-| `pnpm db:generate` / `db:migrate` | 生成并执行迁移                    |
-| `pnpm db:seed`          | 幂等种子数据（含三账号）                    |
-| `pnpm db:embed`         | 图鉴图片向量索引                            |
-| `pnpm db:verify-rls` / `verify-trade` / `verify-lighting` | 策略验证 |
-| `pnpm crawler:run`      | 手动执行一次采集                            |
-| `pnpm cap:sync`         | 同步安卓壳                                  |
+| 命令                                                      | 作用                       |
+| --------------------------------------------------------- | -------------------------- |
+| `pnpm dev`                                                | 本地开发（127.0.0.1:3000） |
+| `pnpm build` / `start`                                    | 生产构建与启动             |
+| `pnpm lint` / `typecheck`                                 | 静态检查                   |
+| `pnpm test`                                               | Vitest 单测                |
+| `pnpm db:generate` / `db:migrate`                         | 生成并执行迁移             |
+| `pnpm db:seed`                                            | 幂等种子数据（含三账号）   |
+| `pnpm db:embed`                                           | 图鉴图片向量索引           |
+| `pnpm db:verify-rls` / `verify-trade` / `verify-lighting` | 策略验证                   |
+| `pnpm crawler:run`                                        | 手动执行一次采集           |
+| `pnpm cap:sync`                                           | 同步安卓壳                 |

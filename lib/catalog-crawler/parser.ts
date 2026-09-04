@@ -457,7 +457,8 @@ function parseNeogateProduct(
   }
 
   return {
-    sourceUrl: resolveHttpUrl(firstMeta(meta, 'og:url'), pageUrl) ?? pageUrl.toString(),
+    sourceUrl:
+      resolveHttpUrl(firstMeta(meta, 'og:url'), pageUrl) ?? pageUrl.toString(),
     externalId: slug || null,
     name,
     description: firstMeta(meta, 'og:description', 'twitter:description'),
@@ -542,7 +543,12 @@ function parseAnimateOnlineShopProduct(
     currencyCode: price ? 'JPY' : null,
     manufacturer: null,
     imageUrls: [...productImages],
-    rawPayload: { adapter: 'animate-onlineshop', title: rawTitle, jan, productCode },
+    rawPayload: {
+      adapter: 'animate-onlineshop',
+      title: rawTitle,
+      jan,
+      productCode,
+    },
   } satisfies ParsedCatalogProduct;
 }
 

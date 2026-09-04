@@ -77,11 +77,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const controls = normalizeSearchControls(resolvedSearchParams);
   const hasFacets = Boolean(
     controls.query ||
-      controls.ipSlug ||
-      controls.characterSlug ||
-      controls.seriesSlug ||
-      controls.goodsType ||
-      controls.tagSlugs.length,
+    controls.ipSlug ||
+    controls.characterSlug ||
+    controls.seriesSlug ||
+    controls.goodsType ||
+    controls.tagSlugs.length,
   );
   const [authUser, canScan] = await Promise.all([
     getAuthUser(),
