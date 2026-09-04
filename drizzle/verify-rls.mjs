@@ -96,6 +96,7 @@ async function main() {
       'no recognition proof rows',
       'select count(*)::int n from recognition_attempts',
     ],
+    ['no private user scans', 'select count(*)::int n from user_scans'],
     [
       'no unapproved posts',
       "select count(*)::int n from posts where moderation_status <> 'approved'",
@@ -175,6 +176,41 @@ async function main() {
     ).rows[0].n,
     0,
   );
+
+  const rlsScanId = '66000000-0000-4000-8000-000000000001';
+  await client.query(
+    `insert into user_scans (id, user_id, image_url, top_score)
+     values ($1, $2, $3, 42) on conflict (id) do nothing`,
+    [rlsScanId, MIKA, `${'a'.repeat(64)}.webp`],
+  );
+  try {
+    check(
+      'owner can read own private scan',
+      (
+        await asClient(
+          client,
+          MIKA,
+          'select count(*)::int n from user_scans where id = $1',
+          [rlsScanId],
+        )
+      ).rows[0].n,
+      1,
+    );
+    check(
+      'another user cannot read a private scan',
+      (
+        await asClient(
+          client,
+          REN,
+          'select count(*)::int n from user_scans where id = $1',
+          [rlsScanId],
+        )
+      ).rows[0].n,
+      0,
+    );
+  } finally {
+    await client.query('delete from user_scans where id = $1', [rlsScanId]);
+  }
 
   const forgedLighting = await asClient(
     client,
@@ -258,6 +294,11 @@ async function main() {
       'cannot forge a recognition proof through the data API',
       "insert into recognition_attempts (user_id, source, provider, expires_at) values ($1, 'camera', 'embedding-search', now() + interval '15 minutes')",
       [MIKA],
+    ],
+    [
+      'cannot forge a private scan through the data API',
+      'insert into user_scans (user_id, image_url) values ($1, $2)',
+      [MIKA, `${'b'.repeat(64)}.webp`],
     ],
     [
       'cannot create a crawler source through the data API',

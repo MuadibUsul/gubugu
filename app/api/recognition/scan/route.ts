@@ -7,9 +7,9 @@ import { isMobileUserAgent } from '@/lib/device';
 import { recognitionUploadLimits } from '@/lib/recognition';
 import { goods, userGoods, userScans } from '@/drizzle/schema';
 import { getAuthUser } from '@/server/auth/session';
-import { normalizeAndStoreCatalogImage } from '@/server/catalog-crawler/image-store';
 import { recognizeGoodsImage } from '@/server/recognition/service';
 import { getDb } from '@/server/db/client';
+import { normalizeAndStoreUserScan } from '@/server/user-scans/image-store';
 
 // 自动扫描入库：拍一张 → 匹配官方谷库。高置信直接点亮对应 SKU（可公开展示）；
 // 否则存为「未鉴定收藏项」（进谷柜、不公开展示）。全程无需用户挑候选、无需审核。
@@ -76,7 +76,9 @@ export async function POST(request: Request) {
         await db
           .select({ id: goods.id, slug: goods.slug })
           .from(goods)
-          .where(and(eq(goods.slug, top.goods.slug), eq(goods.status, 'published')))
+          .where(
+            and(eq(goods.slug, top.goods.slug), eq(goods.status, 'published')),
+          )
           .limit(1)
       )[0];
 
@@ -106,13 +108,13 @@ export async function POST(request: Request) {
     }
 
     // 未匹配（或置信不足）→ 存为未鉴定收藏项：谷柜可见、公开主页不展示。
-    const stored = await normalizeAndStoreCatalogImage(buffer, {});
+    const stored = await normalizeAndStoreUserScan(buffer);
     const inserted = (
       await db
         .insert(userScans)
         .values({
           userId: user.id,
-          imageUrl: stored.imageUrl,
+          assetKey: stored.assetKey,
           topScore: top ? Math.round(top.score * 100) : null,
         })
         .returning({ id: userScans.id })

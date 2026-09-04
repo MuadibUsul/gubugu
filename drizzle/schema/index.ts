@@ -665,14 +665,32 @@ export const userScans = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     userId: uuid('user_id').notNull(),
-    imageUrl: text('image_url').notNull(),
+    assetKey: text('image_url').notNull(),
+    recognitionAttemptId: uuid('recognition_attempt_id').references(
+      () => recognitionAttempts.id,
+      { onDelete: 'set null', onUpdate: 'cascade' },
+    ),
     // 最接近的官方匹配分（0–100，信息用，可为空）。
     topScore: integer('top_score'),
     note: text('note'),
+    // 用户从候选中确认 SKU 后保留私有原图作识别审计，但不再显示为未鉴定项。
+    resolvedAt: timestamp('resolved_at', {
+      withTimezone: true,
+      mode: 'date',
+    }),
     ...timestamps,
   },
-  (table) => [index('user_scans_user_id_idx').on(table.userId)],
-);
+  (table) => [
+    index('user_scans_user_id_idx').on(table.userId),
+    uniqueIndex('user_scans_recognition_attempt_id_unique').on(
+      table.recognitionAttemptId,
+    ),
+    check(
+      'user_scans_top_score_range_check',
+      sql`${table.topScore} is null or (${table.topScore} >= 0 and ${table.topScore} <= 100)`,
+    ),
+  ],
+).enableRLS();
 
 /**
  * 一次服务端识别结果。candidate_map 把返回给浏览器的候选 id 绑定到 SKU id；

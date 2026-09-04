@@ -197,6 +197,20 @@
       "when": 1787677001358,
       "tag": "0027_stiff_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1788512247292,
+      "tag": "0028_early_namora",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1788517398199,
+      "tag": "0029_warm_dormammu",
+      "breakpoints": true
     }
   ]
 }
