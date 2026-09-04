@@ -64,11 +64,8 @@
     "vitest": "^4.1.10"
   },
   "pnpm": {
-    "supportedArchitectures": {
-      "cpu": [
-        "current",
-        "wasm32"
-      ]
+    "overrides": {
+      "sharp": "0.33.5"
     }
   }
 }

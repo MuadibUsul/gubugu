@@ -67,19 +67,10 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/next.config.mjs ./next.config.mjs
 
-# 目标 VPS 的 CPU 是 QEMU 通用型号，只有 x86-64-v1，而 sharp 的 linux-x64 预编译包
-# 要求 v2。sharp 的加载器会先 require 到 linux-x64 包并 break 出候选循环，之后才做
-# v2 自检并把结果置空，因此不会自动回退——必须让这个绑定根本不存在，加载器才会在
-# 它上面拿到 MODULE_NOT_FOUND 继续往下，落到 @img/sharp-wasm32（sharp 官方为不受
-# 支持的 CPU 提供的 WebAssembly 版本，由 package.json 的 supportedArchitectures 装入）。
-# 等价于 sharp 文档里的 `npm install --cpu=wasm32 sharp`。
-# 注意要删三处：pnpm 除了包自身的依赖目录，还会在 .pnpm/node_modules/ 留一份提升
-# 副本，而它正在 Node 的向上查找路径上——只删前者仍会被后者命中。
-RUN rm -rf node_modules/.pnpm/@img+sharp-linux-x64@* \
-           node_modules/.pnpm/node_modules/@img/sharp-linux-x64 \
-           node_modules/.pnpm/*/node_modules/@img/sharp-linux-x64 \
-    && test -z "$(find node_modules -name sharp-linux-x64 -print -quit)" \
-    && node -e "require('sharp'); console.log('sharp loaded via wasm32')"
+# sharp 固定在 0.33.5（见 package.json 的 pnpm.overrides）：0.34 起的预编译 linux-x64
+# 二进制要求 x86-64-v2，而部署目标的 CPU 只有 v1，官方 wasm 回退又需要 Wasm SIMD
+# （同样依赖 SSE4.1）。这里在构建期断言版本与可加载性，避免将来升级悄悄把线上打挂。
+RUN node -e "const s=require('sharp'); const v=s.versions.sharp; if(!v.startsWith('0.33.')) throw new Error('sharp '+v+' 预编译包要求 x86-64-v2，目标 CPU 不支持；请保持 0.33.x'); console.log('sharp', v, 'ok, libvips', s.versions.vips)"
 
 # 可写目录，全部交给运行用户 node：
 #  - .data 是持久卷挂载点（模型缓存、爬虫图片）；
