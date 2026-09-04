@@ -80,16 +80,28 @@ function titleFontSize(title: string) {
   return 58;
 }
 
+export type TextMeasurer = (
+  text: string,
+  size: number,
+) => Promise<{ width: number; height: number }>;
+
 /**
  * 把标题折成至多 maxLines 行。SVG 的 <text> 不会自动换行，而谷子名里中英混排、
  * 中文没有空格，所以按字符做二分找最长可容纳前缀，超出的行尾用省略号收口。
+ *
+ * 量测函数可注入：真实渲染走 Pango，测试里换成确定性的假量测，这样折行边界的
+ * 验证不依赖运行环境里装没装字体。
  */
-async function wrapTitle(title: string, size: number) {
+export async function wrapTitle(
+  title: string,
+  size: number,
+  measure: TextMeasurer = measureText,
+) {
   const lines: string[] = [];
   let rest = title;
 
   for (let line = 0; line < TITLE.maxLines && rest.length > 0; line += 1) {
-    const { width } = await measureText(rest, size);
+    const { width } = await measure(rest, size);
 
     if (width <= TITLE.maxWidth) {
       lines.push(rest);
@@ -105,7 +117,7 @@ async function wrapTitle(title: string, size: number) {
     while (low <= high) {
       const mid = Math.floor((low + high) / 2);
       const candidate = rest.slice(0, mid);
-      const measured = await measureText(candidate, size);
+      const measured = await measure(candidate, size);
 
       if (measured.width <= TITLE.maxWidth) {
         fit = mid;
