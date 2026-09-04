@@ -77,6 +77,12 @@ COPY --from=build /app/next.config.mjs ./next.config.mjs
 # （同样依赖 SSE4.1）。这里在构建期断言版本与可加载性，避免将来升级悄悄把线上打挂。
 RUN node -e "const s=require('sharp'); const v=s.versions.sharp; if(!v.startsWith('0.33.')) throw new Error('sharp '+v+' 预编译包要求 x86-64-v2，目标 CPU 不支持；请保持 0.33.x'); console.log('sharp', v, 'ok, libvips', s.versions.vips)"
 
+# 分享卡由 librsvg 渲染，中文字体必须让 fontconfig 能找到，否则回落到 DejaVu、
+# 中文全部变成豆腐块。字体本身随 public/ 一起进镜像，这里再装进系统字体目录。
+RUN mkdir -p /usr/share/fonts/opentype \
+    && cp /app/public/fonts/SmileySans-Oblique.otf /usr/share/fonts/opentype/ \
+    && fc-cache -f > /dev/null
+
 # 可写目录，全部交给运行用户 node：
 #  - .data 是持久卷挂载点（模型缓存、爬虫图片）；
 #  - 整个 .next 都要可写：除 .next/cache（fetch cache）外，ISR 还会把 force-static
