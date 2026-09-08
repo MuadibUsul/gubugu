@@ -403,14 +403,13 @@
   --font-mono-family:
     ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
 
-  --radius: 14px;
+  --radius: 12px;
 
   --ease: cubic-bezier(0.23, 1, 0.32, 1);
   --duration: 180ms;
-  --shadow-card: 0 18px 45px -34px
-    color-mix(in oklab, var(--ink) 38%, transparent);
-  --shadow-float: 0 22px 55px -32px
-    color-mix(in oklab, var(--violet) 32%, transparent);
+  /* 极简：阴影几乎不可见，层次靠细线与留白，不靠投影。 */
+  --shadow-card: 0 1px 2px color-mix(in oklab, var(--ink) 5%, transparent);
+  --shadow-float: 0 3px 12px -4px color-mix(in oklab, var(--ink) 12%, transparent);
 }
 
 /* 语义别名。
@@ -489,15 +488,9 @@
 
   /* 纸张纹理：极轻的亚光颗粒，营造旧纸质感；overlay 在浅色与暗色上都成立，
      不影响可读性，也不拦截交互。用 ::after 以避开已有的 body::before 氛围层。 */
+  /* 极简：去掉旧纸噪点纹理。 */
   body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-    opacity: 0.07;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    content: none;
   }
 
   body {
@@ -513,29 +506,9 @@
 
   /* 大面积留白只给极淡的樱粉、菫色与天空色环境光。它们负责形成二次元
      收藏册的氛围，不和商品图争抢注意力。 */
+  /* 极简：去掉大面积氛围光晕，纯净底色。 */
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 1;
-    background-image:
-      radial-gradient(
-        circle at 8% 8%,
-        color-mix(in oklab, var(--shu) 9%, transparent),
-        transparent 25rem
-      ),
-      radial-gradient(
-        circle at 92% 4%,
-        color-mix(in oklab, var(--violet) 9%, transparent),
-        transparent 28rem
-      ),
-      radial-gradient(
-        circle at 78% 76%,
-        color-mix(in oklab, var(--sky) 6%, transparent),
-        transparent 30rem
-      );
+    content: none;
   }
 
   main,
@@ -687,14 +660,8 @@
 
   /* 章节分隔延续樱粉到菫色的主色关系。 */
   .rule-kin {
-    height: 2px;
-    border-radius: 999px;
-    background: linear-gradient(
-      90deg,
-      var(--shu),
-      color-mix(in oklab, var(--violet) 58%, var(--shu)) 42%,
-      transparent
-    );
+    height: 1px;
+    background: var(--rule);
   }
 
   /* ---------- 排版 ---------- */
@@ -753,8 +720,8 @@
   .panel {
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: 20px;
-    box-shadow: var(--shadow-card);
+    border-radius: 12px;
+    box-shadow: none;
   }
 
   .panel-float {
@@ -772,7 +739,7 @@
     align-items: center;
     border: 1px solid var(--rule);
     border-radius: 999px;
-    background: color-mix(in oklab, var(--surface) 74%, var(--violet-soft));
+    background: var(--surface);
     color: var(--ink-2);
     font-size: 13px;
     line-height: 1.5;
@@ -794,8 +761,8 @@
   .hud-card {
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: 18px;
-    box-shadow: var(--shadow-card);
+    border-radius: 12px;
+    box-shadow: none;
   }
 
   /* ---------- 商品卡：装裱 ----------
@@ -807,9 +774,9 @@
     flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: 20px;
-    padding: 8px;
-    box-shadow: var(--shadow-card);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: none;
     transition:
       transform var(--duration) var(--ease),
       border-color 180ms var(--ease),
@@ -820,7 +787,7 @@
   .goods-card__art {
     position: relative;
     overflow: hidden;
-    border-radius: 14px;
+    border-radius: 8px;
     background: var(--sunken);
     outline: 1px solid var(--rule);
     outline-offset: 0;
@@ -1136,7 +1103,7 @@
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, var(--shu), var(--violet));
+    background: var(--shu);
   }
 
   /* 系列进度行 */
@@ -1294,9 +1261,9 @@
   .goods-plate {
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: 20px;
-    padding: 11px;
-    box-shadow: var(--shadow-card);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: none;
   }
 
   .goods-plate .goods-card__art {
@@ -1330,12 +1297,12 @@
 
   .empty-state {
     border: 1px dashed var(--rule-2);
-    background: var(--sunken);
-    padding: 28px;
+    background: transparent;
+    padding: 24px;
     text-align: center;
     color: var(--ink-2);
     font-size: 14px;
-    border-radius: 18px;
+    border-radius: 12px;
   }
 
   .empty-state strong {

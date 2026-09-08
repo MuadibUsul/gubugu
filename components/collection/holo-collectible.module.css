@@ -17,27 +17,31 @@
   --background-x: 50%;
   --background-y: 50%;
   --foil-opacity: 0.12;
-  position: relative;
-  height: 100%;
-  border-radius: 4px;
+  /* 用 absolute 填满 .card（.card 由 aspect-ratio 定高），避免 height:100% 在
+     aspect-ratio 派生高度上解析为 0 而整卡塌陷。 */
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
   isolation: isolate;
   overflow: hidden;
   transform: rotateX(0deg) rotateY(0deg);
   transition: transform 240ms cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 3px 9px -5px rgb(38 28 18 / 40%);
 }
 
+.surface {
+  --foil-opacity: 0.2;
+}
 .surface[data-tier='2'] {
-  --foil-opacity: 0.18;
+  --foil-opacity: 0.26;
 }
 .surface[data-tier='3'] {
-  --foil-opacity: 0.24;
+  --foil-opacity: 0.34;
 }
 .surface[data-tier='4'] {
-  --foil-opacity: 0.3;
+  --foil-opacity: 0.42;
 }
 .surface[data-tier='5'] {
-  --foil-opacity: 0.36;
+  --foil-opacity: 0.5;
 }
 
 .shine,
@@ -50,56 +54,39 @@
   transition: opacity 180ms ease-out;
 }
 
+/* 彩虹箔面：饱和虹彩 + screen 混合，任何底图上都可见（不依赖 color-dodge 的微妙）。 */
 .shine {
-  background-image:
-    repeating-linear-gradient(
-      110deg,
-      #b89cce,
-      #8dc5dc,
-      #9bd6bd,
-      #f2d78e,
-      #e7a5a8,
-      #b89cce,
-      #8dc5dc,
-      #9bd6bd,
-      #f2d78e,
-      #e7a5a8
-    ),
-    repeating-linear-gradient(90deg, #000 0 2px, #666 2px 4px);
-  background-position:
-    calc((50% - var(--background-x)) * 2.6 + 50%)
-      calc((50% - var(--background-y)) * 3.5 + 50%),
-    center;
-  background-size:
-    400% 400%,
-    cover;
-  background-blend-mode: overlay;
-  mix-blend-mode: color-dodge;
-  opacity: var(--foil-opacity);
-}
-
-.shine::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    farthest-corner circle at var(--pointer-x) var(--pointer-y),
-    rgb(230 230 230 / 80%) 0%,
-    rgb(199 199 199 / 10%) 25%,
-    #000 90%
+  background-image: repeating-linear-gradient(
+    115deg,
+    #ff5f8f 0%,
+    #ffd36b 10%,
+    #7bff9b 20%,
+    #5fd5ff 30%,
+    #b58bff 40%,
+    #ff5fd5 50%,
+    #ff5f8f 60%
   );
-  mix-blend-mode: luminosity;
+  background-size: 220% 220%;
+  background-position: calc((50% - var(--background-x)) * 2.4 + 50%)
+    calc((50% - var(--background-y)) * 3 + 50%);
+  mix-blend-mode: screen;
+  opacity: calc(var(--foil-opacity) + 0.18);
 }
 
+/* 高光斜带：一道明显的白色反光斜扫，screen 混合，静止也看得见。 */
 .glare {
-  background: radial-gradient(
-    farthest-corner circle at var(--pointer-x) var(--pointer-y),
-    rgb(255 255 255 / 80%) 10%,
-    rgb(255 255 255 / 65%) 20%,
-    rgb(0 0 0 / 50%) 90%
+  background: linear-gradient(
+    115deg,
+    transparent 34%,
+    rgba(255, 255, 255, 0.62) 47%,
+    rgba(255, 255, 255, 0.16) 53%,
+    transparent 66%
   );
-  mix-blend-mode: overlay;
-  opacity: 0.12;
+  background-size: 250% 250%;
+  background-position: calc((50% - var(--background-x)) * 2.4 + 50%)
+    calc((50% - var(--background-y)) * 3 + 50%);
+  mix-blend-mode: screen;
+  opacity: 0.55;
 }
 
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -117,6 +104,25 @@
   }
 }
 
+/* 手机没有鼠标：让已点亮卡自己缓慢漂移箔面，静止也呈全息感（无需交互、不抢滚动）。 */
+@keyframes holo-drift {
+  0% {
+    background-position: 0% 30%;
+  }
+  50% {
+    background-position: 100% 70%;
+  }
+  100% {
+    background-position: 0% 30%;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .surface:not([data-active]) .shine,
+  .surface:not([data-active]) .glare {
+    animation: holo-drift 6s ease-in-out infinite;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .surface {
     transform: none !important;
@@ -125,5 +131,6 @@
   .shine,
   .glare {
     transition: none;
+    animation: none;
   }
 }
