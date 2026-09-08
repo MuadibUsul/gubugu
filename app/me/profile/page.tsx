@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 
+import { DeleteAccountForm } from '@/components/auth/delete-account-form';
 import { requireAuthUser } from '@/server/auth/session';
 import { getProfileByUserId } from '@/server/data/profiles';
 import { updateProfileAction } from '@/server/profile/actions';
@@ -82,6 +84,21 @@ export default async function ProfileSettingsPage({
           保存资料
         </button>
       </form>
+
+      <section className="mt-10 border-t border-[var(--destructive)]/30 pt-8">
+        <p className="lbl text-[var(--destructive)]">危险操作</p>
+        <h2 className="mt-2 text-2xl">删除账号</h2>
+        <p className="text-muted-foreground mt-2 text-sm leading-6">
+          将永久删除登录凭据、收藏、扫描、帖子、私信、换谷记录及关联私密文件，无法恢复。
+        </p>
+        <DeleteAccountForm />
+        <Link
+          className="mt-4 inline-block text-sm text-[var(--shu)] underline"
+          href="/privacy"
+        >
+          查看隐私政策
+        </Link>
+      </section>
     </main>
   );
 }

@@ -13,6 +13,8 @@ import {
   clearLocalAuthSession,
   setLocalAuthSession,
 } from '@/server/auth/local-session';
+import { deleteAccountData } from '@/server/auth/delete-account';
+import { getAuthUser } from '@/server/auth/session';
 import { getDb } from '@/server/db/client';
 
 const signInInputSchema = z.object({
@@ -30,6 +32,11 @@ const registerInputSchema = signInInputSchema.extend({
     .min(2)
     .max(64)
     .regex(/^[a-z0-9][a-z0-9._-]*[a-z0-9]$/),
+});
+
+const deleteAccountInputSchema = z.object({
+  password: z.string().min(8).max(128),
+  confirmation: z.literal('删除我的账号'),
 });
 
 const DUMMY_PASSWORD_HASH =
@@ -149,4 +156,44 @@ export async function signOutAction() {
   await clearLocalAuthSession();
 
   redirect('/');
+}
+
+export async function deleteAccountAction(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const parsed = deleteAccountInputSchema.safeParse({
+    password: formData.get('password'),
+    confirmation: formData.get('confirmation'),
+  });
+  if (!parsed.success) return authError('请确认当前密码并输入完整确认文字。');
+
+  const user = await getAuthUser();
+  if (!user) return authError('登录已失效，请重新登录。');
+  if (
+    !consumeServerWrite(`${user.id}:account-delete`, {
+      limit: 3,
+      windowMs: 60 * 60 * 1000,
+    })
+  ) {
+    return authError('尝试次数过多，请稍后再试。');
+  }
+
+  const account = (
+    await getDb()
+      .select({ passwordHash: localAuthAccounts.passwordHash })
+      .from(localAuthAccounts)
+      .where(eq(localAuthAccounts.userId, user.id))
+      .limit(1)
+  )[0];
+  if (
+    !account ||
+    !(await verifyPassword(parsed.data.password, account.passwordHash))
+  ) {
+    return authError('当前密码不正确。');
+  }
+
+  await deleteAccountData(user.id);
+  await clearLocalAuthSession();
+  redirect('/?accountDeleted=1');
 }

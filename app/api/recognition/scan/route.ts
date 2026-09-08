@@ -92,8 +92,8 @@ export async function POST(request: Request) {
       console.error('[recognition] 自动点亮未通过确认', confirmed.code);
     }
 
-    // 候选档不在这里点亮：交由 /recognition 展示候选、由用户确认。
-    // 无可靠候选或自动点亮未通过 → 存为未鉴定收藏项。
+    // 候选档不在这里点亮：先保存原图，再把有限候选交给用户确认。
+    // 无可靠候选或自动点亮未通过 → 保持为未鉴定收藏项。
     const { scanId } = await recordUnidentifiedScan({
       userId: user.id,
       image: buffer,
@@ -104,10 +104,19 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       matched: false,
-      tier,
+      tier:
+        tier === 'candidates' &&
+        response.pipeline.provider === 'embedding-search'
+          ? 'candidates'
+          : 'unidentified',
       scanId,
       requestId: response.requestId,
       score,
+      candidates:
+        tier === 'candidates' &&
+        response.pipeline.provider === 'embedding-search'
+          ? response.candidates.slice(0, 3)
+          : [],
     });
   } catch (error) {
     console.error('[recognition] 自动扫描失败', error);

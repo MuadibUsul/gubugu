@@ -77,7 +77,12 @@ function buildSlides(
   return slides;
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const accountDeleted = (await searchParams)?.accountDeleted === '1';
   const [frontispiece, authUser, canScan] = await Promise.all([
     loadFrontispieceData(),
     getAuthUser(),
@@ -95,6 +100,12 @@ export default async function Home() {
       data-can-scan={canScan ? 'true' : 'false'}
     >
       <MobileAppHeader />
+
+      {accountDeleted ? (
+        <p className="callout callout--kin mt-4" role="status">
+          账号及关联数据已永久删除。
+        </p>
+      ) : null}
 
       <HomeFrontispiece
         featuredItems={frontispiece.featuredItems}

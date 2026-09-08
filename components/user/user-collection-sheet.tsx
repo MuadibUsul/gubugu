@@ -14,6 +14,8 @@ type UserCollectionSheetProps = {
   basePath: string;
   /** 是否给已点亮藏品套收藏相框。自己的谷柜恒为 true；社交主页按资料设置传入。 */
   showFrames?: boolean;
+  /** 公开作品墙只有已点亮藏品，不显示无意义的私人状态切换。 */
+  showStatusNav?: boolean;
 };
 
 const statusMeta = {
@@ -115,6 +117,7 @@ export function UserCollectionSheet({
   status,
   basePath,
   showFrames = true,
+  showStatusNav = true,
 }: UserCollectionSheetProps) {
   const items = data.goods[status];
   const cabinetGoodsIds = new Set(data.goods.owned.map((item) => item.id));
@@ -126,31 +129,35 @@ export function UserCollectionSheet({
 
   return (
     <div>
-      <nav
-        aria-label="收藏状态"
-        className="border-border mb-8 flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b pb-3"
-      >
-        {(Object.keys(statusMeta) as CollectionStatusFilter[]).map((key) => (
-          <Link
-            className={
-              key === status
-                ? 'text-[15px] font-medium text-[var(--shu)] underline underline-offset-4'
-                : 'text-muted-foreground hover:text-foreground text-[15px]'
-            }
-            href={key === 'owned' ? basePath : `${basePath}?status=${key}`}
-            aria-current={key === status ? 'page' : undefined}
-            key={key}
-          >
-            {statusMeta[key].label}
-            <span className="num ml-1.5">{counts[key]}</span>
-          </Link>
-        ))}
-      </nav>
+      {showStatusNav ? (
+        <nav
+          aria-label="收藏状态"
+          className="border-border mb-8 flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b pb-3"
+        >
+          {(Object.keys(statusMeta) as CollectionStatusFilter[]).map((key) => (
+            <Link
+              className={
+                key === status
+                  ? 'text-[15px] font-medium text-[var(--shu)] underline underline-offset-4'
+                  : 'text-muted-foreground hover:text-foreground text-[15px]'
+              }
+              href={key === 'owned' ? basePath : `${basePath}?status=${key}`}
+              aria-current={key === status ? 'page' : undefined}
+              key={key}
+            >
+              {statusMeta[key].label}
+              <span className="num ml-1.5">{counts[key]}</span>
+            </Link>
+          ))}
+        </nav>
+      ) : null}
 
       {items.length === 0 ? (
         <div className="empty-state">
           <strong>{statusMeta[status].empty}</strong>
-          从图鉴里找到想要的条目，标一下状态，它就会出现在这里。
+          {showStatusNav
+            ? '从图鉴里找到想要的条目，标一下状态，它就会出现在这里。'
+            : '完成实物识别并点亮后，藏品会出现在这里。'}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">

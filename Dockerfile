@@ -85,7 +85,10 @@ RUN mkdir -p /usr/share/fonts/opentype \
 #  - 整个 .next 都要可写：除 .next/cache（fetch cache）外，ISR 还会把 force-static
 #    路由（如分享卡）的预渲染结果写回 .next/server/app/**。产物以 root 拷入，不授权
 #    就会 EACCES —— 结果无法落盘，每次过期都要重算十几秒。
-RUN mkdir -p /app/.data/models /app/.data/catalog-assets /app/.data/user-scans /app/.next/cache \
+# 这些目录必须在镜像里先存在且属于 node：命名卷首次创建时会沿用镜像里该路径的
+# 属主，路径不存在则卷归 root，非 root 的运行用户写入直接 EACCES。
+RUN mkdir -p /app/.data/models /app/.data/catalog-assets /app/.data/user-scans \
+      /app/.data/community-images /app/.next/cache \
     && chown -R node:node /app/.data /app/.next
 
 USER node

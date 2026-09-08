@@ -15,7 +15,7 @@ import {
   goodsRatingValueSchema,
 } from '@/lib/goods-rating';
 import { goodsCommunityUploadLimits } from '@/lib/community-upload';
-import { normalizeAndStoreCatalogImage } from '@/server/catalog-crawler/image-store';
+import { normalizeAndStoreCommunityImage } from '@/server/community/image-store';
 import { getDb } from '@/server/db/client';
 import { requireAuthUser } from '@/server/auth/session';
 import type {
@@ -238,22 +238,23 @@ export async function createGoodsPostAction(
   try {
     const imageRows: PostImageInsert[] = [];
 
-    // 图片存到自有 VPS 的公开资产区：内容寻址、统一转 webp，和目录图共用读取
-    // 路由与缓存策略。此前没有 Supabase 时走的是把整张图以 base64 data URI 塞进
-    // 数据库的分支，那会让 post_images 行随图片体积膨胀，也拿不到任何缓存。
+    // 图片存到自有 VPS 的私密资产目录：内容寻址、统一转 webp。此前没有 Supabase 时
+    // 走的是把整张图以 base64 data URI 塞进数据库的分支，那会让 post_images 行随图片
+    // 体积膨胀，也拿不到任何缓存。
     //
-    // 这些图入库时 moderationStatus 为 pending，但和改造前一样可被公开 URL 读到；
-    // 「待审核用户图应转入私密区」属于审核流程本身的改造，不在本次范围内。
+    // 文件不在 public/ 下，只能经 `/api/post-images/[imageId]` 读取；那条路由按
+    // `getPostImageAccess` 判定可见性，待审核的图只有作者本人和管理员能看到。
     for (const [index, file] of imageFiles.entries()) {
-      const stored = await normalizeAndStoreCatalogImage(
+      const imageId = crypto.randomUUID();
+      const stored = await normalizeAndStoreCommunityImage(
         Buffer.from(await file.arrayBuffer()),
         { maxInputBytes: goodsCommunityUploadLimits.maxFileSizeBytes },
       );
 
       imageRows.push({
-        id: crypto.randomUUID(),
+        id: imageId,
         postId,
-        imageUrl: stored.imageUrl,
+        imageUrl: `/api/post-images/${imageId}`,
         storagePath: stored.fileName,
         altText: null,
         status: 'visible' as const,

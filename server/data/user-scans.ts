@@ -10,6 +10,7 @@ export type UserScanItem = {
   id: string;
   imageUrl: string;
   topScore: number | null;
+  note: string | null;
   createdAt: Date;
 };
 
@@ -29,6 +30,7 @@ export async function listUserScans(
     .select({
       id: userScans.id,
       topScore: userScans.topScore,
+      note: userScans.note,
       createdAt: userScans.createdAt,
     })
     .from(userScans)

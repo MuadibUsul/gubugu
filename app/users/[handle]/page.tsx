@@ -1,15 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { z } from 'zod';
 
 import { TradeListingCard } from '@/components/exchange/trade-listing-card';
 import { FollowButton } from '@/components/user/follow-button';
 import { Button } from '@/components/ui/button';
-import {
-  UserCollectionSheet,
-  type CollectionStatusFilter,
-} from '@/components/user/user-collection-sheet';
+import { UserCollectionSheet } from '@/components/user/user-collection-sheet';
 import { UserPhotoStrip } from '@/components/user/user-photo-strip';
 import { getUserProfilePageData } from '@/server/data';
 import { countUnlockedAchievements } from '@/server/data/achievements';
@@ -25,18 +21,7 @@ type UserPageProps = {
   params: Promise<{
     handle: string;
   }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const userPageSearchSchema = z.object({
-  status: z
-    .enum(['owned', 'wanted', 'exchange'])
-    .default('owned') satisfies z.ZodType<CollectionStatusFilter>,
-});
-
-function getSingleValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 export async function generateMetadata({
   params,
@@ -52,22 +37,14 @@ export async function generateMetadata({
   };
 }
 
-export default async function UserPage({
-  params,
-  searchParams,
-}: UserPageProps) {
+export default async function UserPage({ params }: UserPageProps) {
   const { handle } = await params;
-  const resolvedSearchParams = (await searchParams) ?? {};
   const viewer = await getAuthUser();
   const profile = await resolveBrowsableProfile(handle, viewer?.id ?? null);
 
   if (!profile) {
     notFound();
   }
-
-  const status = userPageSearchSchema.parse({
-    status: getSingleValue(resolvedSearchParams.status),
-  }).status;
 
   const [data, following, reputation, followCounts, badgeCount, listings] =
     await Promise.all([
@@ -215,12 +192,18 @@ export default async function UserPage({
       <section className="mt-14">
         <div className="min-w-0">
           <p className="section-kicker">公开收藏</p>
-          <h2 className="mt-2 mb-7 text-[clamp(16px,4.6vw,32px)]">收藏清单</h2>
+          <h2 className="mt-2 mb-2 text-[clamp(16px,4.6vw,32px)]">
+            点亮作品墙
+          </h2>
+          <p className="text-muted-foreground mb-7 text-[13px]">
+            这里只展示已经通过实物识别点亮的官方 SKU。
+          </p>
           <UserCollectionSheet
             basePath={`/users/${profile.handle}`}
             data={data}
             showFrames={profile.collectionFramesPublic}
-            status={status}
+            showStatusNav={false}
+            status="owned"
           />
         </div>
       </section>

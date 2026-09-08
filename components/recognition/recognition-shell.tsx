@@ -4,16 +4,22 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { RecognitionCandidateCard } from '@/components/recognition/recognition-candidate-card';
+import type { RecognitionCandidate } from '@/lib/recognition';
+import { confirmRecognitionCandidateAction } from '@/server/recognition/actions';
+
 // 相机优先的自动扫描：进入即开相机、全屏取景 + 扫描光效，点快门直接识别并自动入库。
-// 匹配上官方谷库 → 自动点亮（可公开展示）；未匹配 → 存为未鉴定收藏项（进谷柜、不展示）。
-// 无需挑候选、无需审核。相机是唯一输入（不再有上传）。
+// 高置信匹配自动点亮；中置信展示少量候选，由用户确认；未匹配保存为私密未鉴定项。
+// 相机是唯一输入（不再有上传）。
 
 type Phase =
   | 'starting'
   | 'live'
   | 'scanning'
+  | 'candidates'
   | 'matched'
   | 'unmatched'
+  | 'offline'
   | 'denied'
   | 'error';
 
@@ -21,6 +27,9 @@ type ScanResult = {
   goodsSlug?: string;
   goodsName?: string;
   score?: number | null;
+  requestId?: string;
+  scanId?: string | null;
+  candidates?: RecognitionCandidate[];
 };
 
 // 取景框 4:5，把源画面按此比例居中裁切。
@@ -39,11 +48,19 @@ export function RecognitionShell() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const phaseRef = useRef<Phase>('starting');
 
   const [phase, setPhase] = useState<Phase>('starting');
   const [shotUrl, setShotUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [pendingCandidateId, setPendingCandidateId] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -55,12 +72,18 @@ export function RecognitionShell() {
     setErrorMessage(null);
     setResult(null);
     setShotUrl(null);
+    setPendingCandidateId(null);
     if (
       typeof navigator === 'undefined' ||
       !navigator.mediaDevices?.getUserMedia
     ) {
       setPhase('error');
       setErrorMessage('当前环境不支持相机。');
+      return;
+    }
+    if (!navigator.onLine) {
+      setPhase('offline');
+      setErrorMessage('当前处于离线状态，联网后可以继续扫描。');
       return;
     }
     setPhase('starting');
@@ -91,7 +114,15 @@ export function RecognitionShell() {
       }
       setPhase('error');
       setErrorMessage(
-        error instanceof Error ? error.message : '相机启动失败。',
+        error instanceof DOMException &&
+          (error.name === 'NotFoundError' ||
+            error.name === 'DevicesNotFoundError')
+          ? '没有检测到可用相机。'
+          : error instanceof DOMException && error.name === 'NotReadableError'
+            ? '相机正被其他应用占用，请关闭后重试。'
+            : error instanceof Error
+              ? error.message
+              : '相机启动失败。',
       );
     }
   }, [stopCamera]);
@@ -102,6 +133,37 @@ export function RecognitionShell() {
     return () => {
       window.cancelAnimationFrame(startFrame);
       stopCamera();
+    };
+  }, [startCamera, stopCamera]);
+
+  // WebView 切后台时释放摄像头；恢复前台或网络恢复后重新建立流。
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopCamera();
+      } else if (
+        phaseRef.current === 'live' ||
+        phaseRef.current === 'starting'
+      ) {
+        void startCamera();
+      }
+    };
+    const handleOffline = () => {
+      stopCamera();
+      setPhase('offline');
+      setErrorMessage('网络已断开，恢复连接后可以继续扫描。');
+    };
+    const handleOnline = () => {
+      if (phaseRef.current === 'offline') void startCamera();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
     };
   }, [startCamera, stopCamera]);
 
@@ -159,6 +221,14 @@ export function RecognitionShell() {
           score: data.score,
         });
         setPhase('matched');
+      } else if (data.tier === 'candidates' && data.candidates?.length) {
+        setResult({
+          requestId: data.requestId,
+          scanId: data.scanId,
+          score: data.score,
+          candidates: data.candidates,
+        });
+        setPhase('candidates');
       } else {
         setResult({ score: data.score });
         setPhase('unmatched');
@@ -170,6 +240,31 @@ export function RecognitionShell() {
       );
     }
   }, [stopCamera]);
+
+  const confirmCandidate = useCallback(
+    async (candidate: RecognitionCandidate) => {
+      if (!result?.requestId || pendingCandidateId) return;
+      setPendingCandidateId(candidate.id);
+      const confirmed = await confirmRecognitionCandidateAction({
+        requestId: result.requestId,
+        candidateId: candidate.id,
+        ...(result.scanId ? { scanId: result.scanId } : {}),
+      });
+
+      if (confirmed.success) {
+        setResult({
+          goodsSlug: confirmed.goodsSlug,
+          goodsName: candidate.goods.name,
+          score: Math.round(candidate.score * 100),
+        });
+        setPhase('matched');
+      } else {
+        setErrorMessage(confirmed.message);
+      }
+      setPendingCandidateId(null);
+    },
+    [pendingCandidateId, result],
+  );
 
   const done = phase === 'matched' || phase === 'unmatched';
 
@@ -227,7 +322,7 @@ export function RecognitionShell() {
           </div>
         ) : null}
 
-        {phase === 'denied' || phase === 'error' ? (
+        {phase === 'denied' || phase === 'error' || phase === 'offline' ? (
           <div className="scanner__center">
             <p className="scanner__msg">
               {phase === 'denied'
@@ -258,7 +353,44 @@ export function RecognitionShell() {
         </div>
       ) : null}
 
-      {done ? (
+      {phase === 'candidates' ? (
+        <div className="scanner__sheet">
+          <p className="scanner__result-badge">找到几个可能的官方 SKU</p>
+          <p className="scanner__result-sub scanner__result-sub--lead">
+            请核对角色、系列、材质和尺寸后确认。相似度只是检索信号，不代表真伪鉴定。
+          </p>
+          {errorMessage ? (
+            <p className="scanner__msg" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+          <div className="mt-4 space-y-3">
+            {result?.candidates?.map((candidate) => (
+              <RecognitionCandidateCard
+                actionMode="light"
+                candidate={candidate}
+                compact
+                isConfirmed={false}
+                isPending={pendingCandidateId === candidate.id}
+                key={candidate.id}
+                onConfirm={(item) => void confirmCandidate(item)}
+              />
+            ))}
+          </div>
+          <div className="scanner__result-actions">
+            <button
+              className="scanner__btn"
+              onClick={() => void startCamera()}
+              type="button"
+            >
+              都不像，重新拍摄
+            </button>
+            <Link className="scanner__btn" href="/me/collection#unverified">
+              暂存到谷柜
+            </Link>
+          </div>
+        </div>
+      ) : done ? (
         <div className="scanner__sheet">
           {phase === 'matched' ? (
             <>

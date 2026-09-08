@@ -16,6 +16,7 @@ import { getFollowCounts } from '@/server/data/follows';
 import { countUnreadMessages } from '@/server/data/messages';
 import { listNotificationsForUser } from '@/server/data/notifications';
 import { listUserScans } from '@/server/data/user-scans';
+import { updateUserScanNoteAction } from '@/server/user-scans/actions';
 
 export const metadata: Metadata = {
   title: '我的谷柜',
@@ -165,7 +166,7 @@ export default async function MyCollectionPage({
   ];
 
   return (
-    <main className="mx-auto w-full max-w-[720px] px-4 pt-4 pb-24 sm:px-6">
+    <main className="mx-auto w-full max-w-[1240px] px-4 pt-4 pb-24 sm:px-6 lg:px-0 lg:pt-8">
       {/* 头部：头像 + 名字 + 看公开主页 */}
       <div className="flex items-center gap-3">
         <div className="grid size-[52px] flex-none place-items-center rounded-full bg-[var(--shu-soft)] text-[18px] font-bold text-[var(--shu)]">
@@ -246,7 +247,7 @@ export default async function MyCollectionPage({
 
       {/* 谷柜墙：三列，仅图，点亮原色 / 未点亮转灰 */}
       {wallItems.length ? (
-        <div className="mt-3 grid grid-cols-3 gap-[5px]">
+        <div className="mt-3 grid grid-cols-3 gap-[5px] sm:grid-cols-4 lg:grid-cols-5 lg:gap-3 xl:grid-cols-6">
           {wallItems.map((item) => (
             <WallCell item={item} key={item.id} status={status} />
           ))}
@@ -270,27 +271,64 @@ export default async function MyCollectionPage({
               {scans.length}
             </span>
           </div>
-          <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
-            {scans.slice(0, 6).map((scan) => (
-              <div
-                className="goods-card__art h-[78px] w-[62px] flex-none rounded-[2px] border border-dashed border-[var(--rule)]"
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {scans.map((scan) => (
+              <details
+                className="group overflow-hidden rounded-[8px] border border-dashed border-[var(--rule)] bg-[var(--surface)]"
                 key={scan.id}
               >
-                <RemoteImage
-                  alt="未鉴定收藏"
-                  className="goods-card__art-image"
-                  privateSource
-                  sizes="62px"
-                  src={scan.imageUrl}
-                  style={{ filter: 'grayscale(1) contrast(.86) opacity(.62)' }}
-                />
-              </div>
+                <summary className="cursor-pointer list-none">
+                  <div className="goods-card__art aspect-[3/4] rounded-none">
+                    <RemoteImage
+                      alt="未鉴定收藏"
+                      className="goods-card__art-image"
+                      privateSource
+                      sizes="(max-width: 639px) 50vw, 25vw"
+                      src={scan.imageUrl}
+                      style={{
+                        filter: 'grayscale(1) contrast(.86) opacity(.72)',
+                      }}
+                    />
+                  </div>
+                  <p className="px-3 py-2 text-[12px] font-medium">
+                    {scan.note || '未鉴定收藏'}
+                    <span className="text-muted-foreground ml-1 group-open:hidden">
+                      · 管理
+                    </span>
+                  </p>
+                </summary>
+                <form
+                  action={updateUserScanNoteAction}
+                  className="space-y-2 border-t border-[var(--rule)] p-3"
+                >
+                  <label className="text-muted-foreground block text-[11px]">
+                    私人备注
+                    <textarea
+                      className="ui-field mt-1 min-h-16 w-full resize-y p-2 text-[12px]"
+                      defaultValue={scan.note ?? ''}
+                      maxLength={500}
+                      name="note"
+                      placeholder="记录来源、角色或待核对信息"
+                    />
+                  </label>
+                  <input name="scanId" type="hidden" value={scan.id} />
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="flex-1 rounded-[8px] bg-[var(--shu)] px-3 py-2 text-[12px] font-semibold text-white"
+                      type="submit"
+                    >
+                      保存备注
+                    </button>
+                    <Link
+                      className="rounded-[8px] border border-[var(--rule)] px-3 py-2 text-[12px]"
+                      href="/recognition"
+                    >
+                      重新扫描
+                    </Link>
+                  </div>
+                </form>
+              </details>
             ))}
-            {scans.length > 6 ? (
-              <div className="flex h-[78px] w-[62px] flex-none items-center justify-center rounded-[2px] border border-dashed border-[var(--rule)] text-[11px] text-[var(--ink-3)]">
-                +{scans.length - 6}
-              </div>
-            ) : null}
           </div>
         </section>
       ) : null}

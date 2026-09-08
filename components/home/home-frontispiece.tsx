@@ -19,13 +19,13 @@ export function HomeFrontispiece({
   viewerStates,
 }: HomeFrontispieceProps) {
   return (
-    <section className="hidden">
+    <section className="relative mt-5 grid overflow-hidden rounded-[24px] border border-[var(--rule)] bg-[linear-gradient(135deg,var(--shu-soft),color-mix(in_oklab,var(--violet-soft)_72%,var(--surface)))] p-5 shadow-[var(--shadow-card)] sm:p-7 lg:mt-0 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)] lg:items-center lg:gap-10 lg:p-10">
       <span className="absolute -top-20 -left-16 size-56 rounded-full bg-[color-mix(in_oklab,var(--shu)_9%,transparent)] blur-3xl" />
       <span className="absolute -right-20 -bottom-28 size-72 rounded-full bg-[color-mix(in_oklab,var(--violet)_10%,transparent)] blur-3xl" />
 
       <div className="relative min-w-0">
         <p className="section-kicker">二次元周边图鉴</p>
-        <h1 className="mt-3 max-w-[560px] text-[clamp(21px,3.2vw,32px)] leading-[1.2] font-bold text-balance">
+        <h1 className="mt-3 max-w-[560px] text-[clamp(24px,3.2vw,42px)] leading-[1.15] font-bold text-balance">
           把喜欢的角色，
           <span className="text-[var(--shu)]">收进自己的世界</span>。
         </h1>

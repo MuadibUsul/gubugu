@@ -89,6 +89,8 @@ services:
       DISABLE_IMAGE_OPTIMIZATION: ${DISABLE_IMAGE_OPTIMIZATION:-0}
       CATALOG_ASSET_DIR: /app/.data/catalog-assets
       USER_SCAN_ASSET_DIR: /app/.data/user-scans
+      # 社区笔记配图。不给这一项就会落到镜像可写层里，换一次镜像用户传的图就没了。
+      COMMUNITY_IMAGE_ASSET_DIR: /app/.data/community-images
       MODEL_CACHE_DIR: /app/.data/models
       HF_MIRROR: ${HF_MIRROR:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
@@ -97,6 +99,7 @@ services:
     volumes:
       - catalog_assets:/app/.data/catalog-assets
       - user_scan_assets:/app/.data/user-scans
+      - community_images:/app/.data/community-images
       - model_cache:/app/.data/models
     depends_on:
       migrate:
@@ -129,4 +132,5 @@ volumes:
   pgdata:
   catalog_assets:
   user_scan_assets:
+  community_images:
   model_cache:
