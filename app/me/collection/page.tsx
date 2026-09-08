@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { z } from 'zod';
 
+import { HoloCollectible } from '@/components/collection/holo-collectible';
 import { RemoteImage } from '@/components/ui/remote-image';
 import { getSingleSearchParamValue } from '@/lib/search-params';
 import { requireAuthUser } from '@/server/auth/session';
@@ -40,7 +41,7 @@ function fmt(n: number) {
     : String(n);
 }
 
-// 谷柜墙的一格：只放图。已拥有里未点亮的转灰，点亮的原色 + 一圈金边。
+// 谷柜墙的一格：只放图。已拥有里未点亮的转灰，点亮的原色 + 金边与镭射反光。
 function WallCell({
   item,
   status,
@@ -50,22 +51,13 @@ function WallCell({
 }) {
   const lit = Boolean(item.litAt);
   const gray = status === 'owned' && !lit;
-  return (
-    <Link
-      aria-label={`${item.name}，${lit ? '已点亮' : status === 'owned' ? '未点亮' : ''}`}
-      className="goods-card__art aspect-[3/4] overflow-hidden rounded-[2px]"
-      href={`/goods/${item.slug}`}
-      style={
-        status === 'owned' && lit
-          ? { boxShadow: '0 0 0 1px var(--kin)' }
-          : undefined
-      }
-    >
+  const artwork = (
+    <div className="goods-card__art aspect-[3/4] rounded-[2px]">
       {item.primaryImageUrl ? (
         <RemoteImage
           alt={item.name}
           className="goods-card__art-image"
-          sizes="33vw"
+          sizes="(max-width: 639px) 33vw, (max-width: 1023px) 25vw, (max-width: 1279px) 20vw, 16vw"
           src={item.primaryImageUrl}
           style={
             gray
@@ -74,6 +66,26 @@ function WallCell({
           }
         />
       ) : null}
+    </div>
+  );
+  return (
+    <Link
+      aria-label={`${item.name}，${lit ? '已点亮' : status === 'owned' ? '未点亮' : ''}`}
+      className="relative block min-w-0 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--shu)]"
+      href={`/goods/${item.slug}`}
+      style={
+        status === 'owned' && lit
+          ? { boxShadow: '0 0 0 1px var(--kin)' }
+          : undefined
+      }
+    >
+      {status === 'owned' && lit ? (
+        <HoloCollectible rarityAverage={item.rarityAverage}>
+          {artwork}
+        </HoloCollectible>
+      ) : (
+        artwork
+      )}
     </Link>
   );
 }
