@@ -1,0 +1,201 @@
+/*
+ * 交互式全息卡（移植自 simeydotme/pokemon-cards-css，GPL-3.0）。
+ * 与库不同点：我们的谷子图不是标准 TCG 版式，所以**不套 TCG 的 clip 遮罩**，
+ * 全息层铺满整张图；其余（3D 倾斜 + 彩虹箔面 + 眩光 + 扫描线/竖纹 + 指针径向）
+ * 均按 base.css / regular-holo.css 的配方 1:1 还原。逐帧只在交互时跑，单张大卡不卡。
+ */
+
+.card {
+  /* 与库一致的彩虹/日光柱色板 */
+  --red: #f80e35;
+  --yellow: #eedf10;
+  --green: #21e985;
+  --blue: #0dbde9;
+  --violet: #c929f1;
+
+  --card-radius: 4.55% / 3.5%;
+  --card-edge: hsl(47, 100%, 78%);
+  --card-glow: hsl(175, 100%, 90%);
+
+  /* 交互变量默认值（rest 态） */
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --pointer-from-center: 0;
+  --pointer-from-top: 0.5;
+  --pointer-from-left: 0.5;
+  --card-opacity: 0;
+  --rotate-x: 0deg;
+  --rotate-y: 0deg;
+  --background-x: 50%;
+  --background-y: 50%;
+
+  position: relative;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  perspective: 600px;
+  transform: translate3d(0, 0, 0.01px);
+  transform-style: preserve-3d;
+  will-change: transform;
+  touch-action: none;
+  isolation: isolate;
+}
+
+.rotator {
+  display: grid;
+  width: 100%;
+  border-radius: var(--card-radius);
+  transform-origin: center;
+  transform-style: preserve-3d;
+  transform: rotateY(var(--rotate-x)) rotateX(var(--rotate-y));
+  transition: box-shadow 0.4s ease;
+  box-shadow:
+    0 8px 20px -6px rgb(0 0 0 / 45%),
+    0 2px 8px -4px rgb(0 0 0 / 40%);
+}
+.card[data-active='true'] .rotator {
+  box-shadow:
+    0 0 3px -1px white,
+    0 0 3px 1px var(--card-edge),
+    0 0 12px 2px var(--card-glow),
+    0 10px 24px -6px rgb(0 0 0 / 55%),
+    0 0 40px -30px var(--card-glow),
+    0 0 50px -20px var(--card-glow);
+}
+
+.rotator > * {
+  grid-area: 1 / 1;
+  width: 100%;
+  border-radius: var(--card-radius);
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: translate3d(0, 0, 0.01px);
+}
+
+/* ---- Shine（彩虹箔面）：regular-holo 配方，铺满整卡 ---- */
+.shine,
+.glare {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: var(--card-radius);
+}
+
+.shine {
+  --scanlines-space: 0.7px;
+  --scanlines-light: #666;
+  --scanlines-dark: black;
+  --bars: 3%;
+  --bar-color: hsla(0, 0%, 70%, 1);
+  --bar-bg: hsla(0, 0%, 0%, 1);
+
+  z-index: 3;
+  transform: translateZ(1px);
+  background-image: repeating-linear-gradient(
+      110deg,
+      var(--violet), var(--blue), var(--green), var(--yellow), var(--red),
+      var(--violet), var(--blue), var(--green), var(--yellow), var(--red),
+      var(--violet), var(--blue), var(--green), var(--yellow), var(--red)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--scanlines-dark) calc(var(--scanlines-space) * 0),
+      var(--scanlines-dark) calc(var(--scanlines-space) * 2),
+      var(--scanlines-light) calc(var(--scanlines-space) * 2),
+      var(--scanlines-light) calc(var(--scanlines-space) * 4)
+    );
+  background-position:
+    calc(((50% - var(--background-x)) * 2.6) + 50%)
+      calc(((50% - var(--background-y)) * 3.5) + 50%),
+    center center;
+  background-size: 400% 400%, cover;
+  background-blend-mode: overlay;
+  filter: brightness(1.1) contrast(1.1) saturate(1.2);
+  mix-blend-mode: color-dodge;
+  opacity: calc(0.5 + var(--card-opacity) * 0.5);
+}
+
+/* 竖纹层（hard-light） */
+.shine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  --bars: 3%;
+  --bar-color: hsla(0, 0%, 70%, 1);
+  --bar-bg: hsla(0, 0%, 0%, 1);
+  background-image: repeating-linear-gradient(
+      90deg,
+      var(--bar-bg) calc(var(--bars) * 2),
+      var(--bar-color) calc(var(--bars) * 3),
+      var(--bar-bg) calc(var(--bars) * 3.5),
+      var(--bar-color) calc(var(--bars) * 4),
+      var(--bar-bg) calc(var(--bars) * 5),
+      var(--bar-bg) calc(var(--bars) * 14)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--bar-bg) calc(var(--bars) * 2),
+      var(--bar-color) calc(var(--bars) * 3),
+      var(--bar-bg) calc(var(--bars) * 3.5),
+      var(--bar-color) calc(var(--bars) * 4),
+      var(--bar-bg) calc(var(--bars) * 5),
+      var(--bar-bg) calc(var(--bars) * 10)
+    );
+  background-position:
+    calc((((50% - var(--background-x)) * 1.65) + 50%) + (var(--background-y) * 0.5))
+      var(--background-x),
+    calc((((50% - var(--background-x)) * -0.9) + 50%) - (var(--background-y) * 0.75))
+      var(--background-y);
+  background-size: 200% 200%, 200% 200%;
+  background-blend-mode: screen;
+  filter: brightness(1.15) contrast(1.1);
+  mix-blend-mode: hard-light;
+  opacity: var(--card-opacity);
+}
+
+/* 指针径向高光（luminosity），让箔面随指针聚焦 */
+.shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsla(0, 0%, 90%, 0.8) 0%,
+    hsla(0, 0%, 78%, 0.1) 25%,
+    hsl(0, 0%, 0%) 90%
+  );
+  background-position: center center;
+  background-size: cover;
+  mix-blend-mode: luminosity;
+  filter: brightness(0.6) contrast(4);
+  opacity: var(--card-opacity);
+}
+
+/* ---- Glare（整卡眩光）---- */
+.glare {
+  z-index: 4;
+  transform: translateZ(1.4px);
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsl(180, 100%, 95%) 5%,
+    hsla(0, 0%, 39%, 0.25) 55%,
+    hsla(0, 0%, 0%, 0.36) 110%
+  );
+  mix-blend-mode: overlay;
+  filter: brightness(0.8) contrast(1.5);
+  opacity: calc(var(--card-opacity) * 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotator {
+    transform: none !important;
+  }
+}
