@@ -248,6 +248,7 @@ export function HoloCard({
           <img
             alt={alt}
             className={styles.art}
+            fetchPriority="high"
             onLoad={(e) => {
               const img = e.currentTarget;
               if (img.naturalWidth && img.naturalHeight && cardRef.current) {
