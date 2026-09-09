@@ -310,7 +310,7 @@ export function RecognitionShell() {
             <p className="scanner__hint">
               {phase === 'starting'
                 ? '正在启动相机…'
-                : '把谷子放进框里，点下方按钮'}
+                : '把谷子放进框里，点下方按钮 · 卡片正反面各扫一次'}
             </p>
           </div>
         ) : null}

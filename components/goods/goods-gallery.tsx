@@ -96,7 +96,7 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
 
       <p className="text-muted-foreground mt-2 text-center text-[11px]">
         {images.length > 1 ? `${images.length} 张官图 · ` : ''}
-        倾斜手机或滑动卡面看全息反光
+        倾斜手机看全息反光 · 点卡面翻看正反两面
       </p>
     </section>
   );

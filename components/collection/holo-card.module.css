@@ -1,12 +1,10 @@
 /*
  * 交互式全息卡（移植自 simeydotme/pokemon-cards-css，GPL-3.0）。
- * 与库不同点：我们的谷子图不是标准 TCG 版式，所以**不套 TCG 的 clip 遮罩**，
- * 全息层铺满整张图；其余（3D 倾斜 + 彩虹箔面 + 眩光 + 扫描线/竖纹 + 指针径向）
- * 均按 base.css / regular-holo.css 的配方 1:1 还原。逐帧只在交互时跑，单张大卡不卡。
+ * 我们的谷子图不是标准 TCG 版式，故不套 TCG clip 遮罩，全息层铺满整图。
+ * 相比库：箔面强度整体调低（保证原图清晰可见），并加了正/反两面翻转与加载占位。
  */
 
 .card {
-  /* 与库一致的彩虹/日光柱色板 */
   --red: #f80e35;
   --yellow: #eedf10;
   --green: #21e985;
@@ -17,7 +15,6 @@
   --card-edge: hsl(47, 100%, 78%);
   --card-glow: hsl(175, 100%, 90%);
 
-  /* 交互变量默认值（rest 态） */
   --pointer-x: 50%;
   --pointer-y: 50%;
   --pointer-from-center: 0;
@@ -28,12 +25,13 @@
   --rotate-y: 0deg;
   --background-x: 50%;
   --background-y: 50%;
+  --flip: 0deg;
 
   position: relative;
   width: 100%;
   display: grid;
   place-items: center;
-  perspective: 600px;
+  perspective: 700px;
   transform: translate3d(0, 0, 0.01px);
   transform-style: preserve-3d;
   will-change: transform;
@@ -42,43 +40,100 @@
 }
 
 .rotator {
+  position: relative;
   display: grid;
   width: 100%;
+  aspect-ratio: var(--card-aspect, 0.72);
   border-radius: var(--card-radius);
   transform-origin: center;
   transform-style: preserve-3d;
-  transform: rotateY(var(--rotate-x)) rotateX(var(--rotate-y));
+  transform: rotateY(calc(var(--rotate-x) + var(--flip))) rotateX(var(--rotate-y));
+  /* 倾斜由 rAF lerp 平滑，transform 不加过渡（否则双重延迟发糊）；只有翻面时临时启用 */
   transition: box-shadow 0.4s ease;
+  cursor: pointer;
   box-shadow:
-    0 8px 20px -6px rgb(0 0 0 / 45%),
-    0 2px 8px -4px rgb(0 0 0 / 40%);
+    0 8px 20px -6px rgb(0 0 0 / 40%),
+    0 2px 8px -4px rgb(0 0 0 / 35%);
 }
 .card[data-active='true'] .rotator {
+  transition: box-shadow 0.4s ease;
   box-shadow:
     0 0 3px -1px white,
     0 0 3px 1px var(--card-edge),
     0 0 12px 2px var(--card-glow),
-    0 10px 24px -6px rgb(0 0 0 / 55%),
+    0 10px 24px -6px rgb(0 0 0 / 50%),
     0 0 40px -30px var(--card-glow),
-    0 0 50px -20px var(--card-glow);
+    0 0 50px -22px var(--card-glow);
+}
+/* 翻面动画：切换时给一点弹性时长 */
+.card[data-flip-anim='true'] .rotator {
+  transition:
+    box-shadow 0.4s ease,
+    transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.rotator > * {
+.face {
   grid-area: 1 / 1;
   width: 100%;
+  height: 100%;
   border-radius: var(--card-radius);
-  transform-style: preserve-3d;
   overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+.back {
+  transform: rotateY(180deg);
 }
 
 .art {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   transform: translate3d(0, 0, 0.01px);
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+/* 加载占位：浅色底 + 轻微呼吸，图片就绪即淡入，杜绝“黑屏几秒” */
+.front {
+  background: var(--surface, #f4efe6);
+}
+.card[data-loaded='true'] .art {
+  opacity: 1;
+}
+.front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 45%) 50%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  animation: holo-skeleton 1.1s ease-in-out infinite;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 6;
+}
+.card[data-loaded='true'] .front::after {
+  opacity: 0;
+  animation: none;
+}
+@keyframes holo-skeleton {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -150% 0;
+  }
 }
 
-/* ---- Shine（彩虹箔面）：regular-holo 配方，铺满整卡 ---- */
+/* ---- Shine（彩虹箔面）：强度整体调低，保证原图清晰 ---- */
 .shine,
 .glare {
   pointer-events: none;
@@ -88,11 +143,11 @@
 }
 
 .shine {
-  --scanlines-space: 0.7px;
-  --scanlines-light: #666;
+  --scanlines-space: 0.8px;
+  --scanlines-light: #4c4c4c;
   --scanlines-dark: black;
   --bars: 3%;
-  --bar-color: hsla(0, 0%, 70%, 1);
+  --bar-color: hsla(0, 0%, 62%, 1);
   --bar-bg: hsla(0, 0%, 0%, 1);
 
   z-index: 3;
@@ -116,19 +171,20 @@
     center center;
   background-size: 400% 400%, cover;
   background-blend-mode: overlay;
-  filter: brightness(1.1) contrast(1.1) saturate(1.2);
+  filter: brightness(1.05) contrast(1.05) saturate(1.05);
   mix-blend-mode: color-dodge;
-  opacity: calc(0.5 + var(--card-opacity) * 0.5);
+  /* rest 态更透（原图清楚），交互时才明显 */
+  opacity: calc(0.16 + var(--card-opacity) * 0.34);
 }
 
-/* 竖纹层（hard-light） */
+/* 竖纹层（hard-light），强度减半 */
 .shine::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   --bars: 3%;
-  --bar-color: hsla(0, 0%, 70%, 1);
+  --bar-color: hsla(0, 0%, 62%, 1);
   --bar-bg: hsla(0, 0%, 0%, 1);
   background-image: repeating-linear-gradient(
       90deg,
@@ -155,12 +211,12 @@
       var(--background-y);
   background-size: 200% 200%, 200% 200%;
   background-blend-mode: screen;
-  filter: brightness(1.15) contrast(1.1);
+  filter: brightness(1.1) contrast(1.05);
   mix-blend-mode: hard-light;
-  opacity: var(--card-opacity);
+  opacity: calc(var(--card-opacity) * 0.6);
 }
 
-/* 指针径向高光（luminosity），让箔面随指针聚焦 */
+/* 指针径向高光（luminosity），只在交互时聚焦 */
 .shine::after {
   content: '';
   position: absolute;
@@ -168,34 +224,87 @@
   border-radius: inherit;
   background-image: radial-gradient(
     farthest-corner circle at var(--pointer-x) var(--pointer-y),
-    hsla(0, 0%, 90%, 0.8) 0%,
+    hsla(0, 0%, 90%, 0.7) 0%,
     hsla(0, 0%, 78%, 0.1) 25%,
     hsl(0, 0%, 0%) 90%
   );
   background-position: center center;
   background-size: cover;
   mix-blend-mode: luminosity;
-  filter: brightness(0.6) contrast(4);
-  opacity: var(--card-opacity);
+  filter: brightness(0.7) contrast(3);
+  opacity: calc(var(--card-opacity) * 0.7);
 }
 
-/* ---- Glare（整卡眩光）---- */
+/* ---- Glare（整卡眩光）：也调低 ---- */
 .glare {
   z-index: 4;
   transform: translateZ(1.4px);
   background-image: radial-gradient(
     farthest-corner circle at var(--pointer-x) var(--pointer-y),
     hsl(180, 100%, 95%) 5%,
-    hsla(0, 0%, 39%, 0.25) 55%,
-    hsla(0, 0%, 0%, 0.36) 110%
+    hsla(0, 0%, 39%, 0.2) 55%,
+    hsla(0, 0%, 0%, 0.28) 110%
   );
   mix-blend-mode: overlay;
-  filter: brightness(0.8) contrast(1.5);
-  opacity: calc(var(--card-opacity) * 0.9);
+  filter: brightness(0.85) contrast(1.4);
+  opacity: calc(var(--card-opacity) * 0.7);
+}
+
+/* ---- 反面：默认站点卡背（未提供 backSrc 时的品牌兜底）---- */
+.brandedBack {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 12%), transparent 60%),
+    linear-gradient(160deg, var(--shu, #c0392b), color-mix(in srgb, var(--shu, #c0392b) 62%, black));
+  color: rgb(255 255 255 / 92%);
+}
+.brandedBackMark {
+  font-family: var(--font-heading, serif);
+  font-size: clamp(48px, 22vw, 96px);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+}
+.brandedBackWord {
+  position: absolute;
+  bottom: 8%;
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  opacity: 0.7;
+}
+.backImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- 翻面按钮（在 .card 层、不随卡翻转）---- */
+.flipBtn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 45%);
+  color: white;
+  font-size: 11px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .rotator {
-    transform: none !important;
+    transform: rotateY(var(--flip)) !important;
+  }
+  .front::after {
+    animation: none;
   }
 }
