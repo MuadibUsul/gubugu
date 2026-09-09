@@ -316,7 +316,8 @@ export function RecognitionShell() {
     let outCanvas: HTMLCanvasElement | null = null;
     try {
       await ensureOpenCV();
-      const jscanify = (await import('jscanify')).default;
+      // 必须用浏览器构建（jscanify/client）；默认入口是 node 构建，会 require('canvas')/jsdom 导致打包失败。
+      const jscanify = (await import('jscanify/client')).default;
       const scanner = new jscanify();
       // 透视裁切成卡片比例（近 0.72），高分辨率尽量无损。
       outCanvas = scanner.extractPaper(frame, 1000, 1390) as HTMLCanvasElement;

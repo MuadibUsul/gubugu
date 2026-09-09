@@ -1,4 +1,4 @@
-declare module 'jscanify' {
+declare module 'jscanify/client' {
   export default class Jscanify {
     highlightPaper(
       image: HTMLCanvasElement | HTMLImageElement,
@@ -11,4 +11,8 @@ declare module 'jscanify' {
       cornerPoints?: unknown,
     ): HTMLCanvasElement;
   }
+}
+
+declare module 'jscanify' {
+  export { default } from 'jscanify/client';
 }
