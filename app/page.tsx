@@ -10,18 +10,12 @@ import {
   HomeContentsSection,
 } from '@/components/home/home-contents';
 import { MobileAppHeader } from '@/components/app-shell/mobile-app-header';
-import { HomeFrontispiece } from '@/components/home/home-frontispiece';
 import { HomeLeaderboardSection } from '@/components/home/home-leaderboard-band';
 import {
   HomeMarketFallback,
   HomeMarketSection,
 } from '@/components/home/home-market';
-import { getAuthUser } from '@/server/auth/session';
-import {
-  getGoodsCardViewerStateMap,
-  listHotIps,
-  searchGoodsCatalog,
-} from '@/server/data';
+import { listHotIps, searchGoodsCatalog } from '@/server/data';
 import { isDatabaseAccessConfigurationError } from '@/server/db/client';
 import { isMobileRequest } from '@/server/device';
 
@@ -83,15 +77,10 @@ export default async function Home({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const accountDeleted = (await searchParams)?.accountDeleted === '1';
-  const [frontispiece, authUser, canScan] = await Promise.all([
+  const [frontispiece, canScan] = await Promise.all([
     loadFrontispieceData(),
-    getAuthUser(),
     isMobileRequest(),
   ]);
-  const featuredViewerStates = await getGoodsCardViewerStateMap({
-    viewerId: authUser?.id,
-    goodsIds: frontispiece.featuredItems.map((item) => item.id),
-  });
   const slides = buildSlides(frontispiece.featuredItems);
 
   return (
@@ -106,13 +95,6 @@ export default async function Home({
           账号及关联数据已永久删除。
         </p>
       ) : null}
-
-      <HomeFrontispiece
-        featuredItems={frontispiece.featuredItems}
-        goodsCount={frontispiece.goodsCount}
-        ipCount={frontispiece.ipCount}
-        viewerStates={featuredViewerStates}
-      />
 
       <HomeCarousel slides={slides} />
 

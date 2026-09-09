@@ -94,11 +94,23 @@ export async function POST(request: Request) {
 
     // 候选档不在这里点亮：先保存原图，再把有限候选交给用户确认。
     // 无可靠候选或自动点亮未通过 → 保持为未鉴定收藏项。
+    // 角色识别：即便没到点亮阈值，也把最接近候选的角色/IP 作为初始备注存下，
+    // 让「未鉴定收藏」也能显示「疑似：<角色> · <IP>」。仅真实向量检索、且有角色时给。
+    const guessNote =
+      top &&
+      response.pipeline.provider === 'embedding-search' &&
+      top.goods.characterNames.length > 0
+        ? `疑似：${top.goods.characterNames.join('、')}${
+            top.goods.ipName ? ` · ${top.goods.ipName}` : ''
+          }`
+        : null;
+
     const { scanId } = await recordUnidentifiedScan({
       userId: user.id,
       image: buffer,
       recognitionAttemptId: response.requestId,
       topScore: score,
+      note: guessNote,
     });
 
     return NextResponse.json({

@@ -16,12 +16,15 @@ export async function recordUnidentifiedScan({
   image,
   recognitionAttemptId,
   topScore,
+  note,
 }: {
   userId: string;
   image: Buffer;
   recognitionAttemptId: string;
   /** 最接近的官方匹配分（0–100），没有候选时为 null。 */
   topScore: number | null;
+  /** 识别到的角色/IP 猜测，作为初始备注写入（用户可改）。没有候选时为 null。 */
+  note?: string | null;
 }): Promise<{ scanId: string | null }> {
   const stored = await normalizeAndStoreUserScan(image);
 
@@ -33,6 +36,7 @@ export async function recordUnidentifiedScan({
         assetKey: stored.assetKey,
         recognitionAttemptId,
         topScore,
+        note: note ?? null,
       })
       .returning({ id: userScans.id })
   )[0];

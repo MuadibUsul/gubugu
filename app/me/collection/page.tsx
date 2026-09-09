@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { z } from 'zod';
 
 import { HoloCollectible } from '@/components/collection/holo-collectible';
+import { ScanViewer } from '@/components/collection/scan-viewer';
 import { RemoteImage } from '@/components/ui/remote-image';
 import { getSingleSearchParamValue } from '@/lib/search-params';
 import { requireAuthUser } from '@/server/auth/session';
@@ -16,7 +17,6 @@ import { getFollowCounts } from '@/server/data/follows';
 import { countUnreadMessages } from '@/server/data/messages';
 import { listNotificationsForUser } from '@/server/data/notifications';
 import { listUserScans } from '@/server/data/user-scans';
-import { updateUserScanNoteAction } from '@/server/user-scans/actions';
 
 export const metadata: Metadata = {
   title: '我的谷柜',
@@ -266,65 +266,14 @@ export default async function MyCollectionPage({
               {scans.length}
             </span>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {scans.map((scan) => (
-              <details
-                className="group overflow-hidden rounded-[8px] border border-dashed border-[var(--rule)] bg-[var(--surface)]"
-                key={scan.id}
-              >
-                <summary className="cursor-pointer list-none">
-                  <div className="goods-card__art relative aspect-[3/4] rounded-none">
-                    <RemoteImage
-                      alt="未鉴定收藏"
-                      className="goods-card__art-image"
-                      privateSource
-                      sizes="(max-width: 639px) 50vw, 25vw"
-                      src={scan.imageUrl}
-                    />
-                    <span className="absolute top-1.5 left-1.5 rounded-[4px] bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                      未鉴定
-                    </span>
-                  </div>
-                  <p className="px-3 py-2 text-[12px] font-medium">
-                    {scan.note || '未鉴定收藏'}
-                    <span className="text-muted-foreground ml-1 group-open:hidden">
-                      · 管理
-                    </span>
-                  </p>
-                </summary>
-                <form
-                  action={updateUserScanNoteAction}
-                  className="space-y-2 border-t border-[var(--rule)] p-3"
-                >
-                  <label className="text-muted-foreground block text-[11px]">
-                    私人备注
-                    <textarea
-                      className="ui-field mt-1 min-h-16 w-full resize-y p-2 text-[12px]"
-                      defaultValue={scan.note ?? ''}
-                      maxLength={500}
-                      name="note"
-                      placeholder="记录来源、角色或待核对信息"
-                    />
-                  </label>
-                  <input name="scanId" type="hidden" value={scan.id} />
-                  <div className="flex items-center gap-2">
-                    <button
-                      className="flex-1 rounded-[8px] bg-[var(--shu)] px-3 py-2 text-[12px] font-semibold text-white"
-                      type="submit"
-                    >
-                      保存备注
-                    </button>
-                    <Link
-                      className="rounded-[8px] border border-[var(--rule)] px-3 py-2 text-[12px]"
-                      href="/recognition"
-                    >
-                      重新扫描
-                    </Link>
-                  </div>
-                </form>
-              </details>
-            ))}
-          </div>
+          <ScanViewer
+            scans={scans.map((scan) => ({
+              id: scan.id,
+              topScore: scan.topScore,
+              note: scan.note,
+              imageUrl: scan.imageUrl,
+            }))}
+          />
         </section>
       ) : null}
     </main>
