@@ -141,13 +141,16 @@
   border-radius: var(--card-radius);
 }
 
+/*
+ * 全部改为「只加光、不压暗」：去掉会把非指针区域压黑的 luminosity 聚光、hard-light
+ * 黑竖纹、以及 glare 的黑色外圈。只保留：① 彩虹箔（color-dodge，黑处不改、亮处提亮）
+ * ② 指针处一小团柔和白光（soft-light / screen，透明处不改色）。这样原图始终清晰，
+ * 指针附近只是轻轻泛光，不再有黑晕影响观感。
+ */
 .shine {
-  --scanlines-space: 0.8px;
-  --scanlines-light: #4c4c4c;
+  --scanlines-space: 0.85px;
+  --scanlines-light: #3a3a3a;
   --scanlines-dark: black;
-  --bars: 3%;
-  --bar-color: hsla(0, 0%, 62%, 1);
-  --bar-bg: hsla(0, 0%, 0%, 1);
 
   z-index: 3;
   transform: translateZ(1px);
@@ -170,52 +173,13 @@
     center center;
   background-size: 400% 400%, cover;
   background-blend-mode: overlay;
-  filter: brightness(1.05) contrast(1.05) saturate(1.05);
+  filter: saturate(1.05);
   mix-blend-mode: color-dodge;
-  /* rest 态更透（原图清楚），交互时才明显 */
-  opacity: calc(0.16 + var(--card-opacity) * 0.34);
+  /* 彩虹箔很淡：静止 ~0.08，交互也只到 ~0.26，原图清楚 */
+  opacity: calc(0.08 + var(--card-opacity) * 0.18);
 }
 
-/* 竖纹层（hard-light），强度减半 */
-.shine::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  --bars: 3%;
-  --bar-color: hsla(0, 0%, 62%, 1);
-  --bar-bg: hsla(0, 0%, 0%, 1);
-  background-image: repeating-linear-gradient(
-      90deg,
-      var(--bar-bg) calc(var(--bars) * 2),
-      var(--bar-color) calc(var(--bars) * 3),
-      var(--bar-bg) calc(var(--bars) * 3.5),
-      var(--bar-color) calc(var(--bars) * 4),
-      var(--bar-bg) calc(var(--bars) * 5),
-      var(--bar-bg) calc(var(--bars) * 14)
-    ),
-    repeating-linear-gradient(
-      90deg,
-      var(--bar-bg) calc(var(--bars) * 2),
-      var(--bar-color) calc(var(--bars) * 3),
-      var(--bar-bg) calc(var(--bars) * 3.5),
-      var(--bar-color) calc(var(--bars) * 4),
-      var(--bar-bg) calc(var(--bars) * 5),
-      var(--bar-bg) calc(var(--bars) * 10)
-    );
-  background-position:
-    calc((((50% - var(--background-x)) * 1.65) + 50%) + (var(--background-y) * 0.5))
-      var(--background-x),
-    calc((((50% - var(--background-x)) * -0.9) + 50%) - (var(--background-y) * 0.75))
-      var(--background-y);
-  background-size: 200% 200%, 200% 200%;
-  background-blend-mode: screen;
-  filter: brightness(1.1) contrast(1.05);
-  mix-blend-mode: hard-light;
-  opacity: calc(var(--card-opacity) * 0.6);
-}
-
-/* 指针径向高光（luminosity），只在交互时聚焦 */
+/* 指针处柔光（soft-light：白处轻提亮、透明处不改色，绝不压暗） */
 .shine::after {
   content: '';
   position: absolute;
@@ -223,29 +187,25 @@
   border-radius: inherit;
   background-image: radial-gradient(
     farthest-corner circle at var(--pointer-x) var(--pointer-y),
-    hsla(0, 0%, 90%, 0.7) 0%,
-    hsla(0, 0%, 78%, 0.1) 25%,
-    hsl(0, 0%, 0%) 90%
+    rgb(255 255 255 / 45%) 0%,
+    rgb(255 255 255 / 12%) 20%,
+    rgb(255 255 255 / 0%) 48%
   );
-  background-position: center center;
-  background-size: cover;
-  mix-blend-mode: luminosity;
-  filter: brightness(0.7) contrast(3);
-  opacity: calc(var(--card-opacity) * 0.7);
+  mix-blend-mode: soft-light;
+  opacity: calc(var(--card-opacity) * 0.8);
 }
 
-/* ---- Glare（整卡眩光）：也调低 ---- */
+/* ---- Glare：指针处一小团白色高光，向外淡出到透明（screen 只提亮、不压暗）---- */
 .glare {
   z-index: 4;
   transform: translateZ(1.4px);
   background-image: radial-gradient(
     farthest-corner circle at var(--pointer-x) var(--pointer-y),
-    hsl(180, 100%, 95%) 5%,
-    hsla(0, 0%, 39%, 0.2) 55%,
-    hsla(0, 0%, 0%, 0.28) 110%
+    rgb(255 255 255 / 40%) 6%,
+    rgb(255 255 255 / 8%) 34%,
+    rgb(255 255 255 / 0%) 60%
   );
-  mix-blend-mode: overlay;
-  filter: brightness(0.85) contrast(1.4);
+  mix-blend-mode: screen;
   opacity: calc(var(--card-opacity) * 0.7);
 }
 

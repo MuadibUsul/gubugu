@@ -42,7 +42,8 @@ function fmt(n: number) {
     : String(n);
 }
 
-// 谷柜墙的一格：只放图。已拥有里未点亮的转灰，点亮的原色 + 金边与镭射反光。
+// 谷柜墙的一格：只放图。**自己的谷柜一律全彩**（点亮/未点亮都不转灰——灰/彩的区
+// 别只在别人看你的公开主页时才出现）；点亮的额外加金边 + 静态全息。
 function WallCell({
   item,
   status,
@@ -51,7 +52,6 @@ function WallCell({
   status: StatusFilter;
 }) {
   const lit = Boolean(item.litAt);
-  const gray = status === 'owned' && !lit;
   const artwork = (
     <div className="goods-card__art aspect-[3/4] rounded-[2px]">
       {item.primaryImageUrl ? (
@@ -60,11 +60,6 @@ function WallCell({
           className="goods-card__art-image"
           sizes="(max-width: 639px) 33vw, (max-width: 1023px) 25vw, (max-width: 1279px) 20vw, 16vw"
           src={item.primaryImageUrl}
-          style={
-            gray
-              ? { filter: 'grayscale(1) contrast(.86) opacity(.62)' }
-              : undefined
-          }
         />
       ) : null}
     </div>
