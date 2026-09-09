@@ -184,10 +184,19 @@ export function HoloCard({
       );
     };
 
+    // 基准「自动跟随」当前朝向（~1s 时间常数的指数低通）：无论你怎么拿，很快就把
+    // 「当前角度」当成正对，只有相对基准的**倾斜变化**才产生旋转/反光——彻底解决
+    // 「基准歪了」（正常拿着就是斜的）。快速倾斜时基准来不及跟上→差值大→效果明显（灵动）；
+    // 拿稳约 1s 后回正、反光淡出。
     let gyroBase: { g: number; b: number } | null = null;
     const onOrient = (e: DeviceOrientationEvent) => {
       if (e.gamma == null || e.beta == null) return;
-      if (!gyroBase) gyroBase = { g: e.gamma, b: e.beta };
+      if (!gyroBase) {
+        gyroBase = { g: e.gamma, b: e.beta };
+      } else {
+        gyroBase.g += (e.gamma - gyroBase.g) * 0.03;
+        gyroBase.b += (e.beta - gyroBase.b) * 0.03;
+      }
       const limit = { x: 16, y: 18 };
       const gx = clamp(e.gamma - gyroBase.g, -limit.x, limit.x);
       const gy = clamp(e.beta - gyroBase.b, -limit.y, limit.y);
