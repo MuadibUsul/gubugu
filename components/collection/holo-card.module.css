@@ -46,6 +46,7 @@
   border-radius: var(--card-radius);
   transform-origin: center;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transform: rotateY(calc(var(--rotate-x) + var(--flip))) rotateX(var(--rotate-y));
   /* 倾斜由 rAF lerp 平滑，transform 不加过渡（否则双重延迟发糊）；只有翻面时临时启用 */
   transition: box-shadow 0.4s ease;
@@ -81,9 +82,23 @@
   border-radius: var(--card-radius);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* iOS/微信 WebView 兜底：不依赖 backface-visibility。翻面用 3D 旋转做动画，但
+     哪一面可见由透明度决定，且在翻面中点(≈0.28s，即 0.55s 的一半)瞬间切换——
+     这样即使 WebKit 不剔除背向面，稳定态也绝不会露出镜像的正面。 */
+  transition: opacity 0s linear 0.28s;
+}
+.front {
+  opacity: 1;
 }
 .back {
   transform: rotateY(180deg);
+  opacity: 0;
+}
+.card[data-flipped='true'] .front {
+  opacity: 0;
+}
+.card[data-flipped='true'] .back {
+  opacity: 1;
 }
 
 .art {

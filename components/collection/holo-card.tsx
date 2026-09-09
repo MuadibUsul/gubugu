@@ -256,6 +256,7 @@ export function HoloCard({
       className={`${styles.card} ${className ?? ''}`}
       data-active="false"
       data-flip-anim="false"
+      data-flipped={flipped ? 'true' : 'false'}
       data-loaded={loaded ? 'true' : 'false'}
       ref={cardRef}
       style={{ '--flip': '0deg' } as React.CSSProperties}
