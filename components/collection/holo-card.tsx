@@ -58,6 +58,8 @@ export function HoloCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rafRef = useRef<number | null>(null);
+  // 拖动过（超过阈值）就把这次的 click 当成"转卡"而非"翻面"，避免拖完手一松就翻面。
+  const draggedRef = useRef(false);
   const [loaded, setLoaded] = useState(false);
   const [flipped, setFlipped] = useState(false);
 
@@ -137,22 +139,6 @@ export function HoloCard({
       if (rafRef.current == null) rafRef.current = requestAnimationFrame(tick);
     };
 
-    const setFromPercent = (px: number, py: number) => {
-      const c = s.current;
-      const cx = px - 50;
-      const cy = py - 50;
-      c.active = true;
-      c.tbx = adjust(px, 0, 100, 37, 63);
-      c.tby = adjust(py, 0, 100, 33, 67);
-      c.trx = -(cx / 3.5);
-      c.tryy = cy / 3.5;
-      c.tgx = px;
-      c.tgy = py;
-      c.to = 1;
-      el.dataset.active = 'true';
-      kick();
-    };
-
     const rest = () => {
       const c = s.current;
       c.active = false;
@@ -167,29 +153,66 @@ export function HoloCard({
       kick();
     };
 
-    const onPointerMove = (e: PointerEvent) => {
-      const rect = el.getBoundingClientRect();
-      setFromPercent(
-        clamp(((e.clientX - rect.left) / rect.width) * 100),
-        clamp(((e.clientY - rect.top) / rect.height) * 100),
-      );
+    // 手动「拖拽自由转动」：在卡面任意按住拖动，累积角度、范围大（远超此前跟手位置的小幅
+    // 倾斜），像把实体卡拿在手里转。松手缓缓回正。拖动时陀螺仪让位、且这次不触发翻面。
+    const MAXY = 45; // 左右转（rotateY）最大角
+    const MAXX = 32; // 上下转（rotateX）最大角
+    const SENS = 0.32; // 每像素多少度
+    let dragging = false;
+    let sx = 0;
+    let sy = 0;
+    let baseTrx = 0;
+    let baseTry = 0;
+    let moved = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      dragging = true;
+      moved = 0;
+      draggedRef.current = false;
+      sx = e.clientX;
+      sy = e.clientY;
+      baseTrx = s.current.trx;
+      baseTry = s.current.tryy;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* 某些环境不支持，忽略 */
+      }
     };
-    const onTouchMove = (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (!t) return;
-      const rect = el.getBoundingClientRect();
-      setFromPercent(
-        clamp(((t.clientX - rect.left) / rect.width) * 100),
-        clamp(((t.clientY - rect.top) / rect.height) * 100),
-      );
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - sx;
+      const dy = e.clientY - sy;
+      moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
+      if (moved > 6) draggedRef.current = true;
+      const c = s.current;
+      c.active = true;
+      c.trx = clamp(baseTrx - dx * SENS, -MAXY, MAXY);
+      c.tryy = clamp(baseTry + dy * SENS, -MAXX, MAXX);
+      // 反光/箔面随转动幅度走
+      c.tgx = clamp(50 - c.trx * 1.6, 0, 100);
+      c.tgy = clamp(50 + c.tryy * 1.9, 0, 100);
+      c.tbx = adjust(c.trx, -MAXY, MAXY, 63, 37);
+      c.tby = adjust(c.tryy, -MAXX, MAXX, 33, 67);
+      c.to = 1;
+      el.dataset.active = 'true';
+      kick();
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      try {
+        el.releasePointerCapture(e.pointerId);
+      } catch {
+        /* 忽略 */
+      }
+      rest();
     };
 
-    // 基准「自动跟随」当前朝向（~1s 时间常数的指数低通）：无论你怎么拿，很快就把
-    // 「当前角度」当成正对，只有相对基准的**倾斜变化**才产生旋转/反光——彻底解决
-    // 「基准歪了」（正常拿着就是斜的）。快速倾斜时基准来不及跟上→差值大→效果明显（灵动）；
-    // 拿稳约 1s 后回正、反光淡出。
+    // 陀螺仪退居其次：基准自动跟随当前朝向（~1s 指数低通，解决「基准歪了」），拖动时让位。
     let gyroBase: { g: number; b: number } | null = null;
     const onOrient = (e: DeviceOrientationEvent) => {
+      if (dragging) return;
       if (e.gamma == null || e.beta == null) return;
       if (!gyroBase) {
         gyroBase = { g: e.gamma, b: e.beta };
@@ -213,12 +236,11 @@ export function HoloCard({
       kick();
     };
 
+    el.addEventListener('pointerdown', onPointerDown);
     el.addEventListener('pointermove', onPointerMove);
-    el.addEventListener('pointerleave', rest);
-    el.addEventListener('pointercancel', rest);
-    el.addEventListener('touchmove', onTouchMove, { passive: true });
-    el.addEventListener('touchend', rest);
-    el.addEventListener('touchcancel', rest);
+    el.addEventListener('pointerup', onPointerUp);
+    el.addEventListener('pointercancel', onPointerUp);
+    el.addEventListener('pointerleave', onPointerUp);
 
     const coarse =
       typeof window !== 'undefined' &&
@@ -233,12 +255,11 @@ export function HoloCard({
     write();
 
     return () => {
+      el.removeEventListener('pointerdown', onPointerDown);
       el.removeEventListener('pointermove', onPointerMove);
-      el.removeEventListener('pointerleave', rest);
-      el.removeEventListener('pointercancel', rest);
-      el.removeEventListener('touchmove', onTouchMove);
-      el.removeEventListener('touchend', rest);
-      el.removeEventListener('touchcancel', rest);
+      el.removeEventListener('pointerup', onPointerUp);
+      el.removeEventListener('pointercancel', onPointerUp);
+      el.removeEventListener('pointerleave', onPointerUp);
       window.removeEventListener('deviceorientation', onOrient);
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -270,7 +291,17 @@ export function HoloCard({
       ref={cardRef}
       style={{ '--flip': '0deg' } as React.CSSProperties}
     >
-      <div className={styles.rotator} onClick={toggleFlip}>
+      <div
+        className={styles.rotator}
+        onClick={() => {
+          // 拖动转卡后松手不要误翻面；仅点按(未拖动)才翻面
+          if (draggedRef.current) {
+            draggedRef.current = false;
+            return;
+          }
+          toggleFlip();
+        }}
+      >
         <div className={`${styles.face} ${styles.front}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -303,6 +334,7 @@ export function HoloCard({
           e.stopPropagation();
           toggleFlip();
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         type="button"
       >
         ⟲ {flipped ? '正面' : '背面'}
