@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
     "@huggingface/transformers": "^4.2.0",
