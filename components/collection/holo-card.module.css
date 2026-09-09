@@ -65,27 +65,23 @@
     0 0 40px -30px var(--card-glow),
     0 0 50px -22px var(--card-glow);
 }
-/* 翻面动画：切换时给一点弹性时长 */
+/* 翻面动画：用**线性** 0.5s，好让「90° 正好在 0.25s」——与下面透明度硬切换对齐。 */
 .card[data-flip-anim='true'] .rotator {
   transition:
     box-shadow 0.4s ease,
-    transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transform 0.5s linear;
 }
 
-/* 标准翻转卡：两面绝对定位、backface 隐藏。
-   关键：面上**不能**开 overflow:hidden——它会制造 flattening 上下文、令
-   backface-visibility 失效，翻面转过 90° 时正面来不及剔除 → 先闪一下镜像正面
-   再出背面（用户说的「反转一瞬间」）。改为不裁剪面，圆角交给各子层自己裁。 */
+/* 翻转卡：两面绝对定位。
+   **不再用 backface-visibility**——iOS/微信 WebView 里它在陀螺仪倾斜到某些角度时会
+   误剔除正面，导致卡片突然变空白（用户遇到的「某些角度整卡消失」）。改为纯靠透明度
+   决定哪一面可见：未翻面时永远显示正面(与角度无关)；翻面时在 90°(=0.25s)瞬间把正面
+   切成透明、背面切成不透明。线性翻面保证切换点正好落在 90°，既不露镜像也不闪空白。 */
 .face {
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  /* iOS/微信 WebView 兜底：不依赖 backface-visibility。翻面用 3D 旋转做动画，但
-     哪一面可见由透明度决定，且在翻面中点(≈0.28s，即 0.55s 的一半)瞬间切换——
-     这样即使 WebKit 不剔除背向面，稳定态也绝不会露出镜像的正面。 */
-  transition: opacity 0s linear 0.28s;
+  transition: opacity 0s linear 0.25s;
 }
 .front {
   opacity: 1;
