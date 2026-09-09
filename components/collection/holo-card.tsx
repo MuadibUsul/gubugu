@@ -56,9 +56,27 @@ export function HoloCard({
   className?: string;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const rafRef = useRef<number | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [flipped, setFlipped] = useState(false);
+
+  // 图片可能在 React 绑定 onLoad 之前就已从缓存加载完成（complete=true），
+  // 那样 load 事件不会再触发、淡入永远卡在 opacity:0。挂载时补一次判断。
+  const applyLoaded = (img: HTMLImageElement) => {
+    if (img.naturalWidth && img.naturalHeight && cardRef.current) {
+      cardRef.current.style.setProperty(
+        '--card-aspect',
+        `${img.naturalWidth / img.naturalHeight}`,
+      );
+    }
+    setLoaded(true);
+  };
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) applyLoaded(img);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const s = useRef<SpringState>({
     ...REST,
     trx: 0,
@@ -249,17 +267,8 @@ export function HoloCard({
             alt={alt}
             className={styles.art}
             fetchPriority="high"
-            onLoad={(e) => {
-              const img = e.currentTarget;
-              if (img.naturalWidth && img.naturalHeight && cardRef.current) {
-                // 用图片自身比例做卡面比例，object-fit:cover 即不裁切，原图完整显示。
-                cardRef.current.style.setProperty(
-                  '--card-aspect',
-                  `${img.naturalWidth / img.naturalHeight}`,
-                );
-              }
-              setLoaded(true);
-            }}
+            onLoad={(e) => applyLoaded(e.currentTarget)}
+            ref={imgRef}
             src={src}
           />
           <span aria-hidden="true" className={styles.shine} />
