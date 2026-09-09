@@ -54,198 +54,154 @@ export default async function IpPage({ params }: IpPageProps) {
   });
 
   return (
-    <main>
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10 px-5 py-14 md:px-10">
-        <section className="collection-panel relative overflow-hidden px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-          <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]">
-            <div className="space-y-5">
-              <div className="flex flex-wrap gap-2">
-                <span className="border-border/70 bg-background/78 text-muted-foreground rounded-full border px-3 py-1 text-sm uppercase">
-                  IP 图鉴
-                </span>
+    <main className="mx-auto w-full max-w-[1180px] px-5 pt-10 pb-24 md:px-10 md:pt-14">
+      <section className="spread border-border border-b pb-12">
+        <div>
+          <p className="lbl">公开图鉴</p>
+          <div className="rail-jp">图鉴</div>
+        </div>
+
+        <div className="min-w-0">
+          <p className="accession">IP 图鉴</p>
+
+          <h1 className="mt-2 text-[clamp(30px,4.4vw,50px)] leading-[1.1] text-balance">
+            {data.ip.name}
+          </h1>
+          {data.ip.nameLocalized && data.ip.nameLocalized !== data.ip.name ? (
+            <p className="text-muted-foreground mt-1 text-base font-medium">
+              {data.ip.nameLocalized}
+            </p>
+          ) : null}
+          <div className="rule-kin mt-4" />
+
+          <p className="text-muted-foreground mt-5 max-w-[62ch] leading-relaxed">
+            {data.ip.description ??
+              '在这个 IP 下查看角色阵容、已发布系列线与 SKU 级商品图鉴。'}
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="chip px-3.5 py-1.5">
+              <b className="text-foreground">{data.summary.characterCount}</b>
+              &nbsp;位角色
+            </span>
+            <span className="chip px-3.5 py-1.5">
+              <b className="text-foreground">{data.summary.seriesCount}</b>
+              &nbsp;条系列线
+            </span>
+            <span className="chip px-3.5 py-1.5">
+              <b className="text-foreground">{data.summary.goodsCount}</b>
+              &nbsp;件商品
+            </span>
+            <Link
+              className="chip px-3.5 py-1.5 hover:border-[var(--shu)] hover:text-[var(--shu)]"
+              href={`/search?ipSlug=${data.ip.slug}`}
+            >
+              在 IP 内搜索 →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-12 grid gap-10 xl:grid-cols-2">
+        <div className="min-w-0">
+          <p className="section-kicker">角色</p>
+          <h2 className="mt-3 text-[clamp(20px,2.6vw,28px)] leading-tight">
+            角色阵容
+          </h2>
+
+          <div className="mt-5 grid gap-2.5">
+            {data.characters.length > 0 ? (
+              data.characters.map((character) => (
                 <Link
-                  className="border-border/70 bg-background/78 text-muted-foreground hover:bg-muted rounded-full border px-3 py-1 text-sm"
-                  href={`/search?ipSlug=${data.ip.slug}`}
+                  className="flex items-center justify-between gap-4 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] px-4 py-3.5 transition hover:border-[var(--shu)]"
+                  href={`/ips/${data.ip.slug}/characters/${character.slug}`}
+                  key={character.id}
                 >
-                  在当前 IP 内搜索
+                  <div className="min-w-0">
+                    <p className="font-heading truncate font-semibold">
+                      {character.name}
+                    </p>
+                    {character.nameLocalized &&
+                    character.nameLocalized !== character.name ? (
+                      <p className="text-muted-foreground truncate text-[13px]">
+                        {character.nameLocalized}
+                      </p>
+                    ) : null}
+                  </div>
+                  <span className="num shrink-0">{character.goodsCount} 件</span>
                 </Link>
+              ))
+            ) : (
+              <div className="empty-state">
+                <strong>还没有角色</strong>
+                当前这个 IP 还没有关联已发布角色。
               </div>
-
-              <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  公开图鉴
-                </p>
-                <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
-                  {data.ip.name}
-                </h1>
-                {data.ip.nameLocalized &&
-                data.ip.nameLocalized !== data.ip.name ? (
-                  <p className="text-muted-foreground text-lg font-semibold">
-                    {data.ip.nameLocalized}
-                  </p>
-                ) : null}
-                <p className="max-w-3xl text-base leading-8 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))] sm:text-lg">
-                  {data.ip.description ??
-                    '在这个 IP 下查看角色阵容、已发布系列线与 SKU 级商品图鉴。'}
-                </p>
-              </div>
-            </div>
-
-            <aside className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  角色
-                </p>
-                <p className="font-heading text-foreground mt-3 text-5xl leading-none">
-                  {data.summary.characterCount}
-                </p>
-              </div>
-              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  系列
-                </p>
-                <p className="font-heading text-foreground mt-3 text-5xl leading-none">
-                  {data.summary.seriesCount}
-                </p>
-              </div>
-              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  商品
-                </p>
-                <p className="font-heading text-foreground mt-3 text-5xl leading-none">
-                  {data.summary.goodsCount}
-                </p>
-              </div>
-            </aside>
+            )}
           </div>
-        </section>
+        </div>
 
-        <section className="grid gap-6 xl:grid-cols-2">
-          <section className="collection-panel p-6 sm:p-7">
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  角色
-                </p>
-                <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-                  角色阵容
-                </h2>
-              </div>
+        <div className="min-w-0">
+          <p className="section-kicker">系列</p>
+          <h2 className="mt-3 text-[clamp(20px,2.6vw,28px)] leading-tight">
+            发行系列线
+          </h2>
 
-              <div className="grid gap-3">
-                {data.characters.length > 0 ? (
-                  data.characters.map((character) => (
-                    <Link
-                      className="border-border/70 bg-background/78 hover:border-accent/50 rounded-[var(--radius)] border px-4 py-4 transition"
-                      href={`/ips/${data.ip.slug}/characters/${character.slug}`}
-                      key={character.id}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <p className="text-foreground text-base font-semibold">
-                            {character.name}
-                          </p>
-                          {character.nameLocalized &&
-                          character.nameLocalized !== character.name ? (
-                            <p className="text-muted-foreground text-sm">
-                              {character.nameLocalized}
-                            </p>
-                          ) : null}
-                        </div>
-                        <span className="border-border/70 bg-card/78 text-foreground rounded-full border px-3 py-1 text-xs">
-                          {character.goodsCount} 件商品
-                        </span>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm leading-7">
-                    当前这个 IP 还没有关联已发布角色。
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="collection-panel p-6 sm:p-7">
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  Series
-                </p>
-                <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-                  Release lines
-                </h2>
-              </div>
-
-              <div className="grid gap-3">
-                {data.series.length > 0 ? (
-                  data.series.map((item) => (
-                    <Link
-                      className="border-border/70 bg-background/78 hover:border-accent/50 rounded-[var(--radius)] border px-4 py-4 transition"
-                      href={`/ips/${data.ip.slug}/series/${item.slug}`}
-                      key={item.id}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <p className="text-foreground text-base font-semibold">
-                            {item.name}
-                          </p>
-                          <p className="text-muted-foreground text-sm">
-                            {item.seriesType}
-                          </p>
-                        </div>
-                        <span className="border-border/70 bg-card/78 text-foreground rounded-full border px-3 py-1 text-xs">
-                          {item.goodsCount} 件商品
-                        </span>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm leading-7">
-                    当前这个 IP 还没有关联已发布系列。
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        </section>
-
-        <section className="space-y-5">
-          <div className="collection-panel p-6 sm:p-7">
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                商品
-              </p>
-              <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-                最新 SKU 条目
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                未点亮的缩略图保持灰色；打开详情可查看完整彩色原图。
-              </p>
-            </div>
-          </div>
-
-          {data.goods.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
-              {data.goods.map((item) => (
-                <SearchResultCard
-                  isAuthenticated={Boolean(authUser)}
-                  item={item}
+          <div className="mt-5 grid gap-2.5">
+            {data.series.length > 0 ? (
+              data.series.map((item) => (
+                <Link
+                  className="flex items-center justify-between gap-4 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] px-4 py-3.5 transition hover:border-[var(--shu)]"
+                  href={`/ips/${data.ip.slug}/series/${item.slug}`}
                   key={item.id}
-                  viewerState={viewerStates[item.id] ?? dormantViewerState}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="collection-panel p-6 sm:p-7">
-              <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm leading-7">
-                当前这个 IP 还没有关联已发布商品。
+                >
+                  <div className="min-w-0">
+                    <p className="font-heading truncate font-semibold">
+                      {item.name}
+                    </p>
+                    <p className="text-muted-foreground truncate text-[13px]">
+                      {item.seriesType}
+                    </p>
+                  </div>
+                  <span className="num shrink-0">{item.goodsCount} 件</span>
+                </Link>
+              ))
+            ) : (
+              <div className="empty-state">
+                <strong>还没有系列</strong>
+                当前这个 IP 还没有关联已发布系列。
               </div>
-            </div>
-          )}
-        </section>
-      </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <p className="section-kicker">商品</p>
+        <h2 className="mt-3 text-[clamp(20px,2.6vw,28px)] leading-tight">
+          最新 SKU 条目
+        </h2>
+        <p className="lbl mt-2 max-w-[52ch]">
+          未点亮的缩略图保持灰色；打开详情可查看完整彩色原图。
+        </p>
+
+        {data.goods.length > 0 ? (
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+            {data.goods.map((item) => (
+              <SearchResultCard
+                isAuthenticated={Boolean(authUser)}
+                item={item}
+                key={item.id}
+                viewerState={viewerStates[item.id] ?? dormantViewerState}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state mt-5">
+            <strong>还没有商品</strong>
+            当前这个 IP 还没有关联已发布商品。
+          </div>
+        )}
+      </section>
     </main>
   );
 }

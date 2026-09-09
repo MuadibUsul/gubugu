@@ -57,143 +57,110 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
   });
 
   return (
-    <main>
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10 px-5 py-14 md:px-10">
-        <section className="collection-panel relative overflow-hidden px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-          <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]">
-            <div className="space-y-5">
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  className="border-border/70 bg-background/78 text-muted-foreground hover:bg-muted rounded-full border px-3 py-1 text-sm"
-                  href={`/ips/${data.ip.slug}`}
-                >
-                  {data.ip.name}
-                </Link>
-                <Link
-                  className="border-border/70 bg-background/78 text-muted-foreground hover:bg-muted rounded-full border px-3 py-1 text-sm"
-                  href={`/search?seriesSlug=${data.series.slug}`}
-                >
-                  在当前系列内搜索
-                </Link>
-              </div>
+    <main className="mx-auto w-full max-w-[1180px] px-5 pt-10 pb-24 md:px-10 md:pt-14">
+      <section className="spread border-border border-b pb-12">
+        <div>
+          <p className="lbl">系列图鉴</p>
+          <div className="rail-jp">系列</div>
+        </div>
 
-              <div className="space-y-4">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  系列图鉴
-                </p>
-                <h1 className="font-heading text-foreground max-w-4xl text-5xl leading-[0.94] text-balance sm:text-6xl xl:text-[5rem]">
-                  {data.series.name}
-                </h1>
-                <p className="max-w-3xl text-base leading-8 text-[color:color-mix(in_oklab,var(--foreground)_72%,var(--background))] sm:text-lg">
-                  {data.series.description ??
-                    '查看归属于这个系列的已发布 SKU 线与关联角色。'}
-                </p>
-              </div>
-            </div>
+        <div className="min-w-0">
+          <p className="accession">
+            <Link className="hover:text-[var(--shu)]" href={`/ips/${data.ip.slug}`}>
+              {data.ip.name}
+            </Link>
+            <i> · {data.series.seriesType}</i>
+          </p>
 
-            <aside className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  系列类型
-                </p>
-                <p className="text-foreground mt-3 text-lg font-semibold">
-                  {data.series.seriesType}
-                </p>
-              </div>
-              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  发售日期
-                </p>
-                <p className="text-foreground mt-3 text-lg font-semibold">
-                  {formatCatalogDate(data.series.releaseDate)}
-                </p>
-              </div>
-              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  商品
-                </p>
-                <p className="font-heading text-foreground mt-3 text-5xl leading-none">
-                  {data.summary.goodsCount}
-                </p>
-              </div>
-              <div className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  角色
-                </p>
-                <p className="font-heading text-foreground mt-3 text-5xl leading-none">
-                  {data.summary.characterCount}
-                </p>
-              </div>
-            </aside>
+          <h1 className="mt-2 text-[clamp(28px,4vw,44px)] leading-[1.14] text-balance">
+            {data.series.name}
+          </h1>
+          <div className="rule-kin mt-4" />
+
+          <p className="text-muted-foreground mt-5 max-w-[62ch] leading-relaxed">
+            {data.series.description ??
+              '查看归属于这个系列的已发布 SKU 线与关联角色。'}
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="chip px-3.5 py-1.5">
+              <b className="text-foreground">{data.summary.goodsCount}</b>
+              &nbsp;件商品
+            </span>
+            <span className="chip px-3.5 py-1.5">
+              <b className="text-foreground">{data.summary.characterCount}</b>
+              &nbsp;位角色
+            </span>
+            <span className="chip px-3.5 py-1.5">
+              发售&nbsp;
+              <b className="text-foreground">
+                {formatCatalogDate(data.series.releaseDate)}
+              </b>
+            </span>
+            <Link
+              className="chip px-3.5 py-1.5 hover:border-[var(--shu)] hover:text-[var(--shu)]"
+              href={`/search?seriesSlug=${data.series.slug}`}
+            >
+              在系列内搜索 →
+            </Link>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="collection-panel p-6 sm:p-7">
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                关联角色
-              </p>
-              <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-                角色阵容
-              </h2>
-            </div>
+      <section className="mt-12">
+        <p className="section-kicker">关联角色</p>
+        <h2 className="mt-3 text-[clamp(20px,2.6vw,28px)] leading-tight">
+          角色阵容
+        </h2>
 
-            <div className="flex flex-wrap gap-3">
-              {data.characters.length > 0 ? (
-                data.characters.map((character) => (
-                  <Link
-                    className="border-border/70 bg-background/78 hover:border-accent/50 rounded-full border px-4 py-2 text-sm font-semibold transition"
-                    href={`/ips/${data.ip.slug}/characters/${character.slug}`}
-                    key={character.id}
-                  >
-                    {character.name} ({character.goodsCount})
-                  </Link>
-                ))
-              ) : (
-                <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm leading-7">
-                  当前这个系列还没有关联已发布角色。
-                </div>
-              )}
-            </div>
+        {data.characters.length > 0 ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {data.characters.map((character) => (
+              <Link
+                className="chip px-3.5 py-2 hover:border-[var(--shu)] hover:text-[var(--shu)]"
+                href={`/ips/${data.ip.slug}/characters/${character.slug}`}
+                key={character.id}
+              >
+                {character.name}
+                <span className="num ml-1.5">{character.goodsCount}</span>
+              </Link>
+            ))}
           </div>
-        </section>
-
-        <section className="space-y-5">
-          <div className="collection-panel p-6 sm:p-7">
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                商品
-              </p>
-              <h2 className="font-heading text-foreground text-4xl leading-none sm:text-5xl">
-                系列 SKU 墙
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                灰色是尚未点亮；扫码确认实物后，它会在整座谷库恢复颜色。
-              </p>
-            </div>
+        ) : (
+          <div className="empty-state mt-5">
+            <strong>还没有关联角色</strong>
+            这个系列尚未关联任何已发布角色。
           </div>
+        )}
+      </section>
 
-          {data.goods.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
-              {data.goods.map((item) => (
-                <SearchResultCard
-                  isAuthenticated={Boolean(authUser)}
-                  item={item}
-                  key={item.id}
-                  viewerState={viewerStates[item.id] ?? dormantViewerState}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="collection-panel p-6 sm:p-7">
-              <div className="border-border/70 bg-background/74 text-muted-foreground rounded-[var(--radius)] border border-dashed px-4 py-6 text-sm leading-7">
-                当前这个系列还没有关联已发布商品。
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
+      <section className="mt-12">
+        <p className="section-kicker">商品</p>
+        <h2 className="mt-3 text-[clamp(20px,2.6vw,28px)] leading-tight">
+          系列 SKU 墙
+        </h2>
+        <p className="lbl mt-2 max-w-[52ch]">
+          灰色是尚未点亮；扫码确认实物后，它会在整座谷库恢复颜色。
+        </p>
+
+        {data.goods.length > 0 ? (
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+            {data.goods.map((item) => (
+              <SearchResultCard
+                isAuthenticated={Boolean(authUser)}
+                item={item}
+                key={item.id}
+                viewerState={viewerStates[item.id] ?? dormantViewerState}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state mt-5">
+            <strong>还没有商品</strong>
+            这个系列尚未关联任何已发布商品。
+          </div>
+        )}
+      </section>
     </main>
   );
 }

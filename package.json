@@ -28,6 +28,7 @@
     "recognition:evaluate": "tsx scripts/evaluate-recognition.ts"
   },
   "dependencies": {
+    "@capacitor-mlkit/document-scanner": "^8",
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8",
     "@capacitor/cli": "^8.5.0",
@@ -37,6 +38,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
+    "jscanify": "^1.4.3",
     "next": "16.1.7",
     "pg": "^8.20.0",
     "react": "19.2.3",
