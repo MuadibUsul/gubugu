@@ -1,136 +1,162 @@
 /*
- * Holo gradients adapted from simeydotme/pokemon-cards-css (GPL-3.0).
- * Sources: public/css/cards/base.css and regular-holo.css.
- * Local changes: scoped selectors, lower intensity, rarity tiers, motion fallback.
- * See docs/pokemon-cards-css.md and LICENSES/pokemon-cards-css.txt.
+ * 全息卡效果，忠实移植 simeydotme/pokemon-cards-css (GPL-3.0) 的思路：
+ * 3D 倾斜 + 彩虹箔(color-dodge) + 闪粉 sparkle + 高光 glare。
+ * 单一驱动量 --px/--py（0..1，卡面归一化坐标）：
+ *   - 桌面：指针移动时由本卡覆盖；
+ *   - 手机：<HoloGyro> 在 :root 上按陀螺仪写入，全墙一起跟手机角度动；
+ *   - 都没有时：本卡自呼吸动画（reduced-motion 关闭）。
  */
+@property --px {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.5;
+}
+@property --py {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.5;
+}
+
 .card {
   position: relative;
   min-width: 0;
   aspect-ratio: 3 / 4;
-  perspective: 800px;
+  perspective: 700px;
 }
 
-.surface {
-  --pointer-x: 50%;
-  --pointer-y: 35%;
-  --background-x: 50%;
-  --background-y: 50%;
-  --foil-opacity: 0.12;
-  /* 用 absolute 填满 .card（.card 由 aspect-ratio 定高），避免 height:100% 在
-     aspect-ratio 派生高度上解析为 0 而整卡塌陷。 */
-  position: absolute;
-  inset: 0;
-  border-radius: 8px;
-  isolation: isolate;
-  overflow: hidden;
-  transform: rotateX(0deg) rotateY(0deg);
-  transition: transform 240ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.surface {
-  --foil-opacity: 0.2;
-}
-.surface[data-tier='2'] {
-  --foil-opacity: 0.26;
-}
-.surface[data-tier='3'] {
-  --foil-opacity: 0.34;
-}
-.surface[data-tier='4'] {
-  --foil-opacity: 0.42;
-}
-.surface[data-tier='5'] {
-  --foil-opacity: 0.5;
-}
-
-.shine,
-.glare {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  border-radius: inherit;
-  pointer-events: none;
-  transition: opacity 180ms ease-out;
-}
-
-/* 彩虹箔面：饱和虹彩 + screen 混合，任何底图上都可见（不依赖 color-dodge 的微妙）。 */
-.shine {
-  background-image: repeating-linear-gradient(
-    115deg,
-    #ff5f8f 0%,
-    #ffd36b 10%,
-    #7bff9b 20%,
-    #5fd5ff 30%,
-    #b58bff 40%,
-    #ff5fd5 50%,
-    #ff5f8f 60%
-  );
-  background-size: 220% 220%;
-  background-position: calc((50% - var(--background-x)) * 2.4 + 50%)
-    calc((50% - var(--background-y)) * 3 + 50%);
-  mix-blend-mode: screen;
-  opacity: calc(var(--foil-opacity) + 0.18);
-}
-
-/* 高光斜带：一道明显的白色反光斜扫，screen 混合，静止也看得见。 */
-.glare {
-  background: linear-gradient(
-    115deg,
-    transparent 34%,
-    rgba(255, 255, 255, 0.62) 47%,
-    rgba(255, 255, 255, 0.16) 53%,
-    transparent 66%
-  );
-  background-size: 250% 250%;
-  background-position: calc((50% - var(--background-x)) * 2.4 + 50%)
-    calc((50% - var(--background-y)) * 3 + 50%);
-  mix-blend-mode: screen;
-  opacity: 0.55;
-}
-
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .card:hover {
-    z-index: 2;
-  }
-  .surface[data-active] {
-    will-change: transform;
-  }
-  .surface[data-active] .shine {
-    opacity: calc(var(--foil-opacity) + 0.2);
-  }
-  .surface[data-active] .glare {
-    opacity: 0.36;
-  }
-}
-
-/* 手机没有鼠标：让已点亮卡自己缓慢漂移箔面，静止也呈全息感（无需交互、不抢滚动）。 */
-@keyframes holo-drift {
+/* 静止自呼吸：让 --px/--py 缓慢巡游，箔面/闪粉/倾斜都跟着动（手机无需交互也全息）。 */
+@keyframes holo-idle {
   0% {
-    background-position: 0% 30%;
+    --px: 0.32;
+    --py: 0.36;
   }
   50% {
-    background-position: 100% 70%;
+    --px: 0.68;
+    --py: 0.62;
   }
   100% {
-    background-position: 0% 30%;
+    --px: 0.32;
+    --py: 0.36;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .surface:not([data-active]) .shine,
-  .surface:not([data-active]) .glare {
-    animation: holo-drift 6s ease-in-out infinite;
+  .card:not([data-active]) {
+    animation: holo-idle 5.5s ease-in-out infinite;
   }
+}
+/* 有陀螺仪时以真实角度为准，关掉自呼吸（避免相互覆盖）。 */
+:global(:root[data-gyro]) .card:not([data-active]) {
+  animation: none;
+}
+
+.surface {
+  --foil-opacity: 0.55;
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  isolation: isolate;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transform: rotateX(calc((0.5 - var(--py)) * 20deg))
+    rotateY(calc((var(--px) - 0.5) * 20deg));
+  transition: transform 0.4s ease;
+  box-shadow:
+    -4px -4px 10px -6px rgb(30 20 12 / 35%),
+    4px 6px 14px -6px rgb(30 20 12 / 45%);
+}
+.card[data-active] .surface {
+  transition: transform 0.08s ease-out;
+}
+.surface[data-tier='2'] {
+  --foil-opacity: 0.62;
+}
+.surface[data-tier='3'] {
+  --foil-opacity: 0.7;
+}
+.surface[data-tier='4'] {
+  --foil-opacity: 0.8;
+}
+.surface[data-tier='5'] {
+  --foil-opacity: 0.9;
+}
+
+.shine,
+.sparkle,
+.glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* 彩虹箔：斜向饱和虹彩叠一层细金属线，color-dodge 让它像真箔面反光。 */
+.shine {
+  z-index: 4;
+  background-image:
+    repeating-linear-gradient(
+      110deg,
+      #ff7a7a 0%,
+      #ffe08a 8%,
+      #a6ffb0 16%,
+      #8fe0ff 24%,
+      #c79bff 32%,
+      #ff8fd6 40%,
+      #ff7a7a 48%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(20 20 20 / 55%) 0 2px,
+      rgb(120 120 120 / 55%) 2px 4px
+    );
+  background-size:
+    280% 280%,
+    100% 100%;
+  background-position:
+    calc(var(--px) * 100%) calc(var(--py) * 100%),
+    center;
+  background-blend-mode: overlay;
+  mix-blend-mode: color-dodge;
+  filter: brightness(0.92) contrast(1.35) saturate(1.25);
+  opacity: var(--foil-opacity);
+}
+
+/* 闪粉：两层错位的细密亮点，随 --px/--py 平移 → 星星点点地闪。 */
+.sparkle {
+  z-index: 5;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 90%) 0.6px, transparent 1.4px),
+    radial-gradient(circle at 50% 50%, rgb(255 235 255 / 75%) 0.5px, transparent 1.2px),
+    radial-gradient(circle at 50% 50%, rgb(210 235 255 / 70%) 0.5px, transparent 1.2px);
+  background-size:
+    8px 8px,
+    13px 12px,
+    17px 19px;
+  background-position:
+    calc(var(--px) * 40px) calc(var(--py) * 40px),
+    calc(var(--px) * -60px) calc(var(--py) * 50px),
+    calc(var(--px) * 34px) calc(var(--py) * -46px);
+  mix-blend-mode: color-dodge;
+  opacity: calc(0.35 + var(--foil-opacity) * 0.35);
+}
+
+/* 高光：白色径向反光,落在 --px/--py 处。 */
+.glare {
+  z-index: 6;
+  background: radial-gradient(
+    circle at calc(var(--px) * 100%) calc(var(--py) * 100%),
+    rgb(255 255 255 / 75%) 0%,
+    rgb(255 255 255 / 18%) 28%,
+    transparent 58%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.6;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .surface {
-    transform: none !important;
-    transition: none;
-  }
-  .shine,
-  .glare {
-    transition: none;
+  .card {
     animation: none;
+  }
+  .surface {
+    transition: none;
   }
 }

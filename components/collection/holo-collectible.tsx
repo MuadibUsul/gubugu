@@ -6,7 +6,10 @@ import { frameForRarity } from '@/lib/collection-frame';
 
 import styles from './holo-collectible.module.css';
 
-/** A small interactive boundary; the artwork and data stay server-rendered. */
+/**
+ * 全息卡交互边界（服务端渲染图与数据，这里只加一层可交互的箔面/高光/闪粉）。
+ * 桌面用鼠标驱动 --px/--py；手机交给 CSS 自呼吸 + <HoloGyro> 的陀螺仪。
+ */
 export function HoloCollectible({
   children,
   rarityAverage,
@@ -14,15 +17,18 @@ export function HoloCollectible({
   children: ReactNode;
   rarityAverage: number | null;
 }) {
-  const surface = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLDivElement>(null);
   const pending = useRef<number | null>(null);
   const tier = frameForRarity(rarityAverage).tier;
 
   function reset() {
     if (pending.current !== null) cancelAnimationFrame(pending.current);
     pending.current = null;
-    surface.current?.removeAttribute('style');
-    surface.current?.removeAttribute('data-active');
+    const el = card.current;
+    if (!el) return;
+    el.style.removeProperty('--px');
+    el.style.removeProperty('--py');
+    el.removeAttribute('data-active');
   }
 
   useEffect(() => {
@@ -37,6 +43,7 @@ export function HoloCollectible({
   }, []);
 
   function move(event: PointerEvent<HTMLDivElement>) {
+    // 只在桌面鼠标下做指针跟随；触摸端由自呼吸 + 陀螺仪负责，避免抢滚动。
     if (
       event.pointerType !== 'mouse' ||
       !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
@@ -44,28 +51,18 @@ export function HoloCollectible({
     )
       return;
 
-    // Measure the stationary wrapper, so the tilt cannot feed back into itself.
     const bounds = event.currentTarget.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
-    const x = Math.min(
-      1,
-      Math.max(0, (event.clientX - bounds.left) / bounds.width),
-    );
-    const y = Math.min(
-      1,
-      Math.max(0, (event.clientY - bounds.top) / bounds.height),
-    );
+    const x = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
+    const y = Math.min(1, Math.max(0, (event.clientY - bounds.top) / bounds.height));
     if (pending.current !== null) cancelAnimationFrame(pending.current);
     pending.current = requestAnimationFrame(() => {
       pending.current = null;
-      const card = surface.current;
-      if (!card) return;
-      card.dataset.active = 'true';
-      card.style.transform = `rotateX(${(0.5 - y) * 12}deg) rotateY(${(x - 0.5) * 12}deg)`;
-      card.style.setProperty('--pointer-x', `${x * 100}%`);
-      card.style.setProperty('--pointer-y', `${y * 100}%`);
-      card.style.setProperty('--background-x', `${37 + x * 26}%`);
-      card.style.setProperty('--background-y', `${33 + y * 34}%`);
+      const el = card.current;
+      if (!el) return;
+      el.dataset.active = 'true';
+      el.style.setProperty('--px', String(x));
+      el.style.setProperty('--py', String(y));
     });
   }
 
@@ -75,10 +72,12 @@ export function HoloCollectible({
       onPointerMove={move}
       onPointerLeave={reset}
       onPointerCancel={reset}
+      ref={card}
     >
-      <div className={styles.surface} data-tier={tier} ref={surface}>
+      <div className={styles.surface} data-tier={tier}>
         {children}
         <span aria-hidden="true" className={styles.shine} />
+        <span aria-hidden="true" className={styles.sparkle} />
         <span aria-hidden="true" className={styles.glare} />
       </div>
     </div>

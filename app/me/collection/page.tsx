@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { z } from 'zod';
 
 import { HoloCollectible } from '@/components/collection/holo-collectible';
+import { HoloGyro } from '@/components/collection/holo-gyro';
 import { RemoteImage } from '@/components/ui/remote-image';
 import { getSingleSearchParamValue } from '@/lib/search-params';
 import { requireAuthUser } from '@/server/auth/session';
@@ -167,6 +168,7 @@ export default async function MyCollectionPage({
 
   return (
     <main className="mx-auto w-full max-w-[1240px] px-4 pt-4 pb-24 sm:px-6 lg:px-0 lg:pt-8">
+      <HoloGyro />
       {/* 头部：头像 + 名字 + 看公开主页 */}
       <div className="flex items-center gap-3">
         <div className="grid size-[52px] flex-none place-items-center rounded-full bg-[var(--shu-soft)] text-[18px] font-bold text-[var(--shu)]">
