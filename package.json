@@ -13,6 +13,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx drizzle/seed/index.ts",
     "db:embed": "tsx drizzle/embed/index.ts",
+    "db:backfill-scans": "tsx drizzle/backfill/scan-guesses.ts",
     "crawler:run": "tsx --conditions=react-server scripts/crawl-catalog.ts",
     "db:verify-rls": "node drizzle/verify-rls.mjs",
     "db:verify-trade": "node drizzle/verify-trade.mjs",
