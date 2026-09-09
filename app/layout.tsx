@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 
 import { BottomTabBar } from '@/components/app-shell/bottom-tab-bar';
 import { DesktopNav } from '@/components/app-shell/desktop-nav';
-import { NativeBackGesture } from '@/components/app-shell/native-back-gesture';
 import { PwaProvider } from '@/components/app-shell/pwa-provider';
 import { siteConfig } from '@/lib/config/site';
 
@@ -69,7 +68,6 @@ export default function RootLayout({
         </div>
         <BottomTabBar />
         <PwaProvider />
-        <NativeBackGesture />
       </body>
     </html>
   );
