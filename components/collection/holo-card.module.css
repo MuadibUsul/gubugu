@@ -71,13 +71,14 @@
     transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* 标准翻转卡：两面绝对定位、各自 overflow 裁圆角、backface 隐藏；
-   叶子面不要再开 preserve-3d（会与 overflow:hidden 冲突、把正面误判为背面而剔除）。 */
+/* 标准翻转卡：两面绝对定位、backface 隐藏。
+   关键：面上**不能**开 overflow:hidden——它会制造 flattening 上下文、令
+   backface-visibility 失效，翻面转过 90° 时正面来不及剔除 → 先闪一下镜像正面
+   再出背面（用户说的「反转一瞬间」）。改为不裁剪面，圆角交给各子层自己裁。 */
 .face {
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
-  overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
@@ -90,6 +91,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: var(--card-radius);
   transform: translate3d(0, 0, 0.01px);
   opacity: 0;
   transition: opacity 0.45s ease;
@@ -97,6 +99,7 @@
 /* 加载占位：浅色底 + 轻微呼吸，图片就绪即淡入，杜绝“黑屏几秒” */
 .front {
   background: var(--surface, #f4efe6);
+  border-radius: var(--card-radius);
 }
 .card[data-loaded='true'] .art {
   opacity: 1;
@@ -211,10 +214,12 @@
 
 /* ---- 反面：默认站点卡背（未提供 backSrc 时的品牌兜底）---- */
 .brandedBack {
+  position: relative;
   width: 100%;
   height: 100%;
   display: grid;
   place-items: center;
+  border-radius: var(--card-radius);
   background:
     radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 12%), transparent 60%),
     linear-gradient(160deg, var(--shu, #c0392b), color-mix(in srgb, var(--shu, #c0392b) 62%, black));
@@ -238,6 +243,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: var(--card-radius);
 }
 
 /* ---- 翻面按钮（在 .card 层、不随卡翻转）---- */
