@@ -174,21 +174,18 @@ export function RecognitionShell() {
     if (!video || !canvas || video.videoWidth === 0) return;
 
     const f = clampFrameSize(video.videoWidth, video.videoHeight);
+    // 只截「取景框」范围（屏幕上 74% 宽的引导框），把卡片取出、去掉四周背景——
+    // 既贴合用户框选，又让识别少受背景干扰。留一点余量(0.82)以防轻微框歪切到卡。
+    const crop = 0.82;
+    const cw = f.sw * crop;
+    const ch = f.sh * crop;
+    const cx = f.sx + (f.sw - cw) / 2;
+    const cy = f.sy + (f.sh - ch) / 2;
     canvas.width = 960;
     canvas.height = 1200;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.drawImage(
-      video,
-      f.sx,
-      f.sy,
-      f.sw,
-      f.sh,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
+    ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
     const url = canvas.toDataURL('image/jpeg', 0.92);
 
     stopCamera();

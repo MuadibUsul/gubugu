@@ -278,17 +278,17 @@ export default async function MyCollectionPage({
                 key={scan.id}
               >
                 <summary className="cursor-pointer list-none">
-                  <div className="goods-card__art aspect-[3/4] rounded-none">
+                  <div className="goods-card__art relative aspect-[3/4] rounded-none">
                     <RemoteImage
                       alt="未鉴定收藏"
                       className="goods-card__art-image"
                       privateSource
                       sizes="(max-width: 639px) 50vw, 25vw"
                       src={scan.imageUrl}
-                      style={{
-                        filter: 'grayscale(1) contrast(.86) opacity(.72)',
-                      }}
                     />
+                    <span className="absolute top-1.5 left-1.5 rounded-[4px] bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                      未鉴定
+                    </span>
                   </div>
                   <p className="px-3 py-2 text-[12px] font-medium">
                     {scan.note || '未鉴定收藏'}
