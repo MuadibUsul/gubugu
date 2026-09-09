@@ -19,13 +19,6 @@ type GoodsGalleryProps = {
   };
 };
 
-// 内部图走 Next 图片优化器，按需尺寸 + webp，显著减小首屏体积（原图直出偏慢）。
-// 外部绝对 URL 不经优化器（不在 remotePatterns 里会 400），原样返回。
-function optimized(src: string, width: number) {
-  if (!src.startsWith('/')) return src;
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=80`;
-}
-
 /**
  * 谷子图廊：主图是一张**可交互全息大卡**（倾斜/箔面/眩光/陀螺仪，移植自
  * pokemon-cards-css），多图时下方一排缩略图切换。数据侧已把主图排到首位。
@@ -67,7 +60,7 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
         <HoloCard
           alt={active.altText ?? goods.name}
           key={active.id}
-          src={optimized(active.imageUrl, 828)}
+          src={active.imageUrl}
         />
       </div>
 
@@ -93,7 +86,7 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
                   alt=""
                   className="size-full object-cover"
                   loading="lazy"
-                  src={optimized(image.imageUrl, 160)}
+                  src={image.imageUrl}
                 />
               </button>
             );
