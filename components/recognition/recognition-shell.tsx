@@ -74,12 +74,67 @@ function ensureOpenCV(): Promise<void> {
   return openCvPromise;
 }
 
+// jscanify 客户端实例只建一次；实时找边和快门裁切共用。
+let scannerPromise: Promise<import('jscanify/client').default> | null = null;
+function ensureScanner() {
+  if (!scannerPromise) {
+    scannerPromise = (async () => {
+      await ensureOpenCV();
+      // 必须用浏览器构建；默认入口是 node 构建会 require('canvas')/jsdom 打包失败。
+      const Jscanify = (await import('jscanify/client')).default;
+      return new Jscanify();
+    })();
+  }
+  return scannerPromise;
+}
+
+// 只用到 imread（取一个可 delete 的 Mat）。运行期由 opencv.js 注入。
+type CvMat = { delete: () => void };
+type OpenCvLike = { Mat?: unknown; imread: (el: HTMLCanvasElement) => CvMat };
+function getReadyCv(): OpenCvLike | null {
+  const w = window as unknown as { cv?: OpenCvLike };
+  return w.cv && w.cv.Mat ? w.cv : null;
+}
+
+// 把检测帧（缩小的整帧）里的点，映射到 object-fit:cover 后视频的显示坐标。
+function mapCoverPoint(
+  x: number,
+  y: number,
+  frameW: number,
+  frameH: number,
+  viewW: number,
+  viewH: number,
+) {
+  const scale = Math.max(viewW / frameW, viewH / frameH);
+  const dispW = frameW * scale;
+  const dispH = frameH * scale;
+  return {
+    x: x * scale + (viewW - dispW) / 2,
+    y: y * scale + (viewH - dispH) / 2,
+  };
+}
+
+// 检测帧宽度：够找边又够快。
+const DETECT_W = 320;
+// 连续多少帧“稳且构图合格”才自动采集（约 200ms/帧）。
+const LOCK_FRAMES = 5;
+
 export function RecognitionShell() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
+  const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const phaseRef = useRef<Phase>('starting');
+  // 实时找边循环的状态。放 ref 里，避免每帧触发 re-render。
+  const detectRef = useRef<{
+    running: boolean;
+    timer: number | null;
+    stable: number;
+    lockedShot: boolean;
+    lastCenter: { x: number; y: number } | null;
+  }>({ running: false, timer: null, stable: 0, lockedShot: false, lastCenter: null });
 
   const [isNative] = useState(() => {
     try {
@@ -89,6 +144,9 @@ export function RecognitionShell() {
     }
   });
   const [phase, setPhase] = useState<Phase>('starting');
+  // 实时取景引导语；网页找边循环会动态改写它。
+  const [guide, setGuide] = useState('把整张卡片放进取景框');
+  const [locking, setLocking] = useState(false);
   const [shotUrl, setShotUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -99,6 +157,21 @@ export function RecognitionShell() {
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  // 停止实时找边循环，清掉叠加层与锁定计数。
+  const stopDetection = useCallback(() => {
+    const st = detectRef.current;
+    st.running = false;
+    if (st.timer !== null) {
+      window.clearTimeout(st.timer);
+      st.timer = null;
+    }
+    st.stable = 0;
+    st.lastCenter = null;
+    setLocking(false);
+    const overlay = overlayRef.current;
+    overlay?.getContext('2d')?.clearRect(0, 0, overlay.width, overlay.height);
+  }, []);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -309,16 +382,14 @@ export function RecognitionShell() {
     frame.height = video.videoHeight;
     frame.getContext('2d')?.drawImage(video, 0, 0);
 
+    stopDetection();
     stopCamera();
     setPhase('scanning');
     setErrorMessage(null);
 
     let outCanvas: HTMLCanvasElement | null = null;
     try {
-      await ensureOpenCV();
-      // 必须用浏览器构建（jscanify/client）；默认入口是 node 构建，会 require('canvas')/jsdom 导致打包失败。
-      const jscanify = (await import('jscanify/client')).default;
-      const scanner = new jscanify();
+      const scanner = await ensureScanner();
       // 透视裁切成卡片比例（近 0.72），高分辨率尽量无损。
       outCanvas = scanner.extractPaper(frame, 1000, 1390) as HTMLCanvasElement;
     } catch {
@@ -355,7 +426,202 @@ export function RecognitionShell() {
       type: 'image/jpeg',
     });
     await uploadAndHandle(file, url);
-  }, [stopCamera, uploadAndHandle]);
+  }, [stopCamera, stopDetection, uploadAndHandle]);
+
+  // 实时找边一帧：在缩小帧上找卡片轮廓 → 画叠加框 + 动态引导 → 稳定合格则自动采集。
+  const detectTick = useCallback(async () => {
+    const st = detectRef.current;
+    const schedule = () => {
+      if (st.running) {
+        st.timer = window.setTimeout(() => void detectTick(), 200);
+      }
+    };
+    if (!st.running || phaseRef.current !== 'live') return;
+
+    const video = videoRef.current;
+    const overlay = overlayRef.current;
+    if (!video || video.videoWidth === 0 || !overlay) {
+      schedule();
+      return;
+    }
+
+    const cv = getReadyCv();
+    if (!cv) {
+      setGuide('正在加载识别引擎…');
+      schedule();
+      return;
+    }
+
+    let scanner: import('jscanify/client').default;
+    try {
+      scanner = await ensureScanner();
+    } catch {
+      schedule();
+      return;
+    }
+    if (!st.running || phaseRef.current !== 'live') return;
+
+    // 缩小整帧做检测。
+    const fw = video.videoWidth;
+    const fh = video.videoHeight;
+    const dw = DETECT_W;
+    const dh = Math.max(1, Math.round((fh / fw) * dw));
+    const det =
+      detectCanvasRef.current ??
+      (detectCanvasRef.current = document.createElement('canvas'));
+    det.width = dw;
+    det.height = dh;
+    det.getContext('2d')?.drawImage(video, 0, 0, dw, dh);
+
+    let corners: import('jscanify/client').JscanifyCorners | null = null;
+    let img: CvMat | null = null;
+    let contour: CvMat | null = null;
+    try {
+      img = cv.imread(det);
+      contour = scanner.findPaperContour(img) as CvMat | null;
+      if (contour) {
+        corners = scanner.getCornerPoints(contour);
+      }
+    } catch {
+      corners = null;
+    } finally {
+      // findPaperContour 返回的轮廓由调用方负责释放；img 同样。
+      try {
+        contour?.delete?.();
+      } catch {
+        /* noop */
+      }
+      try {
+        img?.delete?.();
+      } catch {
+        /* noop */
+      }
+    }
+
+    const tl = corners?.topLeftCorner;
+    const tr = corners?.topRightCorner;
+    const br = corners?.bottomRightCorner;
+    const bl = corners?.bottomLeftCorner;
+
+    // 视图（叠加层）尺寸：跟随视频显示区。
+    const viewW = video.clientWidth;
+    const viewH = video.clientHeight;
+    if (overlay.width !== viewW || overlay.height !== viewH) {
+      overlay.width = viewW;
+      overlay.height = viewH;
+    }
+    const octx = overlay.getContext('2d');
+    octx?.clearRect(0, 0, viewW, viewH);
+
+    if (!tl || !tr || !br || !bl) {
+      setGuide('把整张卡片放进取景框');
+      setLocking(false);
+      st.stable = 0;
+      st.lastCenter = null;
+      schedule();
+      return;
+    }
+
+    // 四边形面积（检测帧像素）与占比、中心。
+    const area =
+      Math.abs(
+        tl.x * tr.y -
+          tr.x * tl.y +
+          tr.x * br.y -
+          br.x * tr.y +
+          br.x * bl.y -
+          bl.x * br.y +
+          bl.x * tl.y -
+          tl.x * bl.y,
+      ) / 2;
+    const coverage = area / (dw * dh);
+    const cx = (tl.x + tr.x + br.x + bl.x) / 4;
+    const cy = (tl.y + tr.y + br.y + bl.y) / 4;
+    const offCenter = Math.hypot(cx / dw - 0.5, cy / dh - 0.5);
+
+    // 画叠加四边形（映射到 object-fit:cover 后的显示坐标）。
+    if (octx) {
+      const p = (x: number, y: number) =>
+        mapCoverPoint(x, y, dw, dh, viewW, viewH);
+      const a = p(tl.x, tl.y);
+      const b = p(tr.x, tr.y);
+      const c = p(br.x, br.y);
+      const d = p(bl.x, bl.y);
+      const good = coverage >= 0.2 && coverage <= 0.9 && offCenter <= 0.22;
+      const color = good
+        ? 'rgba(201, 75, 75, 0.95)'
+        : 'rgba(242, 236, 224, 0.85)';
+      octx.lineWidth = 3;
+      octx.strokeStyle = color;
+      octx.fillStyle = 'rgba(201, 75, 75, 0.12)';
+      octx.beginPath();
+      octx.moveTo(a.x, a.y);
+      octx.lineTo(b.x, b.y);
+      octx.lineTo(c.x, c.y);
+      octx.lineTo(d.x, d.y);
+      octx.closePath();
+      if (good) octx.fill();
+      octx.stroke();
+    }
+
+    // 构图判定与引导。
+    if (coverage < 0.2) {
+      setGuide('把卡片靠近一点');
+      setLocking(false);
+      st.stable = 0;
+    } else if (coverage > 0.9) {
+      setGuide('离远一点，让整张卡片进框');
+      setLocking(false);
+      st.stable = 0;
+    } else if (offCenter > 0.22) {
+      setGuide('把卡片移到取景框中间');
+      setLocking(false);
+      st.stable = 0;
+    } else {
+      // 需要“稳”：中心相对上一帧位移要小。
+      const moved = st.lastCenter
+        ? Math.hypot((cx - st.lastCenter.x) / dw, (cy - st.lastCenter.y) / dh)
+        : 1;
+      st.lastCenter = { x: cx, y: cy };
+      if (moved < 0.03) {
+        st.stable += 1;
+      } else {
+        st.stable = 0;
+      }
+      setLocking(true);
+      setGuide('拿稳，正在自动采集…');
+      if (st.stable >= LOCK_FRAMES && !st.lockedShot) {
+        st.lockedShot = true;
+        void scan();
+        return;
+      }
+    }
+
+    schedule();
+  }, [scan]);
+
+  // 启动网页实时找边循环（原生走 ML Kit，不需要）。
+  const startDetection = useCallback(() => {
+    if (isNative) return;
+    const st = detectRef.current;
+    if (st.running) return;
+    st.running = true;
+    st.stable = 0;
+    st.lockedShot = false;
+    st.lastCenter = null;
+    void ensureScanner().catch(() => undefined);
+    st.timer = window.setTimeout(() => void detectTick(), 300);
+  }, [detectTick, isNative]);
+
+  // 网页取景就绪就开始自动找边；离开 live（识别中/结果/卸载）即停。
+  useEffect(() => {
+    if (!isNative && phase === 'live') {
+      startDetection();
+    } else {
+      stopDetection();
+    }
+    return () => stopDetection();
+  }, [phase, isNative, startDetection, stopDetection]);
 
   const confirmCandidate = useCallback(
     async (candidate: RecognitionCandidate) => {
@@ -405,6 +671,13 @@ export function RecognitionShell() {
             ref={videoRef}
           />
         )}
+        {!isNative && !shotUrl ? (
+          <canvas
+            aria-hidden
+            className="scanner__overlay"
+            ref={overlayRef}
+          />
+        ) : null}
         <div className="scanner__scrim" />
 
         <div className="scanner__top">
@@ -421,12 +694,14 @@ export function RecognitionShell() {
         </div>
 
         {phase === 'live' || phase === 'starting' ? (
-          <div className="scanner__frame">
+          <div
+            className={`scanner__frame${locking ? ' scanner__frame--locking' : ''}`}
+          >
             <span className="scanner__corner scanner__corner--tl" />
             <span className="scanner__corner scanner__corner--tr" />
             <span className="scanner__corner scanner__corner--bl" />
             <span className="scanner__corner scanner__corner--br" />
-            {phase === 'live' && !isNative ? (
+            {phase === 'live' && !isNative && !locking ? (
               <span className="scanner__sweep" />
             ) : null}
             <p className="scanner__hint">
@@ -434,7 +709,7 @@ export function RecognitionShell() {
                 ? '正在启动相机…'
                 : isNative
                   ? '点下方按钮开始扫描 · 对准卡片会自动找边、自动拍摄 · 正反面各扫一次'
-                  : '把卡片放进框里，点下方按钮 · 会自动裁出卡片 · 正反面各扫一次'}
+                  : guide}
             </p>
           </div>
         ) : null}
@@ -467,13 +742,18 @@ export function RecognitionShell() {
       {phase === 'live' ? (
         <div className="scanner__bottom">
           <button
-            aria-label="扫描"
+            aria-label={isNative ? '开始扫描' : '手动拍摄'}
             className="scanner__shutter"
             onClick={() => void onShutter()}
             type="button"
           >
             <span className="scanner__shutter-ring" />
           </button>
+          {!isNative ? (
+            <span className="scanner__bottom-note">
+              对准卡片会自动采集 · 也可手动按
+            </span>
+          ) : null}
         </div>
       ) : null}
 

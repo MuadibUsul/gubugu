@@ -34,6 +34,15 @@
   );
   pointer-events: none;
 }
+/* 实时找边叠加层：铺满取景，画检测到的卡片四边形；不拦截交互。 */
+.scanner__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
 .scanner__top {
   position: absolute;
   inset: 12px 12px auto 12px;
@@ -77,6 +86,11 @@
   width: 26px;
   height: 26px;
   border: 3px solid var(--shu);
+  transition: border-color 160ms var(--ease);
+}
+/* 锁定（构图合格、正在自动采集）时四角转金，提示“别动”。 */
+.scanner__frame--locking .scanner__corner {
+  border-color: var(--kin);
 }
 .scanner__corner--tl {
   top: -1px;
@@ -188,9 +202,17 @@
 }
 .scanner__bottom {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   justify-content: center;
   padding: 18px 0 calc(18px + env(safe-area-inset-bottom));
   z-index: 3;
+}
+.scanner__bottom-note {
+  font-size: 12px;
+  color: rgba(242, 236, 224, 0.82);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 .scanner__shutter {
   width: 68px;
