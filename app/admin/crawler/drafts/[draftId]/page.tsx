@@ -68,34 +68,27 @@ export default async function CrawlerDraftPage({
   return (
     <main className="relative isolate overflow-hidden">
       <div className="mx-auto flex min-h-screen w-full max-w-[1180px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 xl:px-10 xl:py-10">
-        <section className="collection-panel overflow-hidden px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-9">
-          <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <span className="border-border/70 bg-background/80 text-muted-foreground rounded-full border px-3 py-1 text-xs uppercase">
-                  采集审核
-                </span>
-                <span className="border-primary/25 bg-primary/8 text-primary rounded-full border px-3 py-1 text-xs font-semibold">
-                  待人工确认
-                </span>
-              </div>
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-[0.72rem] font-semibold uppercase">
-                  {data.draft.sourceName}
-                </p>
-                <h1 className="font-heading text-foreground text-4xl leading-[0.98] text-balance sm:text-5xl">
-                  {data.draft.title}
-                </h1>
-                <p className="text-muted-foreground max-w-3xl text-sm leading-7">
-                  爬虫只负责生成草稿。请核对系列、SKU、规格与图片，再决定发布或拒绝。
-                </p>
-              </div>
+        <section className="border-border border-b pb-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="section-kicker">采集审核</span>
+            <span className="chip chip--on px-3 py-1 text-xs font-semibold">
+              待人工确认
+            </span>
+          </div>
+          <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
+            <div className="min-w-0">
+              <p className="accession truncate">{data.draft.sourceName}</p>
+              <h1 className="mt-2 text-[clamp(26px,3.4vw,40px)] leading-[1.1] text-balance">
+                {data.draft.title}
+              </h1>
+              <div className="rule-kin mt-4" />
+              <p className="text-muted-foreground mt-4 max-w-[62ch] text-sm leading-7">
+                爬虫只负责生成草稿。请核对系列、SKU、规格与图片，再决定发布或拒绝。
+              </p>
             </div>
 
-            <aside className="border-border/70 bg-background/78 rounded-[var(--radius)] border px-5 py-5">
-              <p className="text-muted-foreground text-[0.68rem] uppercase">
-                来源快照
-              </p>
+            <aside className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] px-5 py-5">
+              <p className="lbl">来源快照</p>
               <a
                 className="text-foreground hover:text-primary mt-3 block truncate text-sm font-semibold"
                 href={data.draft.sourceUrl}
@@ -104,7 +97,7 @@ export default async function CrawlerDraftPage({
               >
                 {displaySourceUrl(data.draft.sourceUrl)}
               </a>
-              <p className="text-muted-foreground mt-2 text-xs">
+              <p className="lbl mt-2">
                 入队于 {formatTimestamp(data.draft.createdAt)}
               </p>
               <Button
@@ -140,9 +133,7 @@ export default async function CrawlerDraftPage({
 
             <div className="min-w-0 space-y-3">
               <div>
-                <p className="text-muted-foreground text-[0.68rem] uppercase">
-                  自动提取结果
-                </p>
+                <p className="lbl">自动提取结果</p>
                 <p className="text-foreground mt-2 text-lg font-semibold">
                   {data.initialGoods.name}
                 </p>
@@ -151,13 +142,13 @@ export default async function CrawlerDraftPage({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <span className="border-border/70 bg-card/78 rounded-full border px-3 py-1 text-xs">
+                <span className="chip px-3 py-1 text-xs">
                   图片 {data.initialGoods.images.length}
                 </span>
-                <span className="border-border/70 bg-card/78 rounded-full border px-3 py-1 text-xs">
+                <span className="chip px-3 py-1 text-xs">
                   标签 {data.initialGoods.tags.length}
                 </span>
-                <span className="border-border/70 bg-card/78 rounded-full border px-3 py-1 text-xs">
+                <span className="chip px-3 py-1 text-xs">
                   {data.initialGoods.currencyCode ?? '未识别币种'}
                 </span>
               </div>
@@ -194,9 +185,7 @@ export default async function CrawlerDraftPage({
         {enrichment ? (
           <section className="collection-panel p-5 sm:p-6">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-muted-foreground text-[0.68rem] font-semibold uppercase">
-                LLM 识别结果 · 供核对
-              </p>
+              <p className="section-kicker">LLM 识别结果 · 供核对</p>
               <span
                 className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                   enrichment.status === 'enriched'
