@@ -11,3 +11,6 @@
 *.webp binary
 *.avif binary
 *.ico binary
+
+# 第三方 OpenCV 构建：原样保存，别做 EOL/diff 处理
+public/vendor/opencv.js binary

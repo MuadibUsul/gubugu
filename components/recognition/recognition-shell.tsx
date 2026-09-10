@@ -45,7 +45,10 @@ function clampFrameSize(sw: number, sh: number) {
   return { sx: 0, sy: (sh - h) / 2, sw, sh: h };
 }
 
-// 惰性加载 OpenCV.js（仅非原生回退路径需要，~8MB，只加载一次）。
+// 惰性加载 OpenCV.js（网页/回退相机路径需要，~8.6MB，只加载一次）。
+// 自托管在 /vendor/opencv.js（同源，随应用一起部署）：既避免 docs.opencv.org
+// 已把旧版本路径改成 404，也让国内用户不必访问被墙/不稳的境外 CDN。文件取自
+// jscanify 自带的 opencv 构建，版本与裁切逻辑匹配，wasm 以 data URI 内联、单文件自足。
 let openCvPromise: Promise<void> | null = null;
 function ensureOpenCV(): Promise<void> {
   if (openCvPromise) return openCvPromise;
@@ -66,7 +69,7 @@ function ensureOpenCV(): Promise<void> {
     const s = document.createElement('script');
     s.id = 'opencv-js';
     s.async = true;
-    s.src = 'https://docs.opencv.org/4.10.0/opencv.js';
+    s.src = '/vendor/opencv.js';
     s.onload = finish;
     s.onerror = () => reject(new Error('OpenCV 加载失败'));
     document.head.appendChild(s);
@@ -127,6 +130,8 @@ export function RecognitionShell() {
   const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const phaseRef = useRef<Phase>('starting');
+  // startCamera 定义在 scanNative 之后；回退时用这个 ref 回调它，避开先用后声明。
+  const startCameraRef = useRef<(() => void) | null>(null);
   // 实时找边循环的状态。放 ref 里，避免每帧触发 re-render。
   const detectRef = useRef<{
     running: boolean;
@@ -143,6 +148,22 @@ export function RecognitionShell() {
       return false;
     }
   });
+  // 国内很多机型没有 Google Play 服务，用不了 ML Kit 文档扫描（就是那句“需要更新
+  // 谷歌插件”）。此时回退到网页相机路径（getUserMedia + jscanify 自动采集，完全
+  // 不依赖谷歌服务）。上次回退过就用 localStorage 记住，避免每次都先踩一次 ML Kit。
+  const [webFallback, setWebFallback] = useState(() => {
+    try {
+      return localStorage.getItem('gubugu.scanMode') === 'web';
+    } catch {
+      return false;
+    }
+  });
+  const webFallbackRef = useRef(webFallback);
+  useEffect(() => {
+    webFallbackRef.current = webFallback;
+  }, [webFallback]);
+  // 是否走网页相机路径：非原生，或原生但无 GMS 已回退。
+  const useWebCamera = !isNative || webFallback;
   const [phase, setPhase] = useState<Phase>('starting');
   // 实时取景引导语；网页找边循环会动态改写它。
   const [guide, setGuide] = useState('把整张卡片放进取景框');
@@ -259,8 +280,17 @@ export function RecognitionShell() {
         setPhase('live');
         return;
       }
-      setPhase('error');
-      setErrorMessage(msg || '扫描失败，请重试。');
+      // ML Kit 依赖 Google Play 服务；没有 GMS / 模块下载失败时，一次性回退到网页
+      // 相机路径（不依赖谷歌），并记住选择，之后直接走网页自动采集，不再踩这个坑。
+      webFallbackRef.current = true;
+      setWebFallback(true);
+      try {
+        localStorage.setItem('gubugu.scanMode', 'web');
+      } catch {
+        /* noop */
+      }
+      setErrorMessage('检测不到谷歌服务，已切换到内置扫描。');
+      startCameraRef.current?.();
     }
   }, [uploadAndHandle]);
 
@@ -269,8 +299,8 @@ export function RecognitionShell() {
     setResult(null);
     setShotUrl(null);
     setPendingCandidateId(null);
-    if (isNative) {
-      // 原生不用 getUserMedia 预览，交给 ML Kit 全屏扫描；这里只呈现启动屏。
+    if (isNative && !webFallbackRef.current) {
+      // 有 GMS 的原生：不用 getUserMedia 预览，交给 ML Kit 全屏扫描；这里只呈现启动屏。
       setPhase('live');
       return;
     }
@@ -330,6 +360,11 @@ export function RecognitionShell() {
     }
   }, [isNative, stopCamera]);
 
+  // scanNative 的回退需要回调 startCamera（它声明在后面），用 ref 转一手。
+  useEffect(() => {
+    startCameraRef.current = () => void startCamera();
+  }, [startCamera]);
+
   // 进入即开相机（原生则进入启动屏）。
   useEffect(() => {
     const startFrame = window.requestAnimationFrame(() => void startCamera());
@@ -339,9 +374,9 @@ export function RecognitionShell() {
     };
   }, [startCamera, stopCamera]);
 
-  // WebView 切后台释放摄像头；恢复后重建（仅非原生）。
+  // WebView 切后台释放摄像头；恢复后重建（网页路径，含原生无 GMS 回退）。
   useEffect(() => {
-    if (isNative) return;
+    if (!useWebCamera) return;
     const handleVisibility = () => {
       if (document.hidden) {
         stopCamera();
@@ -368,7 +403,7 @@ export function RecognitionShell() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
     };
-  }, [isNative, startCamera, stopCamera]);
+  }, [useWebCamera, startCamera, stopCamera]);
 
   // 非原生快门：抓全帧 → jscanify 透视裁出卡片（失败回退居中裁切）→ 上传。
   const scan = useCallback(async () => {
@@ -600,9 +635,9 @@ export function RecognitionShell() {
     schedule();
   }, [scan]);
 
-  // 启动网页实时找边循环（原生走 ML Kit，不需要）。
+  // 启动网页实时找边循环（有 GMS 的原生走 ML Kit，不需要）。
   const startDetection = useCallback(() => {
-    if (isNative) return;
+    if (!useWebCamera) return;
     const st = detectRef.current;
     if (st.running) return;
     st.running = true;
@@ -611,17 +646,17 @@ export function RecognitionShell() {
     st.lastCenter = null;
     void ensureScanner().catch(() => undefined);
     st.timer = window.setTimeout(() => void detectTick(), 300);
-  }, [detectTick, isNative]);
+  }, [detectTick, useWebCamera]);
 
   // 网页取景就绪就开始自动找边；离开 live（识别中/结果/卸载）即停。
   useEffect(() => {
-    if (!isNative && phase === 'live') {
+    if (useWebCamera && phase === 'live') {
       startDetection();
     } else {
       stopDetection();
     }
     return () => stopDetection();
-  }, [phase, isNative, startDetection, stopDetection]);
+  }, [phase, useWebCamera, startDetection, stopDetection]);
 
   const confirmCandidate = useCallback(
     async (candidate: RecognitionCandidate) => {
@@ -649,8 +684,8 @@ export function RecognitionShell() {
   );
 
   const done = phase === 'matched' || phase === 'unmatched';
-  // 快门：原生走 ML Kit，网页走 getUserMedia 抓帧
-  const onShutter = isNative ? scanNative : scan;
+  // 快门：有 GMS 的原生走 ML Kit；网页（含原生无 GMS 回退）走 getUserMedia 抓帧。
+  const onShutter = useWebCamera ? scan : scanNative;
 
   return (
     <div className="scanner">
@@ -660,9 +695,7 @@ export function RecognitionShell() {
         {shotUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img alt="扫描画面" className="scanner__media" src={shotUrl} />
-        ) : isNative ? (
-          <div className="scanner__media scanner__media--native" />
-        ) : (
+        ) : useWebCamera ? (
           <video
             autoPlay
             className="scanner__media"
@@ -670,8 +703,10 @@ export function RecognitionShell() {
             playsInline
             ref={videoRef}
           />
+        ) : (
+          <div className="scanner__media scanner__media--native" />
         )}
-        {!isNative && !shotUrl ? (
+        {useWebCamera && !shotUrl ? (
           <canvas
             aria-hidden
             className="scanner__overlay"
@@ -701,15 +736,15 @@ export function RecognitionShell() {
             <span className="scanner__corner scanner__corner--tr" />
             <span className="scanner__corner scanner__corner--bl" />
             <span className="scanner__corner scanner__corner--br" />
-            {phase === 'live' && !isNative && !locking ? (
+            {phase === 'live' && useWebCamera && !locking ? (
               <span className="scanner__sweep" />
             ) : null}
             <p className="scanner__hint">
               {phase === 'starting'
                 ? '正在启动相机…'
-                : isNative
-                  ? '点下方按钮开始扫描 · 对准卡片会自动找边、自动拍摄 · 正反面各扫一次'
-                  : guide}
+                : useWebCamera
+                  ? guide
+                  : '点下方按钮开始扫描 · 对准卡片会自动找边、自动拍摄 · 正反面各扫一次'}
             </p>
           </div>
         ) : null}
@@ -742,14 +777,14 @@ export function RecognitionShell() {
       {phase === 'live' ? (
         <div className="scanner__bottom">
           <button
-            aria-label={isNative ? '开始扫描' : '手动拍摄'}
+            aria-label={useWebCamera ? '手动拍摄' : '开始扫描'}
             className="scanner__shutter"
             onClick={() => void onShutter()}
             type="button"
           >
             <span className="scanner__shutter-ring" />
           </button>
-          {!isNative ? (
+          {useWebCamera ? (
             <span className="scanner__bottom-note">
               对准卡片会自动采集 · 也可手动按
             </span>
