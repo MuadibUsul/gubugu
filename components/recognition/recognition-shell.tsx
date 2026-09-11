@@ -46,7 +46,7 @@ type ScanResult = {
 // 检测帧宽度：够找边又够快。
 const DETECT_W = 320;
 // 找到完整四边形且短暂稳定后自动采集。
-const LOCK_FRAMES = 5;
+const LOCK_FRAMES = 3;
 
 export function RecognitionShell() {
   const router = useRouter();
@@ -571,9 +571,7 @@ export function RecognitionShell() {
     if (!tl || !tr || !br || !bl) {
       setGuide('把整张卡片放进取景框');
       setLocking(false);
-      st.stable = 0;
-      st.autoBlocked = false;
-      st.lastCenter = null;
+      st.stable = Math.max(0, st.stable - 1);
       schedule();
       return;
     }
@@ -585,23 +583,19 @@ export function RecognitionShell() {
     if (evaluation.reason === 'small') {
       setGuide('把卡片靠近一点');
       setLocking(false);
-      st.stable = 0;
-      st.autoBlocked = false;
+      st.stable = Math.max(0, st.stable - 1);
     } else if (evaluation.reason === 'large') {
       setGuide('离远一点，让整张卡片进框');
       setLocking(false);
-      st.stable = 0;
-      st.autoBlocked = false;
+      st.stable = Math.max(0, st.stable - 1);
     } else if (evaluation.reason === 'off-center') {
       setGuide('把卡片移到取景框中间');
       setLocking(false);
-      st.stable = 0;
-      st.autoBlocked = false;
+      st.stable = Math.max(0, st.stable - 1);
     } else if (evaluation.reason === 'shape') {
       setGuide('让卡片四条边都完整落在框内');
       setLocking(false);
-      st.stable = 0;
-      st.autoBlocked = false;
+      st.stable = Math.max(0, st.stable - 1);
     } else {
       // 需要“稳”：中心相对上一帧位移要小。
       const moved = st.lastCenter
@@ -611,7 +605,7 @@ export function RecognitionShell() {
       if (moved < 0.05) {
         st.stable += 1;
       } else {
-        st.stable = 0;
+        st.stable = Math.max(0, st.stable - 1);
       }
       setLocking(true);
       setGuide('拿稳，正在检查构图…');
