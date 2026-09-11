@@ -113,6 +113,17 @@ jobs:
             echo "MIGRATOR_IMAGE=${MIGRATOR_IMAGE}" >> .env.next
             mv .env.next .env
 
+            # 首次切换到独立 Web 数据库账号时，在 VPS 本地生成并持久化密码。
+            # 密码不经过 Actions，也不会出现在日志里；后续部署沿用同一个值。
+            if ! grep -qE '^APP_DATABASE_PASSWORD=.+$' .env; then
+              APP_DATABASE_PASSWORD="$(openssl rand -hex 32)"
+              grep -v '^APP_DATABASE_PASSWORD=' .env > .env.next || true
+              printf 'APP_DATABASE_PASSWORD=%s\n' "${APP_DATABASE_PASSWORD}" >> .env.next
+              chmod 600 .env.next
+              mv .env.next .env
+            fi
+            chmod 600 .env
+
             # 登录 GHCR 拉私有镜像（token 仅本次运行有效）。
             echo "${REGISTRY_TOKEN}" | docker login ghcr.io -u "${REGISTRY_USER}" --password-stdin
 
