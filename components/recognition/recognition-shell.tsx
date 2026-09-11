@@ -45,8 +45,8 @@ type ScanResult = {
 
 // 检测帧宽度：够找边又够快。
 const DETECT_W = 320;
-// 找到完整四边形且短暂稳定后自动采集。
-const LOCK_FRAMES = 3;
+// Scanic 已验证完整四边形；命中一次即可采集，避免反光导致重复证明失败。
+const LOCK_FRAMES = 1;
 
 export function RecognitionShell() {
   const router = useRouter();
@@ -600,7 +600,7 @@ export function RecognitionShell() {
       // 需要“稳”：中心相对上一帧位移要小。
       const moved = st.lastCenter
         ? Math.hypot((cx - st.lastCenter.x) / dw, (cy - st.lastCenter.y) / dh)
-        : 1;
+        : 0;
       st.lastCenter = { x: cx, y: cy };
       if (moved < 0.05) {
         st.stable += 1;
