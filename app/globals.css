@@ -65,11 +65,11 @@
 .scanner__frame {
   position: absolute;
   left: 50%;
-  top: 58%;
+  top: 53%;
   transform: translate(-50%, -50%);
-  width: 62%;
-  max-width: 280px;
-  aspect-ratio: 4 / 5;
+  width: 80%;
+  max-width: 340px;
+  aspect-ratio: 5 / 7;
   z-index: 2;
   border: 1px solid rgba(242, 236, 224, 0.42);
   border-radius: 12px;
