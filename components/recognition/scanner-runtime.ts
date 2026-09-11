@@ -30,6 +30,27 @@ export function clampFrameSize(sw: number, sh: number) {
   return { sx: 0, sy: (sh - height) / 2, sw, sh: height };
 }
 
+/** Map a visible guide through an object-fit: cover video to source pixels. */
+export function getCoverSourceRect(
+  frameWidth: number,
+  frameHeight: number,
+  viewWidth: number,
+  viewHeight: number,
+  guide: { x: number; y: number; width: number; height: number },
+) {
+  const scale = Math.max(viewWidth / frameWidth, viewHeight / frameHeight);
+  const offsetX = (viewWidth - frameWidth * scale) / 2;
+  const offsetY = (viewHeight - frameHeight * scale) / 2;
+  const sx = Math.max(0, (guide.x - offsetX) / scale);
+  const sy = Math.max(0, (guide.y - offsetY) / scale);
+  return {
+    sx,
+    sy,
+    sw: Math.min(frameWidth - sx, guide.width / scale),
+    sh: Math.min(frameHeight - sy, guide.height / scale),
+  };
+}
+
 function distance(a: ScannerPoint, b: ScannerPoint) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
@@ -76,9 +97,9 @@ export function evaluateCardFrame(
     center.y / frameHeight - 0.5,
   );
 
-  if (coverage < 0.22)
+  if (coverage < 0.45)
     return { good: false, reason: 'small', coverage, center };
-  if (coverage > 0.78)
+  if (coverage > 0.96)
     return { good: false, reason: 'large', coverage, center };
   if (offCenter > 0.16) {
     return { good: false, reason: 'off-center', coverage, center };

@@ -11,8 +11,8 @@ import {
   ensureOpenCV,
   ensureScanner,
   evaluateCardFrame,
+  getCoverSourceRect,
   getReadyCv,
-  mapCoverPoint,
   type ScannerCorners,
   type CvMat,
 } from '@/components/recognition/scanner-runtime';
@@ -54,6 +54,7 @@ export function RecognitionShell() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const frameRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -378,11 +379,39 @@ export function RecognitionShell() {
       const canvas = canvasRef.current;
       if (!video || !canvas || video.videoWidth === 0) return;
 
-      // 先抓整帧到离屏 canvas（尽量保原分辨率，少损失）。
+      // 红框就是唯一识别区域：只截取框内画面，避免背景矩形干扰。
       const frame = document.createElement('canvas');
-      frame.width = video.videoWidth;
-      frame.height = video.videoHeight;
-      frame.getContext('2d')?.drawImage(video, 0, 0);
+      const videoRect = video.getBoundingClientRect();
+      const guideRect = frameRef.current?.getBoundingClientRect();
+      const source = guideRect
+        ? getCoverSourceRect(
+            video.videoWidth,
+            video.videoHeight,
+            videoRect.width,
+            videoRect.height,
+            {
+              x: guideRect.left - videoRect.left,
+              y: guideRect.top - videoRect.top,
+              width: guideRect.width,
+              height: guideRect.height,
+            },
+          )
+        : clampFrameSize(video.videoWidth, video.videoHeight);
+      frame.width = Math.round(source.sw);
+      frame.height = Math.round(source.sh);
+      frame
+        .getContext('2d')
+        ?.drawImage(
+          video,
+          source.sx,
+          source.sy,
+          source.sw,
+          source.sh,
+          0,
+          0,
+          frame.width,
+          frame.height,
+        );
 
       stopDetection();
       stopCamera();
@@ -404,18 +433,17 @@ export function RecognitionShell() {
 
       // jscanify 失败/没找到卡 → 居中 4:5 裁切兜底。
       if (!outCanvas) {
-        const f = clampFrameSize(frame.width, frame.height);
         const crop = 0.82;
-        const cw = f.sw * crop;
-        const ch = f.sh * crop;
+        const cw = frame.width * crop;
+        const ch = frame.height * crop;
         canvas.width = 1000;
         canvas.height = 1250;
         canvas
           .getContext('2d')
           ?.drawImage(
             frame,
-            f.sx + (f.sw - cw) / 2,
-            f.sy + (f.sh - ch) / 2,
+            (frame.width - cw) / 2,
+            (frame.height - ch) / 2,
             cw,
             ch,
             0,
@@ -436,7 +464,7 @@ export function RecognitionShell() {
     [stopCamera, stopDetection, uploadAndHandle],
   );
 
-  // 实时找边一帧：在缩小帧上找卡片轮廓 → 画叠加框与构图提示。
+  // 实时找边一帧：只在红框内找卡片轮廓 → 画叠加框与构图提示。
   const detectTick = useCallback(async () => {
     const st = detectRef.current;
     const schedule = () => {
@@ -448,7 +476,8 @@ export function RecognitionShell() {
 
     const video = videoRef.current;
     const overlay = overlayRef.current;
-    if (!video || video.videoWidth === 0 || !overlay) {
+    const guideElement = frameRef.current;
+    if (!video || video.videoWidth === 0 || !overlay || !guideElement) {
       schedule();
       return;
     }
@@ -469,17 +498,42 @@ export function RecognitionShell() {
     }
     if (!st.running || phaseRef.current !== 'live') return;
 
-    // 缩小整帧做检测。
-    const fw = video.videoWidth;
-    const fh = video.videoHeight;
+    // 把可见红框反算到相机源画面，只缩放这一块做检测。
+    const videoRect = video.getBoundingClientRect();
+    const guideRect = guideElement.getBoundingClientRect();
+    const guide = {
+      x: guideRect.left - videoRect.left,
+      y: guideRect.top - videoRect.top,
+      width: guideRect.width,
+      height: guideRect.height,
+    };
+    const source = getCoverSourceRect(
+      video.videoWidth,
+      video.videoHeight,
+      videoRect.width,
+      videoRect.height,
+      guide,
+    );
     const dw = DETECT_W;
-    const dh = Math.max(1, Math.round((fh / fw) * dw));
+    const dh = Math.max(1, Math.round((guide.height / guide.width) * dw));
     const det =
       detectCanvasRef.current ??
       (detectCanvasRef.current = document.createElement('canvas'));
     det.width = dw;
     det.height = dh;
-    det.getContext('2d')?.drawImage(video, 0, 0, dw, dh);
+    det
+      .getContext('2d')
+      ?.drawImage(
+        video,
+        source.sx,
+        source.sy,
+        source.sw,
+        source.sh,
+        0,
+        0,
+        dw,
+        dh,
+      );
 
     let corners: import('jscanify/client').JscanifyCorners | null = null;
     let img: CvMat | null = null;
@@ -511,7 +565,7 @@ export function RecognitionShell() {
     const br = corners?.bottomRightCorner;
     const bl = corners?.bottomLeftCorner;
 
-    // 视图（叠加层）尺寸：跟随视频显示区。
+    // 叠加轮廓映射回红框，检测区域与用户看到的区域完全一致。
     const viewW = video.clientWidth;
     const viewH = video.clientHeight;
     if (overlay.width !== viewW || overlay.height !== viewH) {
@@ -536,8 +590,10 @@ export function RecognitionShell() {
 
     // 画叠加四边形（映射到 object-fit:cover 后的显示坐标）。
     if (octx) {
-      const p = (x: number, y: number) =>
-        mapCoverPoint(x, y, dw, dh, viewW, viewH);
+      const p = (x: number, y: number) => ({
+        x: guide.x + (x / dw) * guide.width,
+        y: guide.y + (y / dh) * guide.height,
+      });
       const a = p(tl.x, tl.y);
       const b = p(tr.x, tr.y);
       const c = p(br.x, br.y);
@@ -699,14 +755,12 @@ export function RecognitionShell() {
         {phase === 'live' || phase === 'starting' ? (
           <div
             className={`scanner__frame${locking ? 'scanner__frame--locking' : ''}`}
+            ref={frameRef}
           >
             <span className="scanner__corner scanner__corner--tl" />
             <span className="scanner__corner scanner__corner--tr" />
             <span className="scanner__corner scanner__corner--bl" />
             <span className="scanner__corner scanner__corner--br" />
-            {phase === 'live' && useWebCamera && !locking ? (
-              <span className="scanner__sweep" />
-            ) : null}
             <p className="scanner__hint">
               {phase === 'starting'
                 ? '正在启动相机…'

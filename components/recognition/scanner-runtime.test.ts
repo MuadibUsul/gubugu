@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   clampFrameSize,
   evaluateCardFrame,
+  getCoverSourceRect,
   mapCoverPoint,
 } from './scanner-runtime';
 
@@ -29,17 +30,30 @@ describe('scanner geometry', () => {
     });
   });
 
+  it('maps the visible guide to the matching source-video crop', () => {
+    const crop = getCoverSourceRect(1920, 1440, 360, 640, {
+      x: 45,
+      y: 120,
+      width: 270,
+      height: 337.5,
+    });
+    expect(crop.sx).toBeCloseTo(656.25);
+    expect(crop.sy).toBeCloseTo(270);
+    expect(crop.sw).toBeCloseTo(607.5);
+    expect(crop.sh).toBeCloseTo(759.375);
+  });
+
   it('accepts a centred card and rejects broad or skewed rectangles', () => {
     expect(
       evaluateCardFrame(
         {
-          topLeftCorner: { x: 85, y: 30 },
-          topRightCorner: { x: 235, y: 30 },
-          bottomRightCorner: { x: 235, y: 210 },
-          bottomLeftCorner: { x: 85, y: 210 },
+          topLeftCorner: { x: 28, y: 25 },
+          topRightCorner: { x: 228, y: 25 },
+          bottomRightCorner: { x: 228, y: 295 },
+          bottomLeftCorner: { x: 28, y: 295 },
         },
+        256,
         320,
-        240,
       ).good,
     ).toBe(true);
     expect(
@@ -53,17 +67,17 @@ describe('scanner geometry', () => {
         320,
         240,
       ).reason,
-    ).toBe('shape');
+    ).toBe('small');
     expect(
       evaluateCardFrame(
         {
-          topLeftCorner: { x: 80, y: 30 },
-          topRightCorner: { x: 240, y: 55 },
-          bottomRightCorner: { x: 205, y: 210 },
-          bottomLeftCorner: { x: 115, y: 175 },
+          topLeftCorner: { x: 20, y: 20 },
+          topRightCorner: { x: 236, y: 100 },
+          bottomRightCorner: { x: 200, y: 300 },
+          bottomLeftCorner: { x: 45, y: 240 },
         },
+        256,
         320,
-        240,
       ).reason,
     ).toBe('shape');
   });

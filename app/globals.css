@@ -80,6 +80,12 @@
   max-width: 320px;
   aspect-ratio: 4 / 5;
   z-index: 2;
+  border: 1px solid rgba(242, 236, 224, 0.42);
+  border-radius: 12px;
+  box-shadow: 0 0 0 999px rgba(16, 14, 12, 0.22);
+  transition:
+    border-color 160ms var(--ease),
+    box-shadow 160ms var(--ease);
 }
 .scanner__corner {
   position: absolute;
@@ -91,6 +97,12 @@
 /* 锁定（构图合格、正在自动采集）时四角转金，提示“别动”。 */
 .scanner__frame--locking .scanner__corner {
   border-color: var(--kin);
+}
+.scanner__frame--locking {
+  border-color: var(--kin);
+  box-shadow:
+    0 0 0 999px rgba(16, 14, 12, 0.28),
+    0 0 18px color-mix(in srgb, var(--kin) 55%, transparent);
 }
 .scanner__corner--tl {
   top: -1px;
@@ -119,31 +131,6 @@
   border-left: 0;
   border-top: 0;
   border-bottom-right-radius: 12px;
-}
-.scanner__sweep {
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--shu), transparent);
-  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--shu) 60%, transparent);
-  animation: scanner-sweep 2.2s ease-in-out infinite;
-}
-@keyframes scanner-sweep {
-  0% {
-    top: 6%;
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  88% {
-    opacity: 1;
-  }
-  100% {
-    top: 92%;
-    opacity: 0;
-  }
 }
 .scanner__hint {
   position: absolute;
@@ -347,7 +334,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scanner__sweep,
   .scanner__pulse {
     animation: none;
   }
