@@ -10,6 +10,7 @@ import {
   clampFrameSize,
   ensureScanner,
   evaluateCardFrame,
+  expandSourceRect,
   getCoverSourceRect,
   type ScannerCorners,
 } from '@/components/recognition/scanner-runtime';
@@ -378,17 +379,21 @@ export function RecognitionShell() {
       const videoRect = video.getBoundingClientRect();
       const guideRect = frameRef.current?.getBoundingClientRect();
       const source = guideRect
-        ? getCoverSourceRect(
+        ? expandSourceRect(
+            getCoverSourceRect(
+              video.videoWidth,
+              video.videoHeight,
+              videoRect.width,
+              videoRect.height,
+              {
+                x: guideRect.left - videoRect.left,
+                y: guideRect.top - videoRect.top,
+                width: guideRect.width,
+                height: guideRect.height,
+              },
+            ),
             video.videoWidth,
             video.videoHeight,
-            videoRect.width,
-            videoRect.height,
-            {
-              x: guideRect.left - videoRect.left,
-              y: guideRect.top - videoRect.top,
-              width: guideRect.width,
-              height: guideRect.height,
-            },
           )
         : clampFrameSize(video.videoWidth, video.videoHeight);
       frame.width = Math.round(source.sw);
@@ -501,12 +506,16 @@ export function RecognitionShell() {
       width: guideRect.width,
       height: guideRect.height,
     };
-    const source = getCoverSourceRect(
+    const source = expandSourceRect(
+      getCoverSourceRect(
+        video.videoWidth,
+        video.videoHeight,
+        videoRect.width,
+        videoRect.height,
+        guide,
+      ),
       video.videoWidth,
       video.videoHeight,
-      videoRect.width,
-      videoRect.height,
-      guide,
     );
     const dw = DETECT_W;
     const dh = Math.max(1, Math.round((guide.height / guide.width) * dw));

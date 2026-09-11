@@ -46,6 +46,25 @@ export function getCoverSourceRect(
   };
 }
 
+/** Add a small invisible margin so edges touching the visual guide stay detectable. */
+export function expandSourceRect(
+  rect: { sx: number; sy: number; sw: number; sh: number },
+  frameWidth: number,
+  frameHeight: number,
+  fraction = 0.04,
+) {
+  const padX = rect.sw * fraction;
+  const padY = rect.sh * fraction;
+  const sx = Math.max(0, rect.sx - padX);
+  const sy = Math.max(0, rect.sy - padY);
+  return {
+    sx,
+    sy,
+    sw: Math.min(frameWidth - sx, rect.sw + padX * 2),
+    sh: Math.min(frameHeight - sy, rect.sh + padY * 2),
+  };
+}
+
 function distance(a: ScannerPoint, b: ScannerPoint) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }

@@ -67,9 +67,9 @@
   left: 50%;
   top: 53%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  max-width: 340px;
-  aspect-ratio: 5 / 7;
+  width: 84%;
+  max-width: 360px;
+  aspect-ratio: 0.69;
   z-index: 2;
   border: 1px solid rgba(242, 236, 224, 0.42);
   border-radius: 12px;

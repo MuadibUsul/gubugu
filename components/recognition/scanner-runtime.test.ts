@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   clampFrameSize,
   evaluateCardFrame,
+  expandSourceRect,
   getCoverSourceRect,
   mapCoverPoint,
 } from './scanner-runtime';
@@ -41,6 +42,15 @@ describe('scanner geometry', () => {
     expect(crop.sy).toBeCloseTo(270);
     expect(crop.sw).toBeCloseTo(607.5);
     expect(crop.sh).toBeCloseTo(759.375);
+  });
+
+  it('keeps a detection margin around the visual guide', () => {
+    expect(
+      expandSourceRect({ sx: 100, sy: 200, sw: 500, sh: 700 }, 1000, 1200),
+    ).toEqual({ sx: 80, sy: 172, sw: 540, sh: 756 });
+    expect(
+      expandSourceRect({ sx: 0, sy: 0, sw: 500, sh: 700 }, 500, 700),
+    ).toEqual({ sx: 0, sy: 0, sw: 500, sh: 700 });
   });
 
   it('accepts a centred card and rejects broad or skewed rectangles', () => {
