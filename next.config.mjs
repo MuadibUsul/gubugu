@@ -6,19 +6,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  async headers() {
-    return [
-      {
-        source: '/vendor/opencv.js',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=604800, stale-while-revalidate=2592000',
-          },
-        ],
-      },
-    ];
-  },
   // 原生依赖不进 bundle，运行时从 node_modules 直接加载：sharp 与
   // onnxruntime-node（@huggingface/transformers 的依赖）带平台预编译二进制，
   // 打包会破坏它们。生产镜像保留完整依赖（见 Dockerfile / DEPLOY.md）。

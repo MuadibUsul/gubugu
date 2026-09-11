@@ -1,6 +1,5 @@
 'use client';
 
-export type CvMat = { delete: () => void };
 export type ScannerPoint = { x: number; y: number };
 export type ScannerCorners = {
   topLeftCorner: ScannerPoint;
@@ -14,10 +13,6 @@ export type CardFrameEvaluation = {
   reason: 'small' | 'large' | 'off-center' | 'shape' | 'good';
   coverage: number;
   center: ScannerPoint;
-};
-type OpenCvLike = {
-  Mat?: unknown;
-  imread: (el: HTMLCanvasElement) => CvMat;
 };
 
 export function clampFrameSize(sw: number, sh: number) {
@@ -131,62 +126,22 @@ export function evaluateCardFrame(
   return { good: true, reason: 'good', coverage, center };
 }
 
-let openCvPromise: Promise<void> | null = null;
-
-export function ensureOpenCV(): Promise<void> {
-  if (openCvPromise) return openCvPromise;
-
-  openCvPromise = new Promise<void>((resolve, reject) => {
-    const browserWindow = window as unknown as {
-      cv?: { Mat?: unknown; onRuntimeInitialized?: () => void };
-    };
-    if (browserWindow.cv?.Mat) return resolve();
-
-    const finish = () => {
-      if (browserWindow.cv?.Mat) resolve();
-      else if (browserWindow.cv) {
-        browserWindow.cv.onRuntimeInitialized = () => resolve();
-      } else reject(new Error('OpenCV 未就绪'));
-    };
-    const existing = document.getElementById(
-      'opencv-js',
-    ) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener('load', finish);
-      existing.addEventListener('error', () =>
-        reject(new Error('OpenCV 加载失败')),
-      );
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.id = 'opencv-js';
-    script.async = true;
-    script.src = '/vendor/opencv.js';
-    script.onload = finish;
-    script.onerror = () => reject(new Error('OpenCV 加载失败'));
-    document.head.appendChild(script);
-  });
-
-  return openCvPromise;
-}
-
-let scannerPromise: Promise<import('jscanify/client').default> | null = null;
+let scannerPromise: Promise<import('scanic').Scanner> | null = null;
 
 export function ensureScanner() {
   if (!scannerPromise) {
     scannerPromise = (async () => {
-      await ensureOpenCV();
-      const Jscanify = (await import('jscanify/client')).default;
-      return new Jscanify();
+      const { Scanner } = await import('scanic');
+      const scanner = new Scanner({
+        detector: 'classical',
+        useWasmFullCanny: true,
+        enableDetectionCascade: true,
+      });
+      await scanner.initialize();
+      return scanner;
     })();
   }
   return scannerPromise;
-}
-
-export function getReadyCv(): OpenCvLike | null {
-  const browserWindow = window as unknown as { cv?: OpenCvLike };
-  return browserWindow.cv?.Mat ? browserWindow.cv : null;
 }
 
 export function mapCoverPoint(

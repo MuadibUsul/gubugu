@@ -8,20 +8,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { RecognitionCandidateCard } from '@/components/recognition/recognition-candidate-card';
 import {
   clampFrameSize,
-  ensureOpenCV,
   ensureScanner,
   evaluateCardFrame,
   getCoverSourceRect,
-  getReadyCv,
   type ScannerCorners,
-  type CvMat,
 } from '@/components/recognition/scanner-runtime';
 import type { RecognitionCandidate } from '@/lib/recognition';
 import { confirmRecognitionCandidateAction } from '@/server/recognition/actions';
 
 // 卡片采集分平台：
 //  · 安卓原生 app → Google ML Kit 文档扫描（自动找边 + 自动快门 + 透视校正，出图最干净）；
-//  · 微信 / iOS / 任意浏览器 → getUserMedia 取景 + jscanify(OpenCV.js) 透视裁切出纯卡片。
+//  · 微信 / iOS / 任意浏览器 → getUserMedia 取景 + Scanic 透视裁切出纯卡片。
 // 两条路最终都把「裁好的卡片图」POST 给 /api/recognition/scan 走同一套识别入库逻辑。
 
 type Phase =
@@ -85,7 +82,7 @@ export function RecognitionShell() {
   });
   // Android 默认直接使用 WebView 实时取景。国内机型普遍没有完整 Google Play
   // 服务，而 ML Kit 路径在真正启动前只能显示黑色占位区，看起来像相机坏了。
-  // getUserMedia + jscanify 不依赖 GMS，并且能让用户在按快门前确认构图。
+  // getUserMedia + Scanic 不依赖 GMS，并且能让用户在按快门前确认构图。
   const [webFallback, setWebFallback] = useState(() => {
     if (isNative) return true;
     try {
@@ -298,8 +295,8 @@ export function RecognitionShell() {
         await videoRef.current.play().catch(() => undefined);
       }
       setPhase('live');
-      // 预热 OpenCV，快门时无需等待
-      void ensureOpenCV().catch(() => undefined);
+      // 预热轻量扫描器，快门时无需等待。
+      void ensureScanner().catch(() => undefined);
     } catch (error) {
       if (
         error instanceof DOMException &&
@@ -369,7 +366,7 @@ export function RecognitionShell() {
     };
   }, [useWebCamera, startCamera, stopCamera]);
 
-  // 非原生快门：抓全帧 → jscanify 透视裁出卡片（失败回退居中裁切）→ 上传。
+  // 非原生快门：抓全帧 → Scanic 透视裁出卡片（失败回退居中裁切）→ 上传。
   const scan = useCallback(
     async (captureMode: 'manual' | 'auto' = 'manual') => {
       const video = videoRef.current;
@@ -418,17 +415,25 @@ export function RecognitionShell() {
       let outCanvas: HTMLCanvasElement | null = null;
       try {
         const scanner = await ensureScanner();
-        // 透视裁切成卡片比例（近 0.72），高分辨率尽量无损。
-        outCanvas = scanner.extractPaper(
-          frame,
-          1000,
-          1390,
-        ) as HTMLCanvasElement;
+        const result = await scanner.scan(frame, {
+          mode: 'extract',
+          output: 'canvas',
+          maxProcessingDimension: 720,
+          minArea: 1500,
+          minDocumentCoverageRatio: 0.18,
+          minDocumentFillRatio: 0.04,
+          minContourFitRatio: 0.08,
+          minRightAngleScore: 0.35,
+          maxDocumentAspectRatio: 3,
+        });
+        outCanvas = result.success
+          ? (result.output as HTMLCanvasElement | null)
+          : null;
       } catch {
         outCanvas = null;
       }
 
-      // jscanify 失败/没找到卡 → 居中 4:5 裁切兜底。
+      // 找边失败时仍允许手动快门，用框内中央区域兜底。
       if (!outCanvas) {
         const crop = 0.82;
         const cw = frame.width * crop;
@@ -478,14 +483,7 @@ export function RecognitionShell() {
       return;
     }
 
-    const cv = getReadyCv();
-    if (!cv) {
-      setGuide('首次加载识别引擎可能需要约 1 分钟…');
-      schedule();
-      return;
-    }
-
-    let scanner: import('jscanify/client').default;
+    let scanner: import('scanic').Scanner;
     try {
       scanner = await ensureScanner();
     } catch {
@@ -531,29 +529,28 @@ export function RecognitionShell() {
         dh,
       );
 
-    let corners: import('jscanify/client').JscanifyCorners | null = null;
-    let img: CvMat | null = null;
-    let contour: CvMat | null = null;
+    let corners: ScannerCorners | null = null;
     try {
-      img = cv.imread(det);
-      contour = scanner.findPaperContour(img) as CvMat | null;
-      if (contour) {
-        corners = scanner.getCornerPoints(contour);
+      const result = await scanner.scan(det, {
+        mode: 'detect',
+        maxProcessingDimension: DETECT_W,
+        minArea: 1500,
+        minDocumentCoverageRatio: 0.18,
+        minDocumentFillRatio: 0.04,
+        minContourFitRatio: 0.08,
+        minRightAngleScore: 0.35,
+        maxDocumentAspectRatio: 3,
+      });
+      if (result.success && result.corners) {
+        corners = {
+          topLeftCorner: result.corners.topLeft,
+          topRightCorner: result.corners.topRight,
+          bottomRightCorner: result.corners.bottomRight,
+          bottomLeftCorner: result.corners.bottomLeft,
+        };
       }
     } catch {
       corners = null;
-    } finally {
-      // findPaperContour 返回的轮廓由调用方负责释放；img 同样。
-      try {
-        contour?.delete?.();
-      } catch {
-        /* noop */
-      }
-      try {
-        img?.delete?.();
-      } catch {
-        /* noop */
-      }
     }
 
     const tl = corners?.topLeftCorner;
@@ -571,7 +568,7 @@ export function RecognitionShell() {
       return;
     }
 
-    const evaluation = evaluateCardFrame(corners as ScannerCorners, dw, dh);
+    const evaluation = evaluateCardFrame(corners!, dw, dh);
     const { x: cx, y: cy } = evaluation.center;
 
     // 构图判定与引导。

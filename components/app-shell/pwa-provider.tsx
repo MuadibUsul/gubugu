@@ -28,11 +28,11 @@ export function PwaProvider() {
       navigator.serviceWorker.register('/sw.js').catch(() => undefined);
     }
 
-    // Android 空闲时提前解析 OpenCV；扫描页复用同一个全局运行时，避免用户进页面才等。
+    // Android 空闲时提前初始化轻量扫描器；扫描页复用同一个实例。
     const scannerWarmup = Capacitor.isNativePlatform()
       ? window.setTimeout(() => {
           void import('@/components/recognition/scanner-runtime').then(
-            ({ ensureOpenCV }) => ensureOpenCV().catch(() => undefined),
+            ({ ensureScanner }) => ensureScanner().catch(() => undefined),
           );
         }, 1500)
       : null;
