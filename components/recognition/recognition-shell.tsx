@@ -55,7 +55,6 @@ export function RecognitionShell() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
-  const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const phaseRef = useRef<Phase>('starting');
@@ -116,7 +115,7 @@ export function RecognitionShell() {
     phaseRef.current = phase;
   }, [phase]);
 
-  // 停止实时找边循环，清掉叠加层与锁定计数。
+  // 停止实时找边循环并清掉锁定计数。
   const stopDetection = useCallback(() => {
     const st = detectRef.current;
     st.running = false;
@@ -127,8 +126,6 @@ export function RecognitionShell() {
     st.stable = 0;
     st.lastCenter = null;
     setLocking(false);
-    const overlay = overlayRef.current;
-    overlay?.getContext('2d')?.clearRect(0, 0, overlay.width, overlay.height);
   }, []);
 
   const stopCamera = useCallback(() => {
@@ -475,9 +472,8 @@ export function RecognitionShell() {
     if (!st.running || phaseRef.current !== 'live') return;
 
     const video = videoRef.current;
-    const overlay = overlayRef.current;
     const guideElement = frameRef.current;
-    if (!video || video.videoWidth === 0 || !overlay || !guideElement) {
+    if (!video || video.videoWidth === 0 || !guideElement) {
       schedule();
       return;
     }
@@ -565,16 +561,6 @@ export function RecognitionShell() {
     const br = corners?.bottomRightCorner;
     const bl = corners?.bottomLeftCorner;
 
-    // 叠加轮廓映射回红框，检测区域与用户看到的区域完全一致。
-    const viewW = video.clientWidth;
-    const viewH = video.clientHeight;
-    if (overlay.width !== viewW || overlay.height !== viewH) {
-      overlay.width = viewW;
-      overlay.height = viewH;
-    }
-    const octx = overlay.getContext('2d');
-    octx?.clearRect(0, 0, viewW, viewH);
-
     if (!tl || !tr || !br || !bl) {
       setGuide('把整张卡片放进取景框');
       setLocking(false);
@@ -587,32 +573,6 @@ export function RecognitionShell() {
 
     const evaluation = evaluateCardFrame(corners as ScannerCorners, dw, dh);
     const { x: cx, y: cy } = evaluation.center;
-
-    // 画叠加四边形（映射到 object-fit:cover 后的显示坐标）。
-    if (octx) {
-      const p = (x: number, y: number) => ({
-        x: guide.x + (x / dw) * guide.width,
-        y: guide.y + (y / dh) * guide.height,
-      });
-      const a = p(tl.x, tl.y);
-      const b = p(tr.x, tr.y);
-      const c = p(br.x, br.y);
-      const d = p(bl.x, bl.y);
-      const color = evaluation.good
-        ? 'rgba(201, 75, 75, 0.95)'
-        : 'rgba(242, 236, 224, 0.85)';
-      octx.lineWidth = 3;
-      octx.strokeStyle = color;
-      octx.fillStyle = 'rgba(201, 75, 75, 0.12)';
-      octx.beginPath();
-      octx.moveTo(a.x, a.y);
-      octx.lineTo(b.x, b.y);
-      octx.lineTo(c.x, c.y);
-      octx.lineTo(d.x, d.y);
-      octx.closePath();
-      if (evaluation.good) octx.fill();
-      octx.stroke();
-    }
 
     // 构图判定与引导。
     if (evaluation.reason === 'small') {
@@ -734,9 +694,6 @@ export function RecognitionShell() {
         ) : (
           <div className="scanner__media scanner__media--native" />
         )}
-        {useWebCamera && !shotUrl ? (
-          <canvas aria-hidden className="scanner__overlay" ref={overlayRef} />
-        ) : null}
         <div className="scanner__scrim" />
 
         <div className="scanner__top">

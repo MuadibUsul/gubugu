@@ -34,15 +34,6 @@
   );
   pointer-events: none;
 }
-/* 实时找边叠加层：铺满取景，画检测到的卡片四边形；不拦截交互。 */
-.scanner__overlay {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-}
 .scanner__top {
   position: absolute;
   inset: 12px 12px auto 12px;
