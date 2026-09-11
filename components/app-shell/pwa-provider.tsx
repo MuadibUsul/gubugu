@@ -1,5 +1,6 @@
 'use client';
 
+import { Capacitor } from '@capacitor/core';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -27,7 +28,20 @@ export function PwaProvider() {
       navigator.serviceWorker.register('/sw.js').catch(() => undefined);
     }
 
-    if (localStorage.getItem(DISMISS_KEY) || isStandalone()) return;
+    // Android 空闲时提前解析 OpenCV；扫描页复用同一个全局运行时，避免用户进页面才等。
+    const scannerWarmup = Capacitor.isNativePlatform()
+      ? window.setTimeout(() => {
+          void import('@/components/recognition/scanner-runtime').then(
+            ({ ensureOpenCV }) => ensureOpenCV().catch(() => undefined),
+          );
+        }, 1500)
+      : null;
+
+    if (localStorage.getItem(DISMISS_KEY) || isStandalone()) {
+      return () => {
+        if (scannerWarmup !== null) window.clearTimeout(scannerWarmup);
+      };
+    }
 
     const onPrompt = (event: Event) => {
       event.preventDefault();
@@ -46,6 +60,7 @@ export function PwaProvider() {
     return () => {
       window.removeEventListener('beforeinstallprompt', onPrompt);
       if (hintFrame !== null) window.cancelAnimationFrame(hintFrame);
+      if (scannerWarmup !== null) window.clearTimeout(scannerWarmup);
     };
   }, []);
 
