@@ -431,7 +431,8 @@
   --duration: 180ms;
   /* 极简：阴影几乎不可见，层次靠细线与留白，不靠投影。 */
   --shadow-card: 0 1px 2px color-mix(in oklab, var(--ink) 5%, transparent);
-  --shadow-float: 0 3px 12px -4px color-mix(in oklab, var(--ink) 12%, transparent);
+  --shadow-float: 0 3px 12px -4px
+    color-mix(in oklab, var(--ink) 12%, transparent);
 }
 
 /* 语义别名。

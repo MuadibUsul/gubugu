@@ -282,57 +282,6 @@ function one(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-type PendingOffer = Awaited<
-  ReturnType<typeof listTradeActivityForUser>
->['offers'][number];
-
-/**
- * 一条协商的摘要卡。「等你处理」的待办区和下方的「我的协商」用的是同一张卡——
- * 两处曾各写一份几乎一样的 JSX，谁改了一边另一边就开始漂。
- *
- * 「你出 X ⇄ 得到 Y」永远站在当前 viewer 的角度：同一条协商在提案方和接收方眼里
- * 方向相反，用 proposerId 判定，而不是照抄 offered/requested 的字面。
- */
-function OfferCard({
-  offer,
-  viewerId,
-}: {
-  offer: PendingOffer;
-  viewerId: string;
-}) {
-  const viewerIsProposer = offer.proposerId === viewerId;
-  const viewerGives = viewerIsProposer
-    ? offer.latestRevision.offeredGoods
-    : offer.latestRevision.requestedGoods;
-  const viewerGets = viewerIsProposer
-    ? offer.latestRevision.requestedGoods
-    : offer.latestRevision.offeredGoods;
-  const awaitingViewer = offer.awaitingUserId === viewerId;
-
-  return (
-    <Link
-      className="panel-float min-w-0 rounded-[18px] border border-[var(--rule)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]"
-      href={`/matches/offers/${offer.id}`}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span
-          className={
-            awaitingViewer
-              ? 'chip border-[var(--shu)] bg-[var(--shu-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--shu)]'
-              : 'chip px-2.5 py-1 text-[11px]'
-          }
-        >
-          {awaitingViewer ? '等你处理' : '等待对方'}
-        </span>
-        <span className="num">议价 {offer.counterCount}/3</span>
-      </div>
-      <p className="mt-3 line-clamp-2 text-sm font-semibold">
-        你出「{viewerGives.name}」⇄ 得到「{viewerGets.name}」
-      </p>
-    </Link>
-  );
-}
-
 export default async function MatchesPage({
   searchParams,
 }: {

@@ -10,7 +10,8 @@
 
 | 变量                               | 生产必需 | 说明                                                                       |
 | ---------------------------------- | -------- | -------------------------------------------------------------------------- |
-| `DATABASE_URL`                     | 是       | 缺失时所有数据模块回退空状态，站点渲染空图鉴却仍返回 200                   |
+| `DATABASE_URL`                     | 是       | Web 运行账号连接串；缺失或不可用时 readiness 返回 503、数据页进入 5xx 边界 |
+| `APP_DATABASE_PASSWORD`            | 是       | Web 运行账号 `gubugu_app` 的独立密码；不得与迁移账号共用                   |
 | `LOCAL_AUTH_SECRET`                | 是       | 至少 32 位。会话 Cookie 的 HMAC 签名密钥，泄露或过短等于任何人可伪造会话   |
 | `APP_URL`                          | 是       | canonical、社交分享卡与同源图片解析；必须是无路径/查询/片段的 HTTPS origin |
 | `ADMIN_USER_EMAILS`                | 实际必需 | 见下方「管理员允许名单」                                                   |
@@ -59,6 +60,13 @@ CLIP 模型冷加载实测约 142 秒，热态单图 60–90ms。模型活在主
 启动时付一次——**这也是不能用 serverless 的原因**。上线前须跑 `pnpm db:embed` 为图鉴
 图片建索引，否则识别没有匹配对象。
 
+### sharp 的临时安全边界
+
+目标 VPS 只支持 x86-64-v1，暂时无法加载修复上游漏洞的 sharp 0.35.x。
+`server/sharp-security.ts` 在进程启动时禁用 HEIF/AVIF、GIF、TIFF 和 VIPS 解码，
+对应审计白名单中的两个 GHSA。上传边界仍只接受 JPG、PNG 和 WebP。
+更换主机 CPU 后应升级 sharp，并在同一提交删除 decoder block 和 audit 例外。
+
 ### 私密资产不得进入公开区
 
 未鉴定扫描图存在 `USER_SCAN_ASSET_DIR`，没有公开静态 URL，只能经
@@ -72,7 +80,9 @@ CLIP 模型冷加载实测约 142 秒，热态单图 60–90ms。模型活在主
 跑 `pnpm db:generate`**：曾出现过 schema 增列却没有对应迁移，线上查询直接报
 「column does not exist」。
 
-RLS 策略**不在当前请求路径上**——应用以表属主连接，会绕过 RLS。它们是纵深防御，
+RLS 策略**不在当前请求路径上**——Web 使用无 DDL 权限的
+`gubugu_app` 运行角色，但在当前服务端会话模型下仍需 `BYPASSRLS`。表属主凭据
+只供 migrator 使用。RLS 是为未来直连客户端准备的纵深防御，
 因此需要专门的验证：`pnpm db:verify-rls` 用一个不拥有任何表的角色去实测策略是否真的
 拦得住。新增任何用户数据表都必须补进这个脚本。另有 `db:verify-trade` 与
 `db:verify-lighting` 覆盖换谷与点亮的不变式。

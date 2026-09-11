@@ -11,6 +11,7 @@
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:provision-runtime-role": "node drizzle/provision-runtime-role.mjs",
     "db:seed": "tsx drizzle/seed/index.ts",
     "db:embed": "tsx drizzle/embed/index.ts",
     "db:backfill-scans": "tsx drizzle/backfill/scan-guesses.ts",
@@ -25,31 +26,32 @@
     "test:watch": "vitest",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "recognition:evaluate": "tsx scripts/evaluate-recognition.ts"
+    "recognition:evaluate": "tsx scripts/evaluate-recognition.ts",
+    "project:metrics": "node scripts/project-metrics.mjs"
   },
   "dependencies": {
     "@capacitor-mlkit/document-scanner": "^8",
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8",
-    "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
     "@huggingface/transformers": "^4.2.0",
     "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "jscanify": "^1.4.3",
-    "next": "16.1.7",
+    "next": "16.3.3",
     "pg": "^8.20.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "server-only": "0.0.1",
-    "sharp": "0.34.5",
+    "sharp": "0.33.5",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.0",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^20.19.25",
     "@types/pg": "^8.18.0",
@@ -58,7 +60,7 @@
     "dotenv": "^17.3.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.1",
-    "eslint-config-next": "16.1.7",
+    "eslint-config-next": "16.3.3",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "tailwindcss": "^4.1.17",
@@ -68,7 +70,17 @@
   },
   "pnpm": {
     "overrides": {
+      "adm-zip": "0.6.0",
+      "baseline-browser-mapping": "2.11.22",
+      "browserslist": "4.28.9",
+      "nanoid": "3.3.19",
       "sharp": "0.33.5"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-f88m-g3jw-g9cj",
+        "GHSA-rgj7-g3m4-5g8c"
+      ]
     }
   }
 }

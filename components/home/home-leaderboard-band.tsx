@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { canUseDevelopmentDatabaseFallback } from '@/server/db/client';
 import { getLeaderboard } from '@/server/data/leaderboard';
 
 // 排行 band：点亮总数榜前 N，首页精简预览，读态不需登录。
@@ -9,7 +9,7 @@ export async function HomeLeaderboardSection() {
   try {
     entries = await getLeaderboard('lit', { limit: 5 });
   } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) console.error(error);
+    if (!canUseDevelopmentDatabaseFallback(error)) throw error;
   }
 
   if (entries.length === 0) return null;

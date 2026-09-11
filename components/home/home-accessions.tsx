@@ -4,7 +4,7 @@ import { GoodsCardArt } from '@/components/goods/goods-card-art';
 import { formatGoodsTypeLabel } from '@/components/search/search-query';
 import { searchGoodsCatalog } from '@/server/data';
 import type { GoodsCardData } from '@/server/data/_shared';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { canUseDevelopmentDatabaseFallback } from '@/server/db/client';
 
 // 最近收录：紧凑三列卡（对齐设计稿）——封面图 + 名称 + 类型，一眼扫过。
 function AccessionPlate({ item }: { item: GoodsCardData }) {
@@ -50,9 +50,7 @@ export async function HomeAccessionsSection() {
     const results = await searchGoodsCatalog({ pageSize: 6 });
     items = results.items;
   } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) {
-      console.error(error);
-    }
+    if (!canUseDevelopmentDatabaseFallback(error)) throw error;
 
     failed = true;
   }

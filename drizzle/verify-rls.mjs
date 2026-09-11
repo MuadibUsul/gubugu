@@ -2,9 +2,9 @@
  * Exercises the row level security policies from migration 0008 against a real
  * database seeded with `pnpm db:seed`.
  *
- * These policies are not on the current request path — the app connects as the
- * table owner, which bypasses RLS — so nothing else would notice if they broke.
- * That is exactly why they need a check of their own.
+ * These policies are not on the current request path — the restricted Web role
+ * still uses BYPASSRLS for the server-side session model — so request tests
+ * would not notice if they broke. That is why they need a check of their own.
  *
  * Run with DATABASE_URL set, after migrate + seed.
  */

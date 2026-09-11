@@ -39,7 +39,10 @@ async function main() {
         const note = `疑似：${names.join('、')}${
           top.goods.ipName ? ` · ${top.goods.ipName}` : ''
         }`;
-        await db.update(userScans).set({ note }).where(eq(userScans.id, row.id));
+        await db
+          .update(userScans)
+          .set({ note })
+          .where(eq(userScans.id, row.id));
         filled += 1;
         console.log(`  ${row.id} → ${note}`);
       } else {

@@ -15,6 +15,7 @@ import { CRAWLER_IMAGE_MAX_BYTES } from './safe-fetch';
 // 呈现，卡片大小一致。
 export const CATALOG_IMAGE_MAX_EDGE = 1400;
 export const CATALOG_ASSET_DIRECTORY = resolve(
+  /* turbopackIgnore: true */
   process.cwd(),
   process.env.CATALOG_ASSET_DIR ?? join('.data', 'catalog-assets'),
 );
@@ -39,7 +40,7 @@ export function catalogAssetPath(
   if (!catalogAssetNamePattern.test(fileName)) {
     throw new Error('Invalid catalog asset name.');
   }
-  return join(resolve(directory), fileName);
+  return join(/* turbopackIgnore: true */ resolve(directory), fileName);
 }
 
 export async function catalogAssetExists(fileName: string) {
@@ -122,7 +123,9 @@ export async function normalizeAndStoreCatalogImage(
 
   const hash = createHash('sha256').update(data).digest('hex');
   const fileName = `${hash}.webp`;
-  const directory = resolve(options.directory ?? CATALOG_ASSET_DIRECTORY);
+  const directory = resolve(
+    /* turbopackIgnore: true */ options.directory ?? CATALOG_ASSET_DIRECTORY,
+  );
   const path = catalogAssetPath(fileName, directory);
 
   await mkdir(directory, { recursive: true });

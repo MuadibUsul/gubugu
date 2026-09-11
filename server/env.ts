@@ -11,8 +11,8 @@ import { z } from 'zod';
 // This module is imported by instrumentation.ts so that a misconfigured
 // deployment fails at boot instead of silently degrading:
 //
-// - without DATABASE_URL every data module falls back to empty state and the
-//   site renders a blank encyclopedia with HTTP 200
+// - without DATABASE_URL production requests and readiness fail explicitly;
+//   only local development may use the empty-state fallback
 // - 认证完全自托管：账号存在自建 PostgreSQL，会话是 HMAC 签名的 cookie
 //
 // Both fallbacks are deliberate local-development conveniences. Neither may be
@@ -58,7 +58,7 @@ const envSchema = z
         code: 'custom',
         path: ['DATABASE_URL'],
         message:
-          '生产环境必须配置 DATABASE_URL，否则全站会静默渲染空图鉴并返回 200。',
+          '生产环境必须配置 DATABASE_URL，否则数据库页面与 readiness 无法提供服务。',
       });
     }
 

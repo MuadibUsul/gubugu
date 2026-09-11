@@ -1,6 +1,6 @@
 # 项目现状报告
 
-> 更新时间：2026-09-04。数字取自当次工作区扫描，改动后请一并更新，别让它退化成
+> 更新时间：2026-09-11。路由、测试和迁移数量由 `pnpm project:metrics` 重新生成，别让它退化成
 > 又一份「看起来还对」的旧快照。
 
 ## 一、基本信息
@@ -14,8 +14,8 @@
 | 当前分支 | `chore/engineering-foundation`（内容已同步到 `main`） |
 | 提交总数 | 80                                                    |
 | 迁移     | 30 个（0000–0029）                                    |
-| 测试     | 42 个文件 / 270 条                                    |
-| 路由     | 40 条 page / route                                    |
+| 测试     | 45 个文件 / 284 条                                    |
+| 路由     | 46 条 page / route                                    |
 
 **生产环境已上线**：<https://gubugu.tlines.tech>，部署在一台 Linux VPS，与同机的另一个
 项目共存但完全隔离。细节见 [../DEPLOY.md](../DEPLOY.md) 与 [deployment.md](deployment.md)。
@@ -92,11 +92,12 @@ Cookie，登录与注册都有限流。不依赖任何外部认证服务。
 
 按 [mobile-first-transformation-plan.md](mobile-first-transformation-plan.md) 的阶段划分：
 
-- **Phase 2（响应式外壳）未做**：根布局仍有全局宽度限制，底部五 Tab 在 `>= 1024px`
-  的桌面宽度下依然显示，PC 没有真正的宽屏信息架构。
-- **Phase 1 余项**：自动点亮与候选确认尚未合并到统一事务；识别阈值仍是硬编码的
-  `0.86`，未配置化也未用真实样本校准；`owned` / `lit_at` / 未鉴定项 / `exchange`
-  的语义边界待收敛；部分页面与 Route Handler 仍有直接的数据库编排。
+- **识别校准**：自动点亮与候选确认已走同一事务，阈值也已可按环境配置；
+  仍需用真实样本运行 `pnpm recognition:evaluate` 完成校准。
+- **生产运维验收**：新的 readiness、备份脚本和独立数据库运行角色已入库，
+  尚需在 VPS 上配置 `APP_DATABASE_PASSWORD` 和 cron，并执行一次恢复演练。
+- **Android 发布验收**：已关闭明文流量和应用备份，CI 已加入 Gradle 构建；
+  真机相机、返回键、深链和断网恢复仍需发布前人工回归。
 - **内容覆盖不足**：首发目标是十几个主流 IP、数百个 SKU，当前仅有种子数据。
 - **部署机 CPU 限制**：VPS 是 x86-64-v1（QEMU 通用型号），sharp 因此固定在 0.33.5；
   CLIP 推理没有 SIMD/AVX 加速，比设计预期慢。换 CPU 型号可解，非阻塞项。

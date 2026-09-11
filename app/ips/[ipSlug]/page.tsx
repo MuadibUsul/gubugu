@@ -128,7 +128,9 @@ export default async function IpPage({ params }: IpPageProps) {
                       </p>
                     ) : null}
                   </div>
-                  <span className="num shrink-0">{character.goodsCount} 件</span>
+                  <span className="num shrink-0">
+                    {character.goodsCount} 件
+                  </span>
                 </Link>
               ))
             ) : (

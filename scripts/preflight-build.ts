@@ -1,14 +1,11 @@
 /**
  * 构建前置检查：把「数据库不可用」从一段吓人的查询堆栈，变成一句说得清的结论。
  *
- * 背景：`next build` 会预渲染部分路由，途中真的去查库。数据库连不上时，日志里会
- * 冒出完整的 SQL 和 ECONNREFUSED，但构建照样成功——产物里那些页面是空的。这既
- * 像故障又不是故障，容易掩盖真正的部署问题（见 mobile-first-transformation-plan
- * 第 3.2 节）。
+ * 背景：数据库驱动页面是运行时动态渲染的，因此数据库离线时仍能完成打包。生产
+ * 实例会通过 readiness 暴露数据库故障，页面请求也会进入 5xx 错误边界；只有本地
+ * 开发且未配置 DATABASE_URL 时允许展示空态。
  *
- * 这里不让构建失败：CI 本来就不该有生产库凭据，无库构建是正常且期望的。要做的是
- * 在日志最前面明确说明本次构建处于哪种模式、哪些页面会降级，让后面出现的报错有
- * 上下文可循。
+ * 这里不让普通本地打包失败；发布 CI 会另外在真实 PostgreSQL 上执行同一构建。
  */
 
 import { config as loadEnv } from 'dotenv';
@@ -27,9 +24,7 @@ for (const path of [
   loadEnv({ path, override: false, quiet: true });
 }
 
-// 数据库不可用时会渲染成空态、但仍返回 200 的页面。它们都是运行时按需渲染的，
-// 所以生产运行时只要库正常就正常；这里列出来是为了让构建日志自我解释。
-const DEGRADES_WITHOUT_DATABASE = [
+const DATABASE_DEPENDENT_ROUTES = [
   '/            首页各栏（轮播、换谷市场、热门作品、最近收录）',
   '/search      谷库搜索与筛选项',
   '/leaderboard 各维度排行榜',
@@ -95,11 +90,10 @@ async function main() {
     banner([
       '构建模式：无数据库（CI 的正常模式）',
       '',
-      '未设置 DATABASE_URL，以下页面在本次构建中按空态渲染：',
-      ...DEGRADES_WITHOUT_DATABASE,
+      '以下动态页面需要在运行时连接数据库：',
+      ...DATABASE_DEPENDENT_ROUTES,
       '',
-      '这不影响运行时——它们都是按需渲染，生产环境连上库即正常。',
-      '构建日志里若出现 SQL 相关报错，属于同一原因，可以忽略。',
+      '本地开发会显示空态；生产 readiness 会在数据库不可用时返回 503。',
     ]);
     return;
   }
@@ -111,16 +105,15 @@ async function main() {
     return;
   }
 
-  // 配了地址却连不上：多半是本地开发库没起，或部署配置写错。不让构建失败——CI
-  // 之外的场景（如只想验证类型和打包）仍应能构建；但必须说清楚产物会是空的。
+  // 配了地址却连不上：允许本地验证打包；发布 CI 会在数据库任务中直接失败。
   banner([
     '构建模式：已配置 DATABASE_URL，但连不上',
     '',
     `地址：${databaseUrl.replace(/:\/\/[^@]*@/, '://***@')}`,
     `原因：${probe.reason}`,
     '',
-    '构建会继续，但以下页面产出空态：',
-    ...DEGRADES_WITHOUT_DATABASE,
+    '构建会继续；以下动态页面在数据库恢复前不可用：',
+    ...DATABASE_DEPENDENT_ROUTES,
     '',
     '如果这是部署构建，请先修好数据库连通性再发布。',
   ]);

@@ -120,6 +120,22 @@ export function isRecognitionAttemptEligible({
   return source === 'camera' && provider === 'embedding-search';
 }
 
+/** An automatic crop must not create an unidentified collection item. */
+export function shouldRetryAutomaticCapture({
+  captureMode,
+  tier,
+  provider,
+}: {
+  captureMode: string;
+  tier: RecognitionTier;
+  provider: string;
+}) {
+  return (
+    captureMode === 'auto' &&
+    !(tier === 'candidates' && provider === 'embedding-search')
+  );
+}
+
 // Future image-similarity matching should resolve to a specific goods_images row
 // when possible, while keeping the candidate response stable for the current
 // placeholder implementation.

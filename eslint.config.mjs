@@ -11,6 +11,7 @@ const eslintConfig = [
       'coverage/**',
       'android/**/build/**',
       'android/app/src/main/assets/**',
+      'public/vendor/**',
       '谷布谷移动应用设计/**',
     ],
   },

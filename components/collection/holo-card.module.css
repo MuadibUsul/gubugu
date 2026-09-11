@@ -47,7 +47,8 @@
   transform-origin: center;
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
-  transform: rotateY(calc(var(--rotate-x) + var(--flip))) rotateX(var(--rotate-y));
+  transform: rotateY(calc(var(--rotate-x) + var(--flip)))
+    rotateX(var(--rotate-y));
   /* 倾斜由 rAF lerp 平滑，transform 不加过渡（否则双重延迟发糊）；只有翻面时临时启用 */
   transition: box-shadow 0.4s ease;
   cursor: pointer;
@@ -168,11 +169,24 @@
 
   z-index: 3;
   transform: translateZ(1px);
-  background-image: repeating-linear-gradient(
+  background-image:
+    repeating-linear-gradient(
       110deg,
-      var(--violet), var(--blue), var(--green), var(--yellow), var(--red),
-      var(--violet), var(--blue), var(--green), var(--yellow), var(--red),
-      var(--violet), var(--blue), var(--green), var(--yellow), var(--red)
+      var(--violet),
+      var(--blue),
+      var(--green),
+      var(--yellow),
+      var(--red),
+      var(--violet),
+      var(--blue),
+      var(--green),
+      var(--yellow),
+      var(--red),
+      var(--violet),
+      var(--blue),
+      var(--green),
+      var(--yellow),
+      var(--red)
     ),
     repeating-linear-gradient(
       90deg,
@@ -185,7 +199,9 @@
     calc(((50% - var(--background-x)) * 2.6) + 50%)
       calc(((50% - var(--background-y)) * 3.5) + 50%),
     center center;
-  background-size: 400% 400%, cover;
+  background-size:
+    400% 400%,
+    cover;
   background-blend-mode: overlay;
   filter: saturate(1.05);
   mix-blend-mode: color-dodge;
@@ -232,8 +248,16 @@
   place-items: center;
   border-radius: var(--card-radius);
   background:
-    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 12%), transparent 60%),
-    linear-gradient(160deg, var(--shu, #c0392b), color-mix(in srgb, var(--shu, #c0392b) 62%, black));
+    radial-gradient(
+      120% 90% at 50% 0%,
+      rgb(255 255 255 / 12%),
+      transparent 60%
+    ),
+    linear-gradient(
+      160deg,
+      var(--shu, #c0392b),
+      color-mix(in srgb, var(--shu, #c0392b) 62%, black)
+    );
   color: rgb(255 255 255 / 92%);
 }
 .brandedBackMark {

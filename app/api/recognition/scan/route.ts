@@ -3,17 +3,20 @@ import { NextResponse } from 'next/server';
 import { isAcceptedImageMimeType } from '@/lib/image-upload';
 import { consumeServerWrite } from '@/lib/rate-limit';
 import { isMobileUserAgent } from '@/lib/device';
-import { recognitionUploadLimits } from '@/lib/recognition';
+import {
+  recognitionUploadLimits,
+  shouldRetryAutomaticCapture,
+} from '@/lib/recognition';
 import { getAuthUser } from '@/server/auth/session';
 import { confirmRecognitionAttempt } from '@/server/recognition/confirm';
 import { recognizeGoodsImage } from '@/server/recognition/service';
 import { gradeRecognition } from '@/server/recognition/thresholds';
 import { recordUnidentifiedScan } from '@/server/user-scans/record';
 
-// 自动扫描入库：拍一张 → 匹配官方谷库。分档见 lib/recognition.ts：
+// 扫描识别：拍一张 → 匹配官方谷库。分档见 lib/recognition.ts：
 //   高置信      → 服务端直接确认并点亮（可公开展示）
 //   有可靠候选  → 交给 /recognition 让用户挑，这里不擅自点亮
-//   无可靠候选  → 存为「未鉴定收藏项」（进谷柜、不公开展示）
+//   无可靠候选  → 先返回结果；只有用户明确选择暂存才写入未鉴定收藏
 // 点亮走 confirmRecognitionAttempt，与用户手动确认候选是同一段事务。
 
 function fail(status: number, message: string) {
@@ -45,6 +48,9 @@ export async function POST(request: Request) {
   }
 
   const image = formData.get('image');
+  const saveUnidentified = formData.get('saveUnidentified') === 'true';
+  const captureMode =
+    formData.get('captureMode') === 'auto' ? 'auto' : 'manual';
   if (!(image instanceof File) || image.size <= 0) {
     return fail(400, '缺少图片。');
   }
@@ -92,8 +98,34 @@ export async function POST(request: Request) {
       console.error('[recognition] 自动点亮未通过确认', confirmed.code);
     }
 
-    // 候选档不在这里点亮：先保存原图，再把有限候选交给用户确认。
-    // 无可靠候选或自动点亮未通过 → 保持为未鉴定收藏项。
+    const hasReliableCandidates =
+      tier === 'candidates' &&
+      response.pipeline.provider === 'embedding-search';
+
+    // 自动快门发现的轮廓若连可靠候选都没有，视为环境误检：不保存、不打断用户，
+    // 让客户端回到取景并等待画面明显变化后重新布防。
+    if (
+      shouldRetryAutomaticCapture({
+        captureMode,
+        tier,
+        provider: response.pipeline.provider,
+      })
+    ) {
+      return NextResponse.json({
+        ok: true,
+        matched: false,
+        tier: 'unidentified',
+        retry: true,
+        saved: false,
+        scanId: null,
+        requestId: response.requestId,
+        score,
+        candidates: [],
+      });
+    }
+
+    // 候选档不在这里点亮，把有限候选交给用户确认。未鉴定照片也不默认入库：
+    // 背景、包装盒等低置信画面没有收藏价值，只有用户明确选择暂存才保存。
     // 角色识别：即便没到点亮阈值，也把最接近候选的角色/IP 作为初始备注存下，
     // 让「未鉴定收藏」也能显示「疑似：<角色> · <IP>」。仅真实向量检索、且有角色时给。
     const guessNote =
@@ -105,33 +137,35 @@ export async function POST(request: Request) {
           }`
         : null;
 
-    const { scanId } = await recordUnidentifiedScan({
-      userId: user.id,
-      image: buffer,
-      recognitionAttemptId: response.requestId,
-      topScore: score,
-      note: guessNote,
-    });
+    const { scanId } = saveUnidentified
+      ? await recordUnidentifiedScan({
+          userId: user.id,
+          image: buffer,
+          recognitionAttemptId: response.requestId,
+          topScore: score,
+          note: guessNote,
+        })
+      : { scanId: null };
 
     return NextResponse.json({
       ok: true,
       matched: false,
-      tier:
-        tier === 'candidates' &&
-        response.pipeline.provider === 'embedding-search'
+      tier: saveUnidentified
+        ? 'unidentified'
+        : hasReliableCandidates
           ? 'candidates'
           : 'unidentified',
+      saved: Boolean(scanId),
       scanId,
       requestId: response.requestId,
       score,
       candidates:
-        tier === 'candidates' &&
-        response.pipeline.provider === 'embedding-search'
+        !saveUnidentified && hasReliableCandidates
           ? response.candidates.slice(0, 3)
           : [],
     });
   } catch (error) {
-    console.error('[recognition] 自动扫描失败', error);
+    console.error('[recognition] 扫描失败', error);
     return fail(500, '扫描服务暂时不可用，请稍后重试。');
   }
 }

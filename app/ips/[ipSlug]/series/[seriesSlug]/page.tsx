@@ -66,7 +66,10 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
         <div className="min-w-0">
           <p className="accession">
-            <Link className="hover:text-[var(--shu)]" href={`/ips/${data.ip.slug}`}>
+            <Link
+              className="hover:text-[var(--shu)]"
+              href={`/ips/${data.ip.slug}`}
+            >
               {data.ip.name}
             </Link>
             <i> · {data.series.seriesType}</i>

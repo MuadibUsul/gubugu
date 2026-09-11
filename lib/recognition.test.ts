@@ -6,6 +6,7 @@ import {
   isRecognitionAttemptEligible,
   recognitionCandidateMapSchema,
   recognitionThresholdDefaults,
+  shouldRetryAutomaticCapture,
 } from './recognition';
 
 const requestId = '10000000-0000-4000-8000-000000000001';
@@ -110,5 +111,31 @@ describe('gradeRecognitionScore', () => {
     expect(gradeRecognitionScore(0.9, strict)).toBe('candidates');
     expect(gradeRecognitionScore(0.96, strict)).toBe('auto-light');
     expect(gradeRecognitionScore(0.7, strict)).toBe('unidentified');
+  });
+});
+
+describe('automatic capture boundary', () => {
+  it('silently retries irrelevant automatic crops instead of saving them', () => {
+    expect(
+      shouldRetryAutomaticCapture({
+        captureMode: 'auto',
+        tier: 'unidentified',
+        provider: 'embedding-search',
+      }),
+    ).toBe(true);
+    expect(
+      shouldRetryAutomaticCapture({
+        captureMode: 'auto',
+        tier: 'candidates',
+        provider: 'embedding-search',
+      }),
+    ).toBe(false);
+    expect(
+      shouldRetryAutomaticCapture({
+        captureMode: 'manual',
+        tier: 'unidentified',
+        provider: 'embedding-search',
+      }),
+    ).toBe(false);
   });
 });

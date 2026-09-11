@@ -77,7 +77,6 @@ export function HoloCard({
   useEffect(() => {
     const img = imgRef.current;
     if (img && img.complete && img.naturalWidth > 0) applyLoaded(img);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const s = useRef<SpringState>({
     ...REST,

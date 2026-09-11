@@ -4,6 +4,7 @@ coverage
 pnpm-lock.yaml
 android/**/build
 android/app/src/main/assets
+public/vendor
 谷布谷移动应用设计
 
 # Generated artifacts. drizzle-kit and next rewrite these in their own format,

@@ -155,16 +155,28 @@ docker compose restart web        # 重启网站
 
 - **回滚**：把 `.env` 里 `WEB_IMAGE`/`MIGRATOR_IMAGE` 改回上一个 sha 标签，再
   `docker compose up -d`。GHCR 保留历史镜像。
-- **数据库备份**：
+- **每日备份**：部署会同步 `ops/backup-production.sh`，在宿主机配置 cron：
   ```bash
-  docker compose exec postgres pg_dump -U gubugu gubugu > backup_$(date +%F).sql
+  20 3 * * * cd /absolute/path/to/gubugu && sh ./ops/backup-production.sh /absolute/path/to/backups >> /var/log/gubugu-backup.log 2>&1
   ```
-- **持久化数据**都在命名卷里：`pgdata`（库）、`catalog_assets`（爬虫图片）、
-  `model_cache`（模型）。证书由宿主机既有的 Caddy 管理，不归本项目。删卷即丢数据，勿轻动。
+- 脚本保留 30 天 PostgreSQL custom dump 和三类资产卷快照。每季度在隔离的
+  Compose 项目中执行一次恢复演练，并核对资产压缩包可解压：
+  ```bash
+  docker compose exec -T postgres sh -c 'dropdb -U "$POSTGRES_USER" --if-exists gubugu_restore && createdb -U "$POSTGRES_USER" gubugu_restore'
+  docker compose exec -T postgres sh -c 'pg_restore -U "$POSTGRES_USER" -d gubugu_restore --clean --if-exists' < /absolute/path/to/backups/postgres-TIMESTAMP.dump
+  tar -tzf /absolute/path/to/backups/catalog_assets-TIMESTAMP.tar.gz >/dev/null
+  docker compose exec -T postgres sh -c 'dropdb -U "$POSTGRES_USER" gubugu_restore'
+  ```
+- **持久化数据**都在命名卷里：`pgdata`、`catalog_assets`、`user_scan_assets`、
+  `community_images` 和 `model_cache`。删卷即丢数据，勿轻动。
 
 ---
 
-## 七、手动部署（不走 CI 时）
+## 七、紧急手动恢复（绕过 CI）
+
+正常发布只能由通过全部验证的 CI commit 触发。以下命令仅用于 GitHub Actions
+不可用时的故障恢复；执行前必须在同一 commit 本地完成格式、lint、类型、测试、构建
+和生产依赖审计。
 
 在装了 Docker 的机器上，仓库根目录：
 

@@ -16,7 +16,7 @@ import {
   HomeMarketSection,
 } from '@/components/home/home-market';
 import { listHotIps, searchGoodsCatalog } from '@/server/data';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { canUseDevelopmentDatabaseFallback } from '@/server/db/client';
 import { isMobileRequest } from '@/server/device';
 
 async function loadFrontispieceData() {
@@ -33,9 +33,7 @@ async function loadFrontispieceData() {
       featuredItems: goods.items,
     };
   } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) {
-      console.error(error);
-    }
+    if (!canUseDevelopmentDatabaseFallback(error)) throw error;
 
     return { ipCount: 0, goodsCount: 0, featuredItems: [] };
   }

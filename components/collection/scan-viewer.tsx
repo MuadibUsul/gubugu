@@ -90,7 +90,11 @@ export function ScanViewer({ scans }: { scans: Scan[] }) {
             </div>
 
             <div className="mx-auto w-full max-w-[300px]">
-              <HoloCard alt="未鉴定收藏" key={active.id} src={active.imageUrl} />
+              <HoloCard
+                alt="未鉴定收藏"
+                key={active.id}
+                src={active.imageUrl}
+              />
             </div>
 
             <p className="text-muted-foreground mt-2 text-center text-[11px]">

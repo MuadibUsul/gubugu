@@ -11,7 +11,7 @@ import {
   getLeaderboard,
   type LeaderboardEntry,
 } from '@/server/data/leaderboard';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { canUseDevelopmentDatabaseFallback } from '@/server/db/client';
 
 export const metadata: Metadata = {
   title: '收藏排行榜',
@@ -123,9 +123,7 @@ export default async function LeaderboardPage({
   try {
     entries = await getLeaderboard(dimension, { limit: 50 });
   } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) {
-      console.error(error);
-    }
+    if (!canUseDevelopmentDatabaseFallback(error)) throw error;
 
     state = 'error';
   }

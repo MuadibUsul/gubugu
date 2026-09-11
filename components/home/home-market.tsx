@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { RemoteImage } from '@/components/ui/remote-image';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { canUseDevelopmentDatabaseFallback } from '@/server/db/client';
 import {
   listOpenTradeListings,
   type TradeListingView,
@@ -69,7 +69,7 @@ export async function HomeMarketSection() {
   try {
     listings = await listOpenTradeListings({ limit: 8 });
   } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) console.error(error);
+    if (!canUseDevelopmentDatabaseFallback(error)) throw error;
   }
 
   if (listings.length === 0) return null;

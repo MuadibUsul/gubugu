@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { RemoteImage } from '@/components/ui/remote-image';
 import { listHotIps, type HomeHotIp } from '@/server/data';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { canUseDevelopmentDatabaseFallback } from '@/server/db/client';
 
 // 热门作品：一排作品封面缩略（对齐设计稿）。横向滚动，点开进入作品页。
 function ContentsThumb({ ip }: { ip: HomeHotIp }) {
@@ -51,9 +51,7 @@ export async function HomeContentsSection() {
   try {
     ips = await listHotIps({ limit: 12 });
   } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) {
-      console.error(error);
-    }
+    if (!canUseDevelopmentDatabaseFallback(error)) throw error;
 
     failed = true;
   }

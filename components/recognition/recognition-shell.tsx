@@ -6,6 +6,16 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { RecognitionCandidateCard } from '@/components/recognition/recognition-candidate-card';
+import {
+  clampFrameSize,
+  ensureOpenCV,
+  ensureScanner,
+  evaluateCardFrame,
+  getReadyCv,
+  mapCoverPoint,
+  type ScannerCorners,
+  type CvMat,
+} from '@/components/recognition/scanner-runtime';
 import type { RecognitionCandidate } from '@/lib/recognition';
 import { confirmRecognitionCandidateAction } from '@/server/recognition/actions';
 
@@ -32,95 +42,13 @@ type ScanResult = {
   requestId?: string;
   scanId?: string | null;
   candidates?: RecognitionCandidate[];
+  saved?: boolean;
 };
-
-// 取景框 4:5，把源画面按此比例居中裁切（jscanify 找不到卡时的兜底）。
-function clampFrameSize(sw: number, sh: number) {
-  const target = 4 / 5;
-  if (sw / sh > target) {
-    const w = sh * target;
-    return { sx: (sw - w) / 2, sy: 0, sw: w, sh };
-  }
-  const h = sw / target;
-  return { sx: 0, sy: (sh - h) / 2, sw, sh: h };
-}
-
-// 惰性加载 OpenCV.js（网页/回退相机路径需要，~8.6MB，只加载一次）。
-// 自托管在 /vendor/opencv.js（同源，随应用一起部署）：既避免 docs.opencv.org
-// 已把旧版本路径改成 404，也让国内用户不必访问被墙/不稳的境外 CDN。文件取自
-// jscanify 自带的 opencv 构建，版本与裁切逻辑匹配，wasm 以 data URI 内联、单文件自足。
-let openCvPromise: Promise<void> | null = null;
-function ensureOpenCV(): Promise<void> {
-  if (openCvPromise) return openCvPromise;
-  openCvPromise = new Promise<void>((resolve, reject) => {
-    const w = window as unknown as { cv?: { Mat?: unknown; onRuntimeInitialized?: () => void } };
-    if (w.cv?.Mat) return resolve();
-    const finish = () => {
-      if (w.cv?.Mat) resolve();
-      else if (w.cv) w.cv.onRuntimeInitialized = () => resolve();
-      else reject(new Error('OpenCV 未就绪'));
-    };
-    const existing = document.getElementById('opencv-js') as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener('load', finish);
-      existing.addEventListener('error', () => reject(new Error('OpenCV 加载失败')));
-      return;
-    }
-    const s = document.createElement('script');
-    s.id = 'opencv-js';
-    s.async = true;
-    s.src = '/vendor/opencv.js';
-    s.onload = finish;
-    s.onerror = () => reject(new Error('OpenCV 加载失败'));
-    document.head.appendChild(s);
-  });
-  return openCvPromise;
-}
-
-// jscanify 客户端实例只建一次；实时找边和快门裁切共用。
-let scannerPromise: Promise<import('jscanify/client').default> | null = null;
-function ensureScanner() {
-  if (!scannerPromise) {
-    scannerPromise = (async () => {
-      await ensureOpenCV();
-      // 必须用浏览器构建；默认入口是 node 构建会 require('canvas')/jsdom 打包失败。
-      const Jscanify = (await import('jscanify/client')).default;
-      return new Jscanify();
-    })();
-  }
-  return scannerPromise;
-}
-
-// 只用到 imread（取一个可 delete 的 Mat）。运行期由 opencv.js 注入。
-type CvMat = { delete: () => void };
-type OpenCvLike = { Mat?: unknown; imread: (el: HTMLCanvasElement) => CvMat };
-function getReadyCv(): OpenCvLike | null {
-  const w = window as unknown as { cv?: OpenCvLike };
-  return w.cv && w.cv.Mat ? w.cv : null;
-}
-
-// 把检测帧（缩小的整帧）里的点，映射到 object-fit:cover 后视频的显示坐标。
-function mapCoverPoint(
-  x: number,
-  y: number,
-  frameW: number,
-  frameH: number,
-  viewW: number,
-  viewH: number,
-) {
-  const scale = Math.max(viewW / frameW, viewH / frameH);
-  const dispW = frameW * scale;
-  const dispH = frameH * scale;
-  return {
-    x: x * scale + (viewW - dispW) / 2,
-    y: y * scale + (viewH - dispH) / 2,
-  };
-}
 
 // 检测帧宽度：够找边又够快。
 const DETECT_W = 320;
-// 连续多少帧“稳且构图合格”才自动采集（约 200ms/帧）。
-const LOCK_FRAMES = 5;
+// 严格构图连续稳定约 1.6 秒后自动采集。
+const LOCK_FRAMES = 8;
 
 export function RecognitionShell() {
   const router = useRouter();
@@ -137,9 +65,16 @@ export function RecognitionShell() {
     running: boolean;
     timer: number | null;
     stable: number;
-    lockedShot: boolean;
+    autoBlocked: boolean;
     lastCenter: { x: number; y: number } | null;
-  }>({ running: false, timer: null, stable: 0, lockedShot: false, lastCenter: null });
+  }>({
+    running: false,
+    timer: null,
+    stable: 0,
+    autoBlocked: false,
+    lastCenter: null,
+  });
+  const pendingScanFileRef = useRef<File | null>(null);
 
   const [isNative] = useState(() => {
     try {
@@ -148,10 +83,11 @@ export function RecognitionShell() {
       return false;
     }
   });
-  // 国内很多机型没有 Google Play 服务，用不了 ML Kit 文档扫描（就是那句“需要更新
-  // 谷歌插件”）。此时回退到网页相机路径（getUserMedia + jscanify 自动采集，完全
-  // 不依赖谷歌服务）。上次回退过就用 localStorage 记住，避免每次都先踩一次 ML Kit。
+  // Android 默认直接使用 WebView 实时取景。国内机型普遍没有完整 Google Play
+  // 服务，而 ML Kit 路径在真正启动前只能显示黑色占位区，看起来像相机坏了。
+  // getUserMedia + jscanify 不依赖 GMS，并且能让用户在按快门前确认构图。
   const [webFallback, setWebFallback] = useState(() => {
+    if (isNative) return true;
     try {
       return localStorage.getItem('gubugu.scanMode') === 'web';
     } catch {
@@ -202,7 +138,13 @@ export function RecognitionShell() {
 
   // 裁好的卡片图上传识别 + 处理结果（原生/网页两条路共用）。
   const uploadAndHandle = useCallback(
-    async (file: File, previewUrl: string | null) => {
+    async (
+      file: File,
+      previewUrl: string | null,
+      saveUnidentified = false,
+      captureMode: 'manual' | 'auto' = 'manual',
+    ) => {
+      pendingScanFileRef.current = file;
       setShotUrl(previewUrl);
       setPhase('scanning');
       setErrorMessage(null);
@@ -210,6 +152,8 @@ export function RecognitionShell() {
         const body = new FormData();
         body.set('image', file);
         body.set('source', 'camera');
+        body.set('captureMode', captureMode);
+        if (saveUnidentified) body.set('saveUnidentified', 'true');
         const res = await fetch('/api/recognition/scan', {
           method: 'POST',
           body,
@@ -218,6 +162,12 @@ export function RecognitionShell() {
         if (!res.ok || !data?.ok) {
           setPhase('error');
           setErrorMessage(data?.message ?? '扫描失败，请重试。');
+          return;
+        }
+        if (captureMode === 'auto' && data.retry) {
+          detectRef.current.autoBlocked = true;
+          setGuide('没有发现可识别的谷子，请换个目标继续对准');
+          window.setTimeout(() => startCameraRef.current?.(), 700);
           return;
         }
         if (data.matched) {
@@ -233,19 +183,36 @@ export function RecognitionShell() {
             scanId: data.scanId,
             score: data.score,
             candidates: data.candidates,
+            saved: data.saved,
           });
           setPhase('candidates');
         } else {
-          setResult({ score: data.score });
+          setResult({
+            requestId: data.requestId,
+            scanId: data.scanId,
+            score: data.score,
+            saved: data.saved,
+          });
           setPhase('unmatched');
         }
       } catch (error) {
         setPhase('error');
-        setErrorMessage(error instanceof Error ? error.message : '扫描请求失败。');
+        setErrorMessage(
+          error instanceof Error ? error.message : '扫描请求失败。',
+        );
       }
     },
     [],
   );
+
+  const saveAsUnidentified = useCallback(() => {
+    const file = pendingScanFileRef.current;
+    if (!file) {
+      setErrorMessage('原始画面已失效，请重新拍摄。');
+      return;
+    }
+    void uploadAndHandle(file, shotUrl, true);
+  }, [shotUrl, uploadAndHandle]);
 
   // 原生：Google ML Kit 文档扫描（全屏、自动找边 + 自动快门 + 透视校正）。
   const scanNative = useCallback(async () => {
@@ -253,9 +220,8 @@ export function RecognitionShell() {
     setResult(null);
     setShotUrl(null);
     try {
-      const { DocumentScanner } = await import(
-        '@capacitor-mlkit/document-scanner'
-      );
+      const { DocumentScanner } =
+        await import('@capacitor-mlkit/document-scanner');
       const { scannedImages } = await DocumentScanner.scanDocument({
         galleryImportAllowed: true,
         pageLimit: 1,
@@ -281,7 +247,7 @@ export function RecognitionShell() {
         return;
       }
       // ML Kit 依赖 Google Play 服务；没有 GMS / 模块下载失败时，一次性回退到网页
-      // 相机路径（不依赖谷歌），并记住选择，之后直接走网页自动采集，不再踩这个坑。
+      // 相机路径（不依赖谷歌），并记住选择，之后直接走网页取景，不再踩这个坑。
       webFallbackRef.current = true;
       setWebFallback(true);
       try {
@@ -406,64 +372,72 @@ export function RecognitionShell() {
   }, [useWebCamera, startCamera, stopCamera]);
 
   // 非原生快门：抓全帧 → jscanify 透视裁出卡片（失败回退居中裁切）→ 上传。
-  const scan = useCallback(async () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.videoWidth === 0) return;
+  const scan = useCallback(
+    async (captureMode: 'manual' | 'auto' = 'manual') => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas || video.videoWidth === 0) return;
 
-    // 先抓整帧到离屏 canvas（尽量保原分辨率，少损失）。
-    const frame = document.createElement('canvas');
-    frame.width = video.videoWidth;
-    frame.height = video.videoHeight;
-    frame.getContext('2d')?.drawImage(video, 0, 0);
+      // 先抓整帧到离屏 canvas（尽量保原分辨率，少损失）。
+      const frame = document.createElement('canvas');
+      frame.width = video.videoWidth;
+      frame.height = video.videoHeight;
+      frame.getContext('2d')?.drawImage(video, 0, 0);
 
-    stopDetection();
-    stopCamera();
-    setPhase('scanning');
-    setErrorMessage(null);
+      stopDetection();
+      stopCamera();
+      setPhase('scanning');
+      setErrorMessage(null);
 
-    let outCanvas: HTMLCanvasElement | null = null;
-    try {
-      const scanner = await ensureScanner();
-      // 透视裁切成卡片比例（近 0.72），高分辨率尽量无损。
-      outCanvas = scanner.extractPaper(frame, 1000, 1390) as HTMLCanvasElement;
-    } catch {
-      outCanvas = null;
-    }
-
-    // jscanify 失败/没找到卡 → 居中 4:5 裁切兜底。
-    if (!outCanvas) {
-      const f = clampFrameSize(frame.width, frame.height);
-      const crop = 0.82;
-      const cw = f.sw * crop;
-      const ch = f.sh * crop;
-      canvas.width = 1000;
-      canvas.height = 1250;
-      canvas
-        .getContext('2d')
-        ?.drawImage(
+      let outCanvas: HTMLCanvasElement | null = null;
+      try {
+        const scanner = await ensureScanner();
+        // 透视裁切成卡片比例（近 0.72），高分辨率尽量无损。
+        outCanvas = scanner.extractPaper(
           frame,
-          f.sx + (f.sw - cw) / 2,
-          f.sy + (f.sh - ch) / 2,
-          cw,
-          ch,
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-        );
-      outCanvas = canvas;
-    }
+          1000,
+          1390,
+        ) as HTMLCanvasElement;
+      } catch {
+        outCanvas = null;
+      }
 
-    const url = outCanvas.toDataURL('image/jpeg', 0.95);
-    const blob = await (await fetch(url)).blob();
-    const file = new File([blob], `scan-${Date.now()}.jpg`, {
-      type: 'image/jpeg',
-    });
-    await uploadAndHandle(file, url);
-  }, [stopCamera, stopDetection, uploadAndHandle]);
+      // jscanify 失败/没找到卡 → 居中 4:5 裁切兜底。
+      if (!outCanvas) {
+        const f = clampFrameSize(frame.width, frame.height);
+        const crop = 0.82;
+        const cw = f.sw * crop;
+        const ch = f.sh * crop;
+        canvas.width = 1000;
+        canvas.height = 1250;
+        canvas
+          .getContext('2d')
+          ?.drawImage(
+            frame,
+            f.sx + (f.sw - cw) / 2,
+            f.sy + (f.sh - ch) / 2,
+            cw,
+            ch,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          );
+        outCanvas = canvas;
+      }
 
-  // 实时找边一帧：在缩小帧上找卡片轮廓 → 画叠加框 + 动态引导 → 稳定合格则自动采集。
+      const url = outCanvas.toDataURL('image/jpeg', 0.95);
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], `scan-${Date.now()}.jpg`, {
+        type: 'image/jpeg',
+      });
+      await uploadAndHandle(file, url, false, captureMode);
+    },
+    [stopCamera, stopDetection, uploadAndHandle],
+  );
+
+  // 实时找边一帧：在缩小帧上找卡片轮廓 → 画叠加框与构图提示。最终快门必须由
+  // 用户主动触发，避免把稳定的包装盒、桌面边缘等误当谷子自动入库。
   const detectTick = useCallback(async () => {
     const st = detectRef.current;
     const schedule = () => {
@@ -552,27 +526,14 @@ export function RecognitionShell() {
       setGuide('把整张卡片放进取景框');
       setLocking(false);
       st.stable = 0;
+      st.autoBlocked = false;
       st.lastCenter = null;
       schedule();
       return;
     }
 
-    // 四边形面积（检测帧像素）与占比、中心。
-    const area =
-      Math.abs(
-        tl.x * tr.y -
-          tr.x * tl.y +
-          tr.x * br.y -
-          br.x * tr.y +
-          br.x * bl.y -
-          bl.x * br.y +
-          bl.x * tl.y -
-          tl.x * bl.y,
-      ) / 2;
-    const coverage = area / (dw * dh);
-    const cx = (tl.x + tr.x + br.x + bl.x) / 4;
-    const cy = (tl.y + tr.y + br.y + bl.y) / 4;
-    const offCenter = Math.hypot(cx / dw - 0.5, cy / dh - 0.5);
+    const evaluation = evaluateCardFrame(corners as ScannerCorners, dw, dh);
+    const { x: cx, y: cy } = evaluation.center;
 
     // 画叠加四边形（映射到 object-fit:cover 后的显示坐标）。
     if (octx) {
@@ -582,8 +543,7 @@ export function RecognitionShell() {
       const b = p(tr.x, tr.y);
       const c = p(br.x, br.y);
       const d = p(bl.x, bl.y);
-      const good = coverage >= 0.2 && coverage <= 0.9 && offCenter <= 0.22;
-      const color = good
+      const color = evaluation.good
         ? 'rgba(201, 75, 75, 0.95)'
         : 'rgba(242, 236, 224, 0.85)';
       octx.lineWidth = 3;
@@ -595,23 +555,31 @@ export function RecognitionShell() {
       octx.lineTo(c.x, c.y);
       octx.lineTo(d.x, d.y);
       octx.closePath();
-      if (good) octx.fill();
+      if (evaluation.good) octx.fill();
       octx.stroke();
     }
 
     // 构图判定与引导。
-    if (coverage < 0.2) {
+    if (evaluation.reason === 'small') {
       setGuide('把卡片靠近一点');
       setLocking(false);
       st.stable = 0;
-    } else if (coverage > 0.9) {
+      st.autoBlocked = false;
+    } else if (evaluation.reason === 'large') {
       setGuide('离远一点，让整张卡片进框');
       setLocking(false);
       st.stable = 0;
-    } else if (offCenter > 0.22) {
+      st.autoBlocked = false;
+    } else if (evaluation.reason === 'off-center') {
       setGuide('把卡片移到取景框中间');
       setLocking(false);
       st.stable = 0;
+      st.autoBlocked = false;
+    } else if (evaluation.reason === 'shape') {
+      setGuide('请对准一张完整、边缘清晰的卡片');
+      setLocking(false);
+      st.stable = 0;
+      st.autoBlocked = false;
     } else {
       // 需要“稳”：中心相对上一帧位移要小。
       const moved = st.lastCenter
@@ -624,10 +592,11 @@ export function RecognitionShell() {
         st.stable = 0;
       }
       setLocking(true);
-      setGuide('拿稳，正在自动采集…');
-      if (st.stable >= LOCK_FRAMES && !st.lockedShot) {
-        st.lockedShot = true;
-        void scan();
+      setGuide('拿稳，正在检查构图…');
+      if (st.stable >= LOCK_FRAMES && !st.autoBlocked) {
+        st.autoBlocked = true;
+        setGuide('已发现卡片，正在自动扫描…');
+        void scan('auto');
         return;
       }
     }
@@ -642,7 +611,6 @@ export function RecognitionShell() {
     if (st.running) return;
     st.running = true;
     st.stable = 0;
-    st.lockedShot = false;
     st.lastCenter = null;
     void ensureScanner().catch(() => undefined);
     st.timer = window.setTimeout(() => void detectTick(), 300);
@@ -707,11 +675,7 @@ export function RecognitionShell() {
           <div className="scanner__media scanner__media--native" />
         )}
         {useWebCamera && !shotUrl ? (
-          <canvas
-            aria-hidden
-            className="scanner__overlay"
-            ref={overlayRef}
-          />
+          <canvas aria-hidden className="scanner__overlay" ref={overlayRef} />
         ) : null}
         <div className="scanner__scrim" />
 
@@ -730,7 +694,7 @@ export function RecognitionShell() {
 
         {phase === 'live' || phase === 'starting' ? (
           <div
-            className={`scanner__frame${locking ? ' scanner__frame--locking' : ''}`}
+            className={`scanner__frame${locking ? 'scanner__frame--locking' : ''}`}
           >
             <span className="scanner__corner scanner__corner--tl" />
             <span className="scanner__corner scanner__corner--tr" />
@@ -744,7 +708,7 @@ export function RecognitionShell() {
                 ? '正在启动相机…'
                 : useWebCamera
                   ? guide
-                  : '点下方按钮开始扫描 · 对准卡片会自动找边、自动拍摄 · 正反面各扫一次'}
+                  : '点下方按钮开始扫描 · 对准卡片后会自动拍摄 · 正反面各扫一次'}
             </p>
           </div>
         ) : null}
@@ -786,7 +750,7 @@ export function RecognitionShell() {
           </button>
           {useWebCamera ? (
             <span className="scanner__bottom-note">
-              对准卡片会自动采集 · 也可手动按
+              发现完整卡片会自动扫描 · 也可手动按
             </span>
           ) : null}
         </div>
@@ -824,9 +788,13 @@ export function RecognitionShell() {
             >
               都不像，重新拍摄
             </button>
-            <Link className="scanner__btn" href="/me/collection#unverified">
-              暂存到谷柜
-            </Link>
+            <button
+              className="scanner__btn"
+              onClick={saveAsUnidentified}
+              type="button"
+            >
+              保存为未鉴定
+            </button>
           </div>
         </div>
       ) : done ? (
@@ -860,21 +828,35 @@ export function RecognitionShell() {
             </>
           ) : (
             <>
-              <p className="scanner__result-badge">已收入谷柜 · 未鉴定</p>
+              <p className="scanner__result-badge">
+                {result?.saved ? '已收入谷柜 · 未鉴定' : '未找到可靠候选'}
+              </p>
               <p className="scanner__result-sub scanner__result-sub--lead">
-                没匹配到官方谷子，已作为你的收藏保存；未鉴定项不会在公开主页展示。
+                {result?.saved
+                  ? '已按你的选择保存为未鉴定收藏，仅自己可见。'
+                  : '这张照片尚未保存。请确认画面里确实有谷子，再决定是否收入未鉴定收藏。'}
               </p>
               <div className="scanner__result-actions">
                 <button
-                  className="scanner__btn scanner__btn--primary"
+                  className={`scanner__btn${result?.saved ? 'scanner__btn--primary' : ''}`}
                   onClick={() => void startCamera()}
                   type="button"
                 >
-                  继续扫描
+                  {result?.saved ? '继续扫描' : '重新拍摄'}
                 </button>
-                <Link className="scanner__btn" href="/me/collection">
-                  去谷柜
-                </Link>
+                {result?.saved ? (
+                  <Link className="scanner__btn" href="/me/collection">
+                    去谷柜
+                  </Link>
+                ) : (
+                  <button
+                    className="scanner__btn"
+                    onClick={saveAsUnidentified}
+                    type="button"
+                  >
+                    保存为未鉴定
+                  </button>
+                )}
               </div>
             </>
           )}

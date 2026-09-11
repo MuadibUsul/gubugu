@@ -40,6 +40,11 @@ Drizzle / PostgreSQL
 
 隐藏入口不是授权。所有受限页面、Action 与 API 都必须在服务端再次校验。资料可见性由 `public / followers / private` 统一决定；private 只允许本人读取。
 
+生产数据库凭据分为迁移账号与 Web 运行账号。迁移账号持有 schema DDL；固定的
+`gubugu_app` 仅获 `public` schema 的 DML、sequence 和连接权限，并以 `BYPASSRLS`
+运行现有应用级授权。Web 进程不拥有 schema，也不能执行 DDL；RLS 验证仍由 CI 中的
+受限验证角色执行。
+
 ## 收藏点亮不变式
 
 - `user_goods.status = 'owned'` 只表示 SKU 已进入用户谷柜；`lit_at IS NULL` 是未点亮收藏，只有 `owned + lit_at IS NOT NULL` 才表示已由实物识别确认。

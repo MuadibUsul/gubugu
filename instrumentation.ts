@@ -3,6 +3,11 @@ export async function register() {
   // check in the runtime that actually reads the variables, and skips it on
   // the edge runtime where the server-only names are not available.
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // The deployment CPU cannot load sharp >=0.34. Block every decoder named
+    // by the upstream security advisories until the host can run a patched
+    // sharp/libvips build. JPG, PNG and WebP remain available.
+    await import('./server/sharp-security');
+
     const { env } = await import('./server/env');
 
     if (env.RECOGNITION_WARMUP === '1') {

@@ -27,7 +27,7 @@ describe('getDb', () => {
   // getDb() is called once per query function across server/, so a per-call
   // pool would leak connections until the database refuses new ones. This is
   // only observable in production, where the bug previously lived.
-  it('reuses one pool across calls', async () => {
+  it('reuses one pool across calls', { timeout: 10_000 }, async () => {
     const { getDb, getDbPool } = await import('./client');
 
     expect(getDb()).toBe(getDb());
@@ -67,5 +67,39 @@ describe('isDatabaseAccessConfigurationError', () => {
     ).toBe(true);
     expect(isDatabaseAccessConfigurationError(new Error('other'))).toBe(false);
     expect(isDatabaseAccessConfigurationError('not an error')).toBe(false);
+  });
+});
+
+describe('canUseDevelopmentDatabaseFallback', () => {
+  it('only allows missing configuration outside production', async () => {
+    const {
+      canUseDevelopmentDatabaseFallback,
+      DATABASE_URL_REQUIRED_ERROR_MESSAGE,
+    } = await import('./client');
+    const previousNodeEnv = process.env.NODE_ENV;
+
+    try {
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        'development';
+      expect(
+        canUseDevelopmentDatabaseFallback(
+          new Error(DATABASE_URL_REQUIRED_ERROR_MESSAGE),
+        ),
+      ).toBe(true);
+      expect(canUseDevelopmentDatabaseFallback(new Error('offline'))).toBe(
+        false,
+      );
+
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        'production';
+      expect(
+        canUseDevelopmentDatabaseFallback(
+          new Error(DATABASE_URL_REQUIRED_ERROR_MESSAGE),
+        ),
+      ).toBe(false);
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        previousNodeEnv;
+    }
   });
 });

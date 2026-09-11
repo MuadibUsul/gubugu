@@ -13,7 +13,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['{lib,server,drizzle}/**/*.test.ts'],
+    include: ['{app,components,lib,server,drizzle}/**/*.test.ts'],
     exclude: ['node_modules', '.next'],
   },
 });

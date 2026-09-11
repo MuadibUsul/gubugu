@@ -110,6 +110,7 @@ Copy `.env.example` to `.env.local` and configure:
 - `NEXT_PUBLIC_APP_NAME`
 - `APP_URL`（生产公开 HTTPS origin，本地可不配置）
 - `DATABASE_URL`
+- `APP_DATABASE_PASSWORD`（仅生产迁移任务使用，用于轮换无 DDL 权限的 Web 运行账号）
 - `LOCAL_AUTH_SECRET`（会话 cookie 的 HMAC 签名密钥，生产必填、至少 32 位）
 - `ADMIN_USER_EMAILS` / `ADMIN_USER_IDS`
 - `MODERATOR_USER_EMAILS` / `MODERATOR_USER_IDS`
@@ -132,7 +133,7 @@ Copy `.env.example` to `.env.local` and configure:
 
 生产环境已上线：<https://gubugu.tlines.tech>。图鉴、搜索、收藏点亮、扫描识别、完整换谷闭环、社区、通知与后台均已可用，应视为可运行的产品基线而非脚手架。
 
-当前主要缺口见 [docs/project-status.md](docs/project-status.md)：桌面宽屏信息架构尚未完成（底部 Tab 仍出现在大屏），识别阈值未配置化，首发内容覆盖不足。
+当前主要缺口见 [docs/project-status.md](docs/project-status.md)：识别质量仍需按真实设备标定，首发内容覆盖仍需持续扩充；桌面导航与宽屏容器已经完成。
 
 When implementing features, keep these constraints in mind:
 

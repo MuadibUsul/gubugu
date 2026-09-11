@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -32,10 +33,8 @@ jobs:
 
       - run: pnpm test
 
-      # The build reads no environment variables: server/env.ts is only loaded
-      # by instrumentation.ts at server start, and every data module falls back
-      # to empty state when DATABASE_URL is absent. So CI needs no secrets.
-      - run: pnpm build
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high --registry=https://registry.npmjs.org
 
   migrations:
     runs-on: ubuntu-latest
@@ -70,9 +69,17 @@ jobs:
 
       - run: pnpm db:seed
 
-      # The app connects as the table owner, which bypasses RLS, so nothing on
-      # the request path would notice if these policies broke.
+      # The Web role uses BYPASSRLS for the current server-side session model,
+      # so request-path tests alone would not notice if policies broke.
       - run: pnpm db:verify-rls
+
+      - run: pnpm db:verify-trade
+
+      - run: pnpm db:verify-lighting
+
+      # Exercise the real database-backed render path. A no-database build can
+      # succeed while SQL or schema assumptions are broken.
+      - run: pnpm build
 
       # A clean migrate must leave the schema matching drizzle/schema. If this
       # fails, someone edited the schema without generating a migration.
@@ -84,3 +91,28 @@ jobs:
             git diff --stat -- drizzle/migrations
             exit 1
           fi
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm cap:sync
+
+      - name: Test and bundle Android shell
+        run: ./android/gradlew -p android test bundleRelease

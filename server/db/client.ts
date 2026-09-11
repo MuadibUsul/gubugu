@@ -67,6 +67,18 @@ export function isDatabaseAccessConfigurationError(error: unknown) {
   );
 }
 
+/**
+ * Missing database configuration is an intentional local-development mode.
+ * Production failures must escape to an error boundary instead of rendering a
+ * convincing but empty catalogue with HTTP 200.
+ */
+export function canUseDevelopmentDatabaseFallback(error: unknown) {
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    isDatabaseAccessConfigurationError(error)
+  );
+}
+
 export type Database = ReturnType<typeof getDb>;
 export type DatabaseTransaction = Parameters<
   Parameters<Database['transaction']>[0]

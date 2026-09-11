@@ -14,7 +14,7 @@ import {
 } from '@/lib/search-params';
 import { getAuthUser } from '@/server/auth/session';
 import { getGoodsSearchPageData } from '@/server/data';
-import { isDatabaseAccessConfigurationError } from '@/server/db/client';
+import { canUseDevelopmentDatabaseFallback } from '@/server/db/client';
 import { isMobileRequest } from '@/server/device';
 
 export const metadata: Metadata = {
@@ -100,9 +100,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       authUser?.id,
     );
   } catch (error) {
-    if (!isDatabaseAccessConfigurationError(error)) {
-      console.error(error);
-    }
+    if (!canUseDevelopmentDatabaseFallback(error)) throw error;
 
     state = 'error';
   }

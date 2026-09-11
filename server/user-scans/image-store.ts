@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { normalizeAndStoreCatalogImage } from '@/server/catalog-crawler/image-store';
 
 export const USER_SCAN_ASSET_DIRECTORY = resolve(
+  /* turbopackIgnore: true */
   process.cwd(),
   process.env.USER_SCAN_ASSET_DIR ?? join('.data', 'user-scans'),
 );
@@ -28,5 +29,5 @@ export function userScanAssetPath(assetKey: string) {
     throw new Error('Invalid user scan asset key.');
   }
 
-  return join(USER_SCAN_ASSET_DIRECTORY, assetKey);
+  return join(/* turbopackIgnore: true */ USER_SCAN_ASSET_DIRECTORY, assetKey);
 }
