@@ -45,8 +45,8 @@ type ScanResult = {
 
 // 检测帧宽度：够找边又够快。
 const DETECT_W = 320;
-// 严格构图连续稳定约 1.6 秒后自动采集。
-const LOCK_FRAMES = 8;
+// 找到完整四边形且短暂稳定后自动采集。
+const LOCK_FRAMES = 5;
 
 export function RecognitionShell() {
   const router = useRouter();
@@ -440,11 +440,12 @@ export function RecognitionShell() {
 
       // 找边失败时仍允许手动快门，用框内中央区域兜底。
       if (!outCanvas) {
-        const crop = 0.82;
+        // source 比可见框多 4% 边距；这里收回边距并保持原始比例，不拉伸卡图。
+        const crop = 1 / 1.08;
         const cw = frame.width * crop;
         const ch = frame.height * crop;
-        canvas.width = 1000;
-        canvas.height = 1250;
+        canvas.width = Math.min(1000, Math.round(cw));
+        canvas.height = Math.round((ch * canvas.width) / cw);
         canvas
           .getContext('2d')
           ?.drawImage(
@@ -607,7 +608,7 @@ export function RecognitionShell() {
         ? Math.hypot((cx - st.lastCenter.x) / dw, (cy - st.lastCenter.y) / dh)
         : 1;
       st.lastCenter = { x: cx, y: cy };
-      if (moved < 0.03) {
+      if (moved < 0.05) {
         st.stable += 1;
       } else {
         st.stable = 0;

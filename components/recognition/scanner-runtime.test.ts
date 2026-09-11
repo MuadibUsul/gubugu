@@ -53,7 +53,7 @@ describe('scanner geometry', () => {
     ).toEqual({ sx: 0, sy: 0, sw: 500, sh: 700 });
   });
 
-  it('accepts a centred card and rejects broad or skewed rectangles', () => {
+  it('accepts real card perspective and rejects tiny or very thin rectangles', () => {
     expect(
       evaluateCardFrame(
         {
@@ -89,7 +89,7 @@ describe('scanner geometry', () => {
         320,
         240,
       ).reason,
-    ).toBe('small');
+    ).toBe('shape');
     expect(
       evaluateCardFrame(
         {
@@ -100,7 +100,19 @@ describe('scanner geometry', () => {
         },
         256,
         320,
+      ).good,
+    ).toBe(true);
+    expect(
+      evaluateCardFrame(
+        {
+          topLeftCorner: { x: 30, y: 100 },
+          topRightCorner: { x: 290, y: 100 },
+          bottomRightCorner: { x: 290, y: 150 },
+          bottomLeftCorner: { x: 30, y: 150 },
+        },
+        320,
+        240,
       ).reason,
-    ).toBe('shape');
+    ).toBe('small');
   });
 });

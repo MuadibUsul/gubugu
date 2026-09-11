@@ -69,20 +69,7 @@ function distance(a: ScannerPoint, b: ScannerPoint) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function cornerCosine(
-  before: ScannerPoint,
-  corner: ScannerPoint,
-  after: ScannerPoint,
-) {
-  const ax = before.x - corner.x;
-  const ay = before.y - corner.y;
-  const bx = after.x - corner.x;
-  const by = after.y - corner.y;
-  const denominator = Math.hypot(ax, ay) * Math.hypot(bx, by);
-  return denominator === 0 ? 1 : Math.abs((ax * bx + ay * by) / denominator);
-}
-
-/** Strict geometry gate for automatic capture; manual capture remains available. */
+/** Practical auto-capture gate; the detector already validates the quadrilateral. */
 export function evaluateCardFrame(
   corners: ScannerCorners,
   frameWidth: number,
@@ -111,11 +98,10 @@ export function evaluateCardFrame(
     center.y / frameHeight - 0.5,
   );
 
-  if (coverage < 0.45)
-    return { good: false, reason: 'small', coverage, center };
-  if (coverage > 0.96)
+  if (coverage < 0.3) return { good: false, reason: 'small', coverage, center };
+  if (coverage > 0.995)
     return { good: false, reason: 'large', coverage, center };
-  if (offCenter > 0.16) {
+  if (offCenter > 0.25) {
     return { good: false, reason: 'off-center', coverage, center };
   }
 
@@ -126,20 +112,8 @@ export function evaluateCardFrame(
   const width = (top + bottom) / 2;
   const height = (left + right) / 2;
   const shortLongRatio = Math.min(width, height) / Math.max(width, height);
-  const oppositeSidesBalanced =
-    Math.min(top, bottom) / Math.max(top, bottom) >= 0.78 &&
-    Math.min(left, right) / Math.max(left, right) >= 0.78;
-  const cornersAreSquare =
-    Math.max(
-      cornerCosine(bl, tl, tr),
-      cornerCosine(tl, tr, br),
-      cornerCosine(tr, br, bl),
-      cornerCosine(br, bl, tl),
-    ) <= 0.3;
-  // 谷子既有竖卡，也有接近正方形的色纸、拍立得和亚克力制品。
-  const cardLikeRatio = shortLongRatio >= 0.55;
-
-  if (!oppositeSidesBalanced || !cornersAreSquare || !cardLikeRatio) {
+  // 只排除明显的细长误检；透视、圆角、反光和接近正方形的谷子都允许。
+  if (shortLongRatio < 0.4) {
     return { good: false, reason: 'shape', coverage, center };
   }
   return { good: true, reason: 'good', coverage, center };
