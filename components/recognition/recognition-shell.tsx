@@ -436,8 +436,7 @@ export function RecognitionShell() {
     [stopCamera, stopDetection, uploadAndHandle],
   );
 
-  // 实时找边一帧：在缩小帧上找卡片轮廓 → 画叠加框与构图提示。最终快门必须由
-  // 用户主动触发，避免把稳定的包装盒、桌面边缘等误当谷子自动入库。
+  // 实时找边一帧：在缩小帧上找卡片轮廓 → 画叠加框与构图提示。
   const detectTick = useCallback(async () => {
     const st = detectRef.current;
     const schedule = () => {
@@ -456,7 +455,7 @@ export function RecognitionShell() {
 
     const cv = getReadyCv();
     if (!cv) {
-      setGuide('正在加载识别引擎…');
+      setGuide('首次加载识别引擎可能需要约 1 分钟…');
       schedule();
       return;
     }
@@ -612,7 +611,12 @@ export function RecognitionShell() {
     st.running = true;
     st.stable = 0;
     st.lastCenter = null;
-    void ensureScanner().catch(() => undefined);
+    void ensureScanner().catch(() => {
+      if (!st.running) return;
+      st.running = false;
+      setLocking(false);
+      setGuide('识别引擎加载失败，请检查网络后重新进入');
+    });
     st.timer = window.setTimeout(() => void detectTick(), 300);
   }, [detectTick, useWebCamera]);
 
