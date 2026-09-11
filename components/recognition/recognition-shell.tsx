@@ -7,10 +7,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { RecognitionCandidateCard } from '@/components/recognition/recognition-candidate-card';
 import {
-  clampFrameSize,
+  detectCardFrame,
   ensureScanner,
-  evaluateCardFrame,
-  expandSourceRect,
+  extractCardFrame,
   getCoverSourceRect,
   type ScannerCorners,
 } from '@/components/recognition/scanner-runtime';
@@ -43,17 +42,18 @@ type ScanResult = {
   saved?: boolean;
 };
 
-// 检测帧宽度：够找边又够快。
-const DETECT_W = 320;
-// Scanic 已验证完整四边形；命中一次即可采集，避免反光导致重复证明失败。
-const LOCK_FRAMES = 1;
+// 短连拍选最清晰的一帧，边界和原图始终成对保留。
+const LOCK_FRAMES = 3;
+type CardCapture = {
+  frame: HTMLCanvasElement;
+  corners: ScannerCorners;
+  sharpness: number;
+};
 
 export function RecognitionShell() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
-  const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const phaseRef = useRef<Phase>('starting');
   // startCamera 定义在 scanNative 之后；回退时用这个 ref 回调它，避开先用后声明。
@@ -64,13 +64,15 @@ export function RecognitionShell() {
     timer: number | null;
     stable: number;
     autoBlocked: boolean;
-    lastCenter: { x: number; y: number } | null;
+    lastCorners: ScannerCorners | null;
+    best: CardCapture | null;
   }>({
     running: false,
     timer: null,
     stable: 0,
     autoBlocked: false,
-    lastCenter: null,
+    lastCorners: null,
+    best: null,
   });
   const pendingScanFileRef = useRef<File | null>(null);
 
@@ -122,7 +124,8 @@ export function RecognitionShell() {
       st.timer = null;
     }
     st.stable = 0;
-    st.lastCenter = null;
+    st.lastCorners = null;
+    st.best = null;
     setLocking(false);
   }, []);
 
@@ -158,12 +161,6 @@ export function RecognitionShell() {
         if (!res.ok || !data?.ok) {
           setPhase('error');
           setErrorMessage(data?.message ?? '扫描失败，请重试。');
-          return;
-        }
-        if (captureMode === 'auto' && data.retry) {
-          detectRef.current.autoBlocked = true;
-          setGuide('没有发现可识别的谷子，请换个目标继续对准');
-          window.setTimeout(() => startCameraRef.current?.(), 700);
           return;
         }
         if (data.matched) {
@@ -367,273 +364,176 @@ export function RecognitionShell() {
     };
   }, [useWebCamera, startCamera, stopCamera]);
 
-  // 非原生快门：抓全帧 → Scanic 透视裁出卡片（失败回退居中裁切）→ 上传。
+  // 可见画面保留框外余量，用于寻找完整卡片边界。
+  const snapshot = useCallback(() => {
+    const video = videoRef.current;
+    const guideElement = frameRef.current;
+    if (!video?.videoWidth || !guideElement) return null;
+    const view = video.getBoundingClientRect();
+    const box = guideElement.getBoundingClientRect();
+    if (!view.width || !view.height || !box.width || !box.height) return null;
+    const source = getCoverSourceRect(
+      video.videoWidth,
+      video.videoHeight,
+      view.width,
+      view.height,
+      { x: 0, y: 0, width: view.width, height: view.height },
+    );
+    const frame = document.createElement('canvas');
+    frame.width = Math.min(1000, Math.round(source.sw));
+    frame.height = Math.round((source.sh * frame.width) / source.sw);
+    const ctx = frame.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(
+      video,
+      source.sx,
+      source.sy,
+      source.sw,
+      source.sh,
+      0,
+      0,
+      frame.width,
+      frame.height,
+    );
+    return {
+      frame,
+      guide: {
+        x: ((box.left - view.left) * frame.width) / view.width,
+        y: ((box.top - view.top) * frame.height) / view.height,
+        width: (box.width * frame.width) / view.width,
+        height: (box.height * frame.height) / view.height,
+      },
+    };
+  }, []);
+
+  // 自动采集裁切已验证的那一帧，不再对另一张照片重新找边。
   const scan = useCallback(
-    async (captureMode: 'manual' | 'auto' = 'manual') => {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      if (!video || !canvas || video.videoWidth === 0) return;
-
-      // 红框就是唯一识别区域：只截取框内画面，避免背景矩形干扰。
-      const frame = document.createElement('canvas');
-      const videoRect = video.getBoundingClientRect();
-      const guideRect = frameRef.current?.getBoundingClientRect();
-      const source = guideRect
-        ? expandSourceRect(
-            getCoverSourceRect(
-              video.videoWidth,
-              video.videoHeight,
-              videoRect.width,
-              videoRect.height,
-              {
-                x: guideRect.left - videoRect.left,
-                y: guideRect.top - videoRect.top,
-                width: guideRect.width,
-                height: guideRect.height,
-              },
-            ),
-            video.videoWidth,
-            video.videoHeight,
-          )
-        : clampFrameSize(video.videoWidth, video.videoHeight);
-      frame.width = Math.round(source.sw);
-      frame.height = Math.round(source.sh);
-      frame
-        .getContext('2d')
-        ?.drawImage(
-          video,
-          source.sx,
-          source.sy,
-          source.sw,
-          source.sh,
-          0,
-          0,
-          frame.width,
-          frame.height,
-        );
-
+    async (
+      captureMode: 'manual' | 'auto' = 'manual',
+      capture?: CardCapture,
+    ) => {
+      if (phaseRef.current !== 'live') return;
+      const shot = capture ? null : snapshot();
+      if (!capture && !shot) return;
+      phaseRef.current = 'scanning';
       stopDetection();
       stopCamera();
       setPhase('scanning');
       setErrorMessage(null);
-
-      let outCanvas: HTMLCanvasElement | null = null;
       try {
-        const scanner = await ensureScanner();
-        const result = await scanner.scan(frame, {
-          mode: 'extract',
-          output: 'canvas',
-          maxProcessingDimension: 720,
-          minArea: 1500,
-          minDocumentCoverageRatio: 0.18,
-          minDocumentFillRatio: 0.04,
-          minContourFitRatio: 0.08,
-          minRightAngleScore: 0.35,
-          maxDocumentAspectRatio: 3,
-        });
-        outCanvas = result.success
-          ? (result.output as HTMLCanvasElement | null)
-          : null;
-      } catch {
-        outCanvas = null;
-      }
-
-      // 找边失败时仍允许手动快门，用框内中央区域兜底。
-      if (!outCanvas) {
-        // source 比可见框多 4% 边距；这里收回边距并保持原始比例，不拉伸卡图。
-        const crop = 1 / 1.08;
-        const cw = frame.width * crop;
-        const ch = frame.height * crop;
-        canvas.width = Math.min(1000, Math.round(cw));
-        canvas.height = Math.round((ch * canvas.width) / cw);
-        canvas
-          .getContext('2d')
-          ?.drawImage(
-            frame,
-            (frame.width - cw) / 2,
-            (frame.height - ch) / 2,
-            cw,
-            ch,
-            0,
-            0,
-            canvas.width,
-            canvas.height,
+        const frame = capture?.frame ?? shot!.frame;
+        let corners = capture?.corners;
+        if (!corners && shot) {
+          const detected = await detectCardFrame(frame, shot.guide).catch(
+            () => null,
           );
-        outCanvas = canvas;
+          corners = detected?.corners;
+        }
+        let output: HTMLCanvasElement;
+        if (corners) {
+          output = await extractCardFrame(frame, corners);
+        } else {
+          // 手动快门找边失败时仍可保留框内原图。
+          output = document.createElement('canvas');
+          const guide = shot!.guide;
+          output.width = Math.round(guide.width);
+          output.height = Math.round(guide.height);
+          output
+            .getContext('2d')
+            ?.drawImage(
+              frame,
+              guide.x,
+              guide.y,
+              guide.width,
+              guide.height,
+              0,
+              0,
+              output.width,
+              output.height,
+            );
+        }
+        const url = output.toDataURL('image/jpeg', 0.95);
+        const blob = await (await fetch(url)).blob();
+        const file = new File([blob], `scan-${Date.now()}.jpg`, {
+          type: 'image/jpeg',
+        });
+        await uploadAndHandle(file, url, false, captureMode);
+      } catch (error) {
+        setPhase('error');
+        setErrorMessage(
+          error instanceof Error ? error.message : '卡片裁切失败，请重试。',
+        );
       }
-
-      const url = outCanvas.toDataURL('image/jpeg', 0.95);
-      const blob = await (await fetch(url)).blob();
-      const file = new File([blob], `scan-${Date.now()}.jpg`, {
-        type: 'image/jpeg',
-      });
-      await uploadAndHandle(file, url, false, captureMode);
     },
-    [stopCamera, stopDetection, uploadAndHandle],
+    [snapshot, stopCamera, stopDetection, uploadAndHandle],
   );
 
-  // 实时找边一帧：只在红框内找卡片轮廓 → 画叠加框与构图提示。
   const detectTick = useCallback(async () => {
     const st = detectRef.current;
     const schedule = () => {
-      if (st.running) {
+      if (st.running)
         st.timer = window.setTimeout(() => void detectTick(), 200);
-      }
     };
     if (!st.running || phaseRef.current !== 'live') return;
-
-    const video = videoRef.current;
-    const guideElement = frameRef.current;
-    if (!video || video.videoWidth === 0 || !guideElement) {
+    const shot = snapshot();
+    if (!shot) {
       schedule();
       return;
     }
-
-    let scanner: import('scanic').Scanner;
-    try {
-      scanner = await ensureScanner();
-    } catch {
-      schedule();
-      return;
-    }
-    if (!st.running || phaseRef.current !== 'live') return;
-
-    // 把可见红框反算到相机源画面，只缩放这一块做检测。
-    const videoRect = video.getBoundingClientRect();
-    const guideRect = guideElement.getBoundingClientRect();
-    const guide = {
-      x: guideRect.left - videoRect.left,
-      y: guideRect.top - videoRect.top,
-      width: guideRect.width,
-      height: guideRect.height,
-    };
-    const source = expandSourceRect(
-      getCoverSourceRect(
-        video.videoWidth,
-        video.videoHeight,
-        videoRect.width,
-        videoRect.height,
-        guide,
-      ),
-      video.videoWidth,
-      video.videoHeight,
+    const detected = await detectCardFrame(shot.frame, shot.guide).catch(
+      () => null,
     );
-    const dw = DETECT_W;
-    const dh = Math.max(1, Math.round((guide.height / guide.width) * dw));
-    const det =
-      detectCanvasRef.current ??
-      (detectCanvasRef.current = document.createElement('canvas'));
-    det.width = dw;
-    det.height = dh;
-    det
-      .getContext('2d')
-      ?.drawImage(
-        video,
-        source.sx,
-        source.sy,
-        source.sw,
-        source.sh,
-        0,
-        0,
-        dw,
-        dh,
-      );
-
-    let corners: ScannerCorners | null = null;
-    try {
-      const result = await scanner.scan(det, {
-        mode: 'detect',
-        maxProcessingDimension: DETECT_W,
-        minArea: 1500,
-        minDocumentCoverageRatio: 0.18,
-        minDocumentFillRatio: 0.04,
-        minContourFitRatio: 0.08,
-        minRightAngleScore: 0.35,
-        maxDocumentAspectRatio: 3,
-      });
-      if (result.success && result.corners) {
-        corners = {
-          topLeftCorner: result.corners.topLeft,
-          topRightCorner: result.corners.topRight,
-          bottomRightCorner: result.corners.bottomRight,
-          bottomLeftCorner: result.corners.bottomLeft,
-        };
-      }
-    } catch {
-      corners = null;
-    }
-
-    const tl = corners?.topLeftCorner;
-    const tr = corners?.topRightCorner;
-    const br = corners?.bottomRightCorner;
-    const bl = corners?.bottomLeftCorner;
-
-    if (!tl || !tr || !br || !bl) {
-      setGuide('把整张卡片放进取景框');
+    if (!st.running || phaseRef.current !== 'live') return;
+    if (!detected) {
+      st.stable = 0;
+      st.best = null;
+      st.lastCorners = null;
       setLocking(false);
-      st.stable = Math.max(0, st.stable - 1);
+      setGuide('将卡片放在框内，停一下即可');
       schedule();
       return;
     }
-
-    const evaluation = evaluateCardFrame(corners!, dw, dh);
-    const { x: cx, y: cy } = evaluation.center;
-
-    // 构图判定与引导。
-    if (evaluation.reason === 'small') {
-      setGuide('把卡片靠近一点');
-      setLocking(false);
-      st.stable = Math.max(0, st.stable - 1);
-    } else if (evaluation.reason === 'large') {
-      setGuide('离远一点，让整张卡片进框');
-      setLocking(false);
-      st.stable = Math.max(0, st.stable - 1);
-    } else if (evaluation.reason === 'off-center') {
-      setGuide('把卡片移到取景框中间');
-      setLocking(false);
-      st.stable = Math.max(0, st.stable - 1);
-    } else if (evaluation.reason === 'shape') {
-      setGuide('让卡片四条边都完整落在框内');
-      setLocking(false);
-      st.stable = Math.max(0, st.stable - 1);
-    } else {
-      // 需要“稳”：中心相对上一帧位移要小。
-      const moved = st.lastCenter
-        ? Math.hypot((cx - st.lastCenter.x) / dw, (cy - st.lastCenter.y) / dh)
-        : 0;
-      st.lastCenter = { x: cx, y: cy };
-      if (moved < 0.05) {
-        st.stable += 1;
-      } else {
-        st.stable = Math.max(0, st.stable - 1);
-      }
-      setLocking(true);
-      setGuide('拿稳，正在检查构图…');
-      if (st.stable >= LOCK_FRAMES && !st.autoBlocked) {
-        st.autoBlocked = true;
-        setGuide('已发现卡片，正在自动扫描…');
-        void scan('auto');
-        return;
-      }
+    const previous = st.lastCorners;
+    const moved = previous
+      ? Math.max(
+          ...Object.entries(detected.corners).map(([key, point]) => {
+            const last = previous[key as keyof ScannerCorners];
+            return Math.hypot(
+              (point.x - last.x) / shot.frame.width,
+              (point.y - last.y) / shot.frame.height,
+            );
+          }),
+        )
+      : 0;
+    st.lastCorners = detected.corners;
+    if (moved > 0.035) {
+      st.stable = 0;
+      st.best = null;
     }
-
+    st.stable += 1;
+    if (!st.best || detected.sharpness > st.best.sharpness) {
+      st.best = { frame: shot.frame, ...detected };
+    }
+    setLocking(true);
+    setGuide('拿稳，正在采集…');
+    if (st.stable >= LOCK_FRAMES && !st.autoBlocked) {
+      st.autoBlocked = true;
+      void scan('auto', st.best);
+      return;
+    }
     schedule();
-  }, [scan]);
+  }, [scan, snapshot]);
 
-  // 启动网页实时找边循环（有 GMS 的原生走 ML Kit，不需要）。
   const startDetection = useCallback(() => {
     if (!useWebCamera) return;
     const st = detectRef.current;
     if (st.running) return;
     st.running = true;
+    st.autoBlocked = false;
     st.stable = 0;
-    st.lastCenter = null;
-    void ensureScanner().catch(() => {
-      if (!st.running) return;
-      st.running = false;
-      setLocking(false);
-      setGuide('识别引擎加载失败，请检查网络后重新进入');
-    });
+    st.lastCorners = null;
+    st.best = null;
+    setGuide('将卡片放在框内，停一下即可');
     st.timer = window.setTimeout(() => void detectTick(), 300);
   }, [detectTick, useWebCamera]);
 
@@ -678,8 +578,6 @@ export function RecognitionShell() {
 
   return (
     <div className="scanner">
-      <canvas className="hidden" ref={canvasRef} />
-
       <div className="scanner__stage">
         {shotUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -711,10 +609,7 @@ export function RecognitionShell() {
         </div>
 
         {phase === 'live' || phase === 'starting' ? (
-          <div
-            className={`scanner__frame${locking ? 'scanner__frame--locking' : ''}`}
-            ref={frameRef}
-          >
+          <div className="scanner__frame" data-locking={locking} ref={frameRef}>
             <span className="scanner__corner scanner__corner--tl" />
             <span className="scanner__corner scanner__corner--tr" />
             <span className="scanner__corner scanner__corner--bl" />

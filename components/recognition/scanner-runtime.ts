@@ -1,5 +1,11 @@
 'use client';
 
+import {
+  cardSharpness,
+  findGuidedCardCorners,
+  type CardGuide,
+} from './card-edge-detector';
+
 export type ScannerPoint = { x: number; y: number };
 export type ScannerCorners = {
   topLeftCorner: ScannerPoint;
@@ -135,6 +141,82 @@ export function ensureScanner() {
     })();
   }
   return scannerPromise;
+}
+
+export async function detectCardFrame(
+  frame: HTMLCanvasElement,
+  guide: CardGuide,
+) {
+  const small = document.createElement('canvas');
+  small.width = 320;
+  small.height = Math.round((frame.height * small.width) / frame.width);
+  const ctx = small.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(frame, 0, 0, small.width, small.height);
+  const pixels = ctx.getImageData(0, 0, small.width, small.height);
+  const scaleX = small.width / frame.width,
+    scaleY = small.height / frame.height;
+  let corners = findGuidedCardCorners(pixels, {
+    x: guide.x * scaleX,
+    y: guide.y * scaleY,
+    width: guide.width * scaleX,
+    height: guide.height * scaleY,
+  });
+  if (!corners) {
+    const scanner = await ensureScanner();
+    const result = await scanner.scan(small, {
+      mode: 'detect',
+      maxProcessingDimension: 480,
+    });
+    if (result.success && result.corners && (result.confidence ?? 0) >= 0.7) {
+      corners = {
+        topLeftCorner: result.corners.topLeft,
+        topRightCorner: result.corners.topRight,
+        bottomLeftCorner: result.corners.bottomLeft,
+        bottomRightCorner: result.corners.bottomRight,
+      };
+    }
+  }
+  if (!corners || !evaluateCardFrame(corners, small.width, small.height).good)
+    return null;
+  // Border-touching detections often include a background object cut off by the camera.
+  if (
+    Object.values(corners).some(
+      (p) =>
+        p.x < 1 || p.y < 1 || p.x >= small.width - 1 || p.y >= small.height - 1,
+    )
+  )
+    return null;
+  const scale = (p: ScannerPoint) => ({ x: p.x / scaleX, y: p.y / scaleY });
+  return {
+    corners: {
+      topLeftCorner: scale(corners.topLeftCorner),
+      topRightCorner: scale(corners.topRightCorner),
+      bottomLeftCorner: scale(corners.bottomLeftCorner),
+      bottomRightCorner: scale(corners.bottomRightCorner),
+    },
+    sharpness: cardSharpness(pixels),
+  };
+}
+
+export async function extractCardFrame(
+  frame: HTMLCanvasElement,
+  corners: ScannerCorners,
+) {
+  const { extractDocument } = await import('scanic');
+  const result = await extractDocument(
+    frame,
+    {
+      topLeft: corners.topLeftCorner,
+      topRight: corners.topRightCorner,
+      bottomRight: corners.bottomRightCorner,
+      bottomLeft: corners.bottomLeftCorner,
+    },
+    { output: 'canvas' },
+  );
+  if (!result.success || !(result.output instanceof HTMLCanvasElement))
+    throw new Error('卡片裁切失败，请重新拍摄。');
+  return result.output;
 }
 
 export function mapCoverPoint(

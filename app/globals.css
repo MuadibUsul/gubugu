@@ -86,10 +86,10 @@
   transition: border-color 160ms var(--ease);
 }
 /* 锁定（构图合格、正在自动采集）时四角转金，提示“别动”。 */
-.scanner__frame--locking .scanner__corner {
+.scanner__frame[data-locking='true'] .scanner__corner {
   border-color: var(--kin);
 }
-.scanner__frame--locking {
+.scanner__frame[data-locking='true'] {
   border-color: var(--kin);
   box-shadow:
     0 0 0 999px rgba(16, 14, 12, 0.28),
