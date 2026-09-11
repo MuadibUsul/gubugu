@@ -631,7 +631,7 @@ export function RecognitionShell() {
       st.stable = 0;
       st.autoBlocked = false;
     } else if (evaluation.reason === 'shape') {
-      setGuide('请对准一张完整、边缘清晰的卡片');
+      setGuide('让卡片四条边都完整落在框内');
       setLocking(false);
       st.stable = 0;
       st.autoBlocked = false;

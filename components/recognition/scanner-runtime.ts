@@ -122,7 +122,8 @@ export function evaluateCardFrame(
       cornerCosine(tr, br, bl),
       cornerCosine(br, bl, tl),
     ) <= 0.3;
-  const cardLikeRatio = shortLongRatio >= 0.55 && shortLongRatio <= 0.86;
+  // 谷子既有竖卡，也有接近正方形的色纸、拍立得和亚克力制品。
+  const cardLikeRatio = shortLongRatio >= 0.55;
 
   if (!oppositeSidesBalanced || !cornersAreSquare || !cardLikeRatio) {
     return { good: false, reason: 'shape', coverage, center };

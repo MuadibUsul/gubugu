@@ -59,6 +59,18 @@ describe('scanner geometry', () => {
     expect(
       evaluateCardFrame(
         {
+          topLeftCorner: { x: 28, y: 60 },
+          topRightCorner: { x: 228, y: 60 },
+          bottomRightCorner: { x: 228, y: 260 },
+          bottomLeftCorner: { x: 28, y: 260 },
+        },
+        256,
+        320,
+      ).good,
+    ).toBe(true);
+    expect(
+      evaluateCardFrame(
+        {
           topLeftCorner: { x: 30, y: 70 },
           topRightCorner: { x: 290, y: 70 },
           bottomRightCorner: { x: 290, y: 170 },
