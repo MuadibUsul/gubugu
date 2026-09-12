@@ -1,7 +1,8 @@
 // 谷布谷 PWA Service Worker（手写，无构建依赖）。
-// 缓存策略：静态资源与目录图 cache-first；导航 network-first + 离线兜底；/api/v1 GET 走 SWR。
+// 缓存策略：静态资源与目录图 cache-first；导航 network-first + 离线兜底。
+// 登录态 API 绝不进入共享缓存，否则同一设备切换账号时可能读到前一账号的数据。
 // 改缓存逻辑时把版本号 +1，activate 会清掉旧缓存。
-const VERSION = 'gbg-v4';
+const VERSION = 'gbg-v5';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const OFFLINE_URL = '/offline';
@@ -87,11 +88,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 优化后的图片与只读 API：stale-while-revalidate。
-  if (
-    url.pathname.startsWith('/_next/image') ||
-    url.pathname.startsWith('/api/v1/')
-  ) {
+  // 优化后的公开图片：stale-while-revalidate。
+  if (url.pathname.startsWith('/_next/image')) {
     event.respondWith(staleWhileRevalidate(request, RUNTIME_CACHE));
   }
 });

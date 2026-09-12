@@ -7,8 +7,10 @@ on:
     types: [completed]
 
 concurrency:
-  group: deploy-${{ github.event.workflow_run.head_sha }}
-  cancel-in-progress: true
+  # 所有生产发布共用一把锁。不同 SHA 不能同时修改同一份 .env、容器和镜像。
+  group: gubugu-production-deploy
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   build-and-deploy:
@@ -106,8 +108,13 @@ jobs:
             set -euo pipefail
             cd "${{ secrets.DEPLOY_DIR }}"
 
+            # GitHub concurrency 防正常流水线并发；宿主机文件锁同时防手动发布撞车。
+            exec 9>.deploy.lock
+            flock -w 900 9
+
             # 用本次构建的不可变 sha 标签覆盖 .env 里的镜像坐标。
             touch .env
+            cp .env .env.previous
             grep -v -E '^(WEB_IMAGE|MIGRATOR_IMAGE)=' .env > .env.next || true
             echo "WEB_IMAGE=${WEB_IMAGE}" >> .env.next
             echo "MIGRATOR_IMAGE=${MIGRATOR_IMAGE}" >> .env.next
@@ -129,7 +136,10 @@ jobs:
 
             docker compose pull
             # migrate 是一次性服务；up -d 会先跑它成功后再起 web。
-            docker compose up -d --remove-orphans
+            docker compose up -d --remove-orphans --wait --wait-timeout 360
+
+            # readiness 之外再走一次真实页面渲染；二者都成功才清理旧镜像。
+            docker compose exec -T web node -e "Promise.all(['/api/health/ready','/'].map(path=>fetch('http://127.0.0.1:3000'+path).then(r=>{if(!r.ok)throw new Error(path+' returned '+r.status)})))"
 
             # 只清理本项目的旧镜像。绝不能用 `docker image prune -a`：同机的
             # tline 有大量按 sha 标记、当前未运行的镜像，那样会一并删掉。

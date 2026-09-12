@@ -153,12 +153,18 @@ docker compose ps                 # 看状态与健康检查
 docker compose restart web        # 重启网站
 ```
 
-- **回滚**：把 `.env` 里 `WEB_IMAGE`/`MIGRATOR_IMAGE` 改回上一个 sha 标签，再
+- **发布验收**：生产发布全局串行，服务器也使用 `.deploy.lock` 防止手动发布撞车；
+  `docker compose up` 必须等 readiness 和首页成功，之后才清理旧镜像。
+- **回滚**：每次发布前的配置保存在 `.env.previous`。确认迁移与旧应用兼容后，把
+  `.env` 里的 `WEB_IMAGE`/`MIGRATOR_IMAGE` 改回上一个 sha 标签，再
   `docker compose up -d`。GHCR 保留历史镜像。
 - **每日备份**：部署会同步 `ops/backup-production.sh`，在宿主机配置 cron：
   ```bash
   20 3 * * * cd /absolute/path/to/gubugu && sh ./ops/backup-production.sh /absolute/path/to/backups >> /var/log/gubugu-backup.log 2>&1
   ```
+- 备份目录会设为 `0700`；脚本使用执行锁防止 cron 重叠，先写临时文件，数据库与
+  压缩包校验通过后才原子改名。过期清理只处理四种 `gubugu` 备份文件名，不清理目录中
+  的其他文件。脚本失败会返回非零状态，应由宿主机 cron/监控发送告警。
 - 脚本保留 30 天 PostgreSQL custom dump 和三类资产卷快照。每季度在隔离的
   Compose 项目中执行一次恢复演练，并核对资产压缩包可解压：
   ```bash
