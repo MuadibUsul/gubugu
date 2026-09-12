@@ -49,6 +49,7 @@ export async function POST(request: Request) {
 
   const image = formData.get('image');
   const saveUnidentified = formData.get('saveUnidentified') === 'true';
+  const previewOnly = formData.get('previewOnly') === 'true';
   const captureMode =
     formData.get('captureMode') === 'auto' ? 'auto' : 'manual';
   if (!(image instanceof File) || image.size <= 0) {
@@ -73,6 +74,23 @@ export async function POST(request: Request) {
     const top = response.candidates[0];
     const tier = gradeRecognition(top?.score);
     const score = top ? Math.round(top.score * 100) : null;
+
+    // 连续扫描先收集与核对，用户点“保存”后才点亮或写入私人收藏。
+    if (previewOnly) {
+      return NextResponse.json(
+        {
+          ok: true,
+          requestId: response.requestId,
+          score,
+          candidates:
+            response.pipeline.provider === 'embedding-search' &&
+            tier !== 'unidentified'
+              ? response.candidates.slice(0, 3)
+              : [],
+        },
+        { headers: { 'Cache-Control': 'private, no-store' } },
+      );
+    }
 
     if (tier === 'auto-light' && top) {
       // 与手动确认完全同路：资格、过期、幂等、SKU 解析、审计、成就、缓存刷新

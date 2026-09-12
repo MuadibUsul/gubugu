@@ -14,6 +14,51 @@ export type ScannerCorners = {
   bottomLeftCorner: ScannerPoint;
 };
 
+/** Small colour sample inside the detected card, independent of its screen position. */
+export function fingerprintCard(
+  frame: HTMLCanvasElement,
+  corners: ScannerCorners,
+) {
+  const ctx = frame.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return [];
+  const { data } = ctx.getImageData(0, 0, frame.width, frame.height);
+  const values: number[] = [];
+  const {
+    topLeftCorner: tl,
+    topRightCorner: tr,
+    bottomLeftCorner: bl,
+    bottomRightCorner: br,
+  } = corners;
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      const u = 0.15 + (x / 7) * 0.7,
+        v = 0.15 + (y / 7) * 0.7;
+      const px = Math.max(
+        0,
+        Math.min(
+          frame.width - 1,
+          Math.round(
+            (tl.x * (1 - u) + tr.x * u) * (1 - v) +
+              (bl.x * (1 - u) + br.x * u) * v,
+          ),
+        ),
+      );
+      const py = Math.max(
+        0,
+        Math.min(
+          frame.height - 1,
+          Math.round(
+            (tl.y * (1 - u) + tr.y * u) * (1 - v) +
+              (bl.y * (1 - u) + br.y * u) * v,
+          ),
+        ),
+      );
+      const i = (py * frame.width + px) * 4;
+      values.push(data[i], data[i + 1], data[i + 2]);
+    }
+  return values;
+}
+
 export type CardFrameEvaluation = {
   good: boolean;
   reason: 'small' | 'large' | 'off-center' | 'shape' | 'good';

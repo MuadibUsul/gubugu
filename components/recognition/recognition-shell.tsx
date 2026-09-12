@@ -10,10 +10,12 @@ import {
   detectCardFrame,
   ensureScanner,
   extractCardFrame,
+  fingerprintCard,
   getCoverSourceRect,
   type ScannerCorners,
 } from '@/components/recognition/scanner-runtime';
 import type { RecognitionCandidate } from '@/lib/recognition';
+import { frameChanged } from '@/lib/scan-batch';
 import { confirmRecognitionCandidateAction } from '@/server/recognition/actions';
 
 // 卡片采集分平台：
@@ -50,12 +52,26 @@ type CardCapture = {
   sharpness: number;
 };
 
-export function RecognitionShell() {
+export function RecognitionShell({
+  onCapture,
+  previousFrame,
+  title,
+  onClose,
+}: {
+  onCapture?: (file: File, url: string, fingerprint: number[]) => void;
+  previousFrame?: number[];
+  title?: string;
+  onClose?: () => void;
+} = {}) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const cameraGenerationRef = useRef(0);
   const phaseRef = useRef<Phase>('starting');
+  const previousFrameRef = useRef(previousFrame);
+  const absentFramesRef = useRef(0);
+  const captureFingerprintRef = useRef<number[]>([]);
   // startCamera 定义在 scanNative 之后；回退时用这个 ref 回调它，避开先用后声明。
   const startCameraRef = useRef<(() => void) | null>(null);
   // 实时找边循环的状态。放 ref 里，避免每帧触发 re-render。
@@ -130,6 +146,7 @@ export function RecognitionShell() {
   }, []);
 
   const stopCamera = useCallback(() => {
+    cameraGenerationRef.current += 1;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -143,6 +160,10 @@ export function RecognitionShell() {
       saveUnidentified = false,
       captureMode: 'manual' | 'auto' = 'manual',
     ) => {
+      if (onCapture && previewUrl) {
+        onCapture(file, previewUrl, captureFingerprintRef.current);
+        return;
+      }
       pendingScanFileRef.current = file;
       setShotUrl(previewUrl);
       setPhase('scanning');
@@ -195,7 +216,7 @@ export function RecognitionShell() {
         );
       }
     },
-    [],
+    [onCapture],
   );
 
   const saveAsUnidentified = useCallback(() => {
@@ -278,6 +299,7 @@ export function RecognitionShell() {
     }
     setPhase('starting');
     stopCamera();
+    const generation = cameraGenerationRef.current;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
@@ -287,6 +309,10 @@ export function RecognitionShell() {
           height: { ideal: 1920 },
         },
       });
+      if (generation !== cameraGenerationRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -418,6 +444,7 @@ export function RecognitionShell() {
       phaseRef.current = 'scanning';
       stopDetection();
       stopCamera();
+      const generation = cameraGenerationRef.current;
       setPhase('scanning');
       setErrorMessage(null);
       try {
@@ -431,11 +458,21 @@ export function RecognitionShell() {
         }
         let output: HTMLCanvasElement;
         if (corners) {
+          captureFingerprintRef.current = fingerprintCard(frame, corners);
           output = await extractCardFrame(frame, corners);
         } else {
           // 手动快门找边失败时仍可保留框内原图。
           output = document.createElement('canvas');
           const guide = shot!.guide;
+          captureFingerprintRef.current = fingerprintCard(frame, {
+            topLeftCorner: { x: guide.x, y: guide.y },
+            topRightCorner: { x: guide.x + guide.width, y: guide.y },
+            bottomRightCorner: {
+              x: guide.x + guide.width,
+              y: guide.y + guide.height,
+            },
+            bottomLeftCorner: { x: guide.x, y: guide.y + guide.height },
+          });
           output.width = Math.round(guide.width);
           output.height = Math.round(guide.height);
           output
@@ -454,6 +491,7 @@ export function RecognitionShell() {
         }
         const url = output.toDataURL('image/jpeg', 0.95);
         const blob = await (await fetch(url)).blob();
+        if (generation !== cameraGenerationRef.current) return;
         const file = new File([blob], `scan-${Date.now()}.jpg`, {
           type: 'image/jpeg',
         });
@@ -485,11 +523,28 @@ export function RecognitionShell() {
     );
     if (!st.running || phaseRef.current !== 'live') return;
     if (!detected) {
+      absentFramesRef.current += 1;
+      if (absentFramesRef.current >= 2) previousFrameRef.current = undefined;
       st.stable = 0;
       st.best = null;
       st.lastCorners = null;
       setLocking(false);
       setGuide('将卡片放在框内，停一下即可');
+      schedule();
+      return;
+    }
+    absentFramesRef.current = 0;
+    if (
+      previousFrameRef.current &&
+      !frameChanged(
+        previousFrameRef.current,
+        fingerprintCard(shot.frame, detected.corners),
+      )
+    ) {
+      st.stable = 0;
+      st.best = null;
+      setLocking(false);
+      setGuide('已拍好，请换下一件或补拍背面');
       schedule();
       return;
     }
@@ -599,12 +654,12 @@ export function RecognitionShell() {
           <button
             aria-label="返回"
             className="scanner__icon"
-            onClick={() => router.back()}
+            onClick={() => (onClose ? onClose() : router.back())}
             type="button"
           >
             ✕
           </button>
-          <span className="scanner__title">扫描点亮</span>
+          <span className="scanner__title">{title ?? '扫描点亮'}</span>
           <span className="scanner__icon scanner__icon--ghost" aria-hidden />
         </div>
 

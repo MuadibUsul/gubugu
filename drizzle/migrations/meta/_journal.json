@@ -211,6 +211,13 @@
       "when": 1788517398199,
       "tag": "0029_warm_dormammu",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789230881993,
+      "tag": "0030_watery_talisman",
+      "breakpoints": true
     }
   ]
 }

@@ -3,28 +3,28 @@ import 'server-only';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { userScans } from '@/drizzle/schema';
+import { goods, recognitionAttempts, userScans } from '@/drizzle/schema';
 import { getDb } from '@/server/db/client';
 
 export type UserScanItem = {
   id: string;
   imageUrl: string;
+  backImageUrl: string | null;
+  goodsName: string | null;
+  resolved: boolean;
   topScore: number | null;
   note: string | null;
   createdAt: Date;
 };
 
 /**
- * 某用户尚未归属的未鉴定收藏项（扫到实物但没匹配上官方 SKU）。仅本人可见，不进
- * 公开主页，也不构成换谷库存。
- *
- * 已经通过候选确认归属到 SKU 的扫描（`resolved_at` 非空）不再出现在这里：那张原图
- * 仍保留作识别审计，但它已经变成一件正常的已点亮藏品，再列进「待鉴定」只会让人
- * 以为还需要处理。
+ * 本人的私密实拍收藏，不进公开主页，也不单独构成换谷库存。
+ * 默认仅返回未鉴定项；谷柜传 includeResolved 同时展示已归属藏品的实拍正反面。
  */
 export async function listUserScans(
   userId: string,
   limit = 60,
+  includeResolved = false,
 ): Promise<UserScanItem[]> {
   const rows = await getDb()
     .select({
@@ -32,22 +32,40 @@ export async function listUserScans(
       topScore: userScans.topScore,
       note: userScans.note,
       createdAt: userScans.createdAt,
+      backAssetKey: userScans.backAssetKey,
+      resolvedAt: userScans.resolvedAt,
+      goodsName: goods.name,
     })
     .from(userScans)
-    .where(and(eq(userScans.userId, userId), isNull(userScans.resolvedAt)))
+    .leftJoin(
+      recognitionAttempts,
+      eq(recognitionAttempts.id, userScans.recognitionAttemptId),
+    )
+    .leftJoin(goods, eq(goods.id, recognitionAttempts.confirmedGoodsId))
+    .where(
+      and(
+        eq(userScans.userId, userId),
+        includeResolved ? undefined : isNull(userScans.resolvedAt),
+      ),
+    )
     .orderBy(desc(userScans.createdAt))
     .limit(limit);
 
-  return rows.map((row) => ({
+  return rows.map(({ backAssetKey, resolvedAt, ...row }) => ({
     ...row,
     // 私密资产没有公开静态 URL，只能经鉴权路由读取。
     imageUrl: `/api/user-scans/${row.id}/image`,
+    backImageUrl: backAssetKey
+      ? `/api/user-scans/${row.id}/image?side=back`
+      : null,
+    resolved: Boolean(resolvedAt),
   }));
 }
 
 const ownedScanInputSchema = z.object({
   scanId: z.string().uuid(),
   userId: z.string().uuid(),
+  side: z.enum(['front', 'back']).default('front'),
 });
 
 /**
@@ -59,11 +77,13 @@ const ownedScanInputSchema = z.object({
 export async function getOwnedUserScanAssetKey(
   input: z.input<typeof ownedScanInputSchema>,
 ): Promise<string | null> {
-  const { scanId, userId } = ownedScanInputSchema.parse(input);
+  const { scanId, userId, side } = ownedScanInputSchema.parse(input);
 
   const row = (
     await getDb()
-      .select({ assetKey: userScans.assetKey })
+      .select({
+        assetKey: side === 'back' ? userScans.backAssetKey : userScans.assetKey,
+      })
       .from(userScans)
       .where(and(eq(userScans.id, scanId), eq(userScans.userId, userId)))
       .limit(1)

@@ -17,7 +17,7 @@ type UserScanImageRouteProps = {
 };
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: UserScanImageRouteProps,
 ) {
   const user = await getAuthUser();
@@ -25,11 +25,16 @@ export async function GET(
 
   const parsedId = scanIdSchema.safeParse((await params).scanId);
   if (!parsedId.success) return new NextResponse(null, { status: 404 });
+  const side = z
+    .enum(['front', 'back'])
+    .safeParse(new URL(request.url).searchParams.get('side') ?? 'front');
+  if (!side.success) return new NextResponse(null, { status: 404 });
 
   // 不存在与不属于本人都走这里：一律 404，不透露资源是否存在。
   const assetKey = await getOwnedUserScanAssetKey({
     scanId: parsedId.data,
     userId: user.id,
+    side: side.data,
   });
   if (!assetKey) return new NextResponse(null, { status: 404 });
 
@@ -38,7 +43,7 @@ export async function GET(
 
     return new Response(bytes, {
       headers: {
-        'Cache-Control': 'private, max-age=3600',
+        'Cache-Control': 'private, no-store',
         'Content-Length': String(bytes.byteLength),
         'Content-Type': 'image/webp',
         'X-Content-Type-Options': 'nosniff',

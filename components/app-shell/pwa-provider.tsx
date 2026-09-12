@@ -2,6 +2,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 // 注册 Service Worker + 安装引导。挂在根 layout（可水合）里。
@@ -20,6 +21,7 @@ function isStandalone() {
 }
 
 export function PwaProvider() {
+  const pathname = usePathname();
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
   const [iosHint, setIosHint] = useState(false);
 
@@ -64,7 +66,8 @@ export function PwaProvider() {
     };
   }, []);
 
-  if (!deferred && !iosHint) return null;
+  // Do not cover the capture/review controls with an installation prompt.
+  if (pathname === '/recognition' || (!deferred && !iosHint)) return null;
 
   const dismiss = () => {
     localStorage.setItem(DISMISS_KEY, '1');

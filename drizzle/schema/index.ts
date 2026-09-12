@@ -665,6 +665,8 @@ export const userScans = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     userId: uuid('user_id').notNull(),
     assetKey: text('image_url').notNull(),
+    backAssetKey: text('back_asset_key'),
+    captureId: uuid('capture_id'),
     recognitionAttemptId: uuid('recognition_attempt_id').references(
       () => recognitionAttempts.id,
       { onDelete: 'set null', onUpdate: 'cascade' },
@@ -681,6 +683,10 @@ export const userScans = pgTable(
   },
   (table) => [
     index('user_scans_user_id_idx').on(table.userId),
+    uniqueIndex('user_scans_user_capture_unique').on(
+      table.userId,
+      table.captureId,
+    ),
     uniqueIndex('user_scans_recognition_attempt_id_unique').on(
       table.recognitionAttemptId,
     ),

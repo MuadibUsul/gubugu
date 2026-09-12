@@ -70,140 +70,14 @@ export async function confirmRecognitionAttempt({
   /** 由未鉴定项发起的确认：确认成功后把该扫描标记为已归属。 */
   scanId?: string;
 }): Promise<ConfirmRecognitionResult> {
-  const result = await getDb().transaction(async (tx) => {
-    const attempt = (
-      await tx
-        .select({
-          id: recognitionAttempts.id,
-          source: recognitionAttempts.source,
-          provider: recognitionAttempts.provider,
-          candidateMap: recognitionAttempts.candidateMap,
-          expiresAt: recognitionAttempts.expiresAt,
-          confirmedCandidateId: recognitionAttempts.confirmedCandidateId,
-          confirmedGoodsId: recognitionAttempts.confirmedGoodsId,
-          confirmedAt: recognitionAttempts.confirmedAt,
-        })
-        .from(recognitionAttempts)
-        .where(
-          and(
-            eq(recognitionAttempts.id, requestId),
-            eq(recognitionAttempts.userId, userId),
-          ),
-        )
-        .limit(1)
-        // 行锁：同一次 attempt 的并发确认在这里串行化，避免重复点亮。
-        .for('update')
-    )[0];
-
-    if (!attempt) {
-      return failure('NOT_FOUND', '识别记录不存在或不属于当前账号。');
-    }
-    if (
-      !isRecognitionAttemptEligible({
-        source: attempt.source,
-        provider: attempt.provider,
-      })
-    ) {
-      return failure(
-        'NOT_ELIGIBLE',
-        '只有实时相机产生的真实图像匹配可以点亮收藏。',
-      );
-    }
-    if (attempt.expiresAt.getTime() <= Date.now()) {
-      return failure('EXPIRED', '这次识别已经过期，请重新扫描。');
-    }
-
-    // 幂等：重复提交同一候选返回既有结果，换候选则拒绝。
-    if (attempt.confirmedAt) {
-      if (
-        attempt.confirmedCandidateId !== candidateId ||
-        !attempt.confirmedGoodsId
-      ) {
-        return failure('ALREADY_CONFIRMED', '这次识别已经确认过其他候选。');
-      }
-
-      const confirmedGoods = (
-        await tx
-          .select({ slug: goods.slug })
-          .from(goods)
-          .where(eq(goods.id, attempt.confirmedGoodsId))
-          .limit(1)
-      )[0];
-
-      return confirmedGoods
-        ? {
-            success: true as const,
-            goodsSlug: confirmedGoods.slug,
-            confirmedAt: attempt.confirmedAt.toISOString(),
-            alreadyConfirmed: true,
-          }
-        : failure('GOODS_UNAVAILABLE', '对应的 SKU 已不可用。');
-    }
-
-    const candidateMap = recognitionCandidateMapSchema.safeParse(
-      attempt.candidateMap,
-    );
-    if (!candidateMap.success) {
-      return failure('INTERNAL_ERROR', '识别候选记录已损坏。');
-    }
-    const goodsId = candidateMap.data[candidateId];
-    if (!goodsId) {
-      return failure('INVALID_CANDIDATE', '该候选不属于这次识别。');
-    }
-
-    const selectedGoods = (
-      await tx
-        .select({ id: goods.id, slug: goods.slug })
-        .from(goods)
-        .where(and(eq(goods.id, goodsId), eq(goods.status, 'published')))
-        .limit(1)
-    )[0];
-    if (!selectedGoods) {
-      return failure('GOODS_UNAVAILABLE', '对应的 SKU 已不可用。');
-    }
-
-    const confirmedAt = new Date();
-
-    await tx
-      .insert(userGoods)
-      .values({
-        userId,
-        goodsId: selectedGoods.id,
-        status: 'owned',
-        litAt: confirmedAt,
-      })
-      .onConflictDoUpdate({
-        target: [userGoods.userId, userGoods.goodsId, userGoods.status],
-        // 不改变数量，也保留第一次点亮时间。
-        set: { litAt: sql`coalesce(${userGoods.litAt}, excluded.lit_at)` },
-      });
-
-    await tx
-      .update(recognitionAttempts)
-      .set({
-        confirmedCandidateId: candidateId,
-        confirmedGoodsId: selectedGoods.id,
-        confirmedAt,
-        updatedAt: confirmedAt,
-      })
-      .where(eq(recognitionAttempts.id, attempt.id));
-
-    // 从未鉴定项确认而来：留下原图作识别审计，但不再显示为待鉴定。
-    if (scanId) {
-      await tx
-        .update(userScans)
-        .set({ resolvedAt: confirmedAt, updatedAt: confirmedAt })
-        .where(and(eq(userScans.id, scanId), eq(userScans.userId, userId)));
-    }
-
-    return {
-      success: true as const,
-      goodsId: selectedGoods.id,
-      goodsSlug: selectedGoods.slug,
-      confirmedAt: confirmedAt.toISOString(),
-      alreadyConfirmed: false,
-    };
-  });
+  const result = await getDb().transaction((tx) =>
+    confirmRecognitionInTransaction(tx, {
+      userId,
+      requestId,
+      candidateId,
+      scanId,
+    }),
+  );
 
   if (!result.success) {
     return result;
@@ -229,5 +103,176 @@ export async function confirmRecognitionAttempt({
     goodsSlug: result.goodsSlug,
     confirmedAt: result.confirmedAt,
     alreadyConfirmed: result.alreadyConfirmed,
+  };
+}
+
+export type RecognitionTransaction = Parameters<
+  Parameters<ReturnType<typeof getDb>['transaction']>[0]
+>[0];
+
+/** Shared locked confirmation for single scans and atomic batch-item saves. */
+export async function confirmRecognitionInTransaction(
+  tx: RecognitionTransaction,
+  {
+    userId,
+    requestId,
+    candidateId,
+    scanId,
+  }: {
+    userId: string;
+    requestId: string;
+    candidateId: string;
+    scanId?: string;
+  },
+) {
+  const attempt = (
+    await tx
+      .select({
+        id: recognitionAttempts.id,
+        source: recognitionAttempts.source,
+        provider: recognitionAttempts.provider,
+        candidateMap: recognitionAttempts.candidateMap,
+        expiresAt: recognitionAttempts.expiresAt,
+        confirmedCandidateId: recognitionAttempts.confirmedCandidateId,
+        confirmedGoodsId: recognitionAttempts.confirmedGoodsId,
+        confirmedAt: recognitionAttempts.confirmedAt,
+      })
+      .from(recognitionAttempts)
+      .where(
+        and(
+          eq(recognitionAttempts.id, requestId),
+          eq(recognitionAttempts.userId, userId),
+        ),
+      )
+      .limit(1)
+      // 行锁：同一次 attempt 的并发确认在这里串行化，避免重复点亮。
+      .for('update')
+  )[0];
+
+  if (!attempt) {
+    return failure('NOT_FOUND', '识别记录不存在或不属于当前账号。');
+  }
+  if (
+    !isRecognitionAttemptEligible({
+      source: attempt.source,
+      provider: attempt.provider,
+    })
+  ) {
+    return failure(
+      'NOT_ELIGIBLE',
+      '只有实时相机产生的真实图像匹配可以点亮收藏。',
+    );
+  }
+  if (attempt.expiresAt.getTime() <= Date.now()) {
+    return failure('EXPIRED', '这次识别已经过期，请重新扫描。');
+  }
+
+  // 幂等：重复提交同一候选返回既有结果，换候选则拒绝。
+  if (attempt.confirmedAt) {
+    if (
+      attempt.confirmedCandidateId !== candidateId ||
+      !attempt.confirmedGoodsId
+    ) {
+      return failure('ALREADY_CONFIRMED', '这次识别已经确认过其他候选。');
+    }
+
+    const confirmedGoods = (
+      await tx
+        .select({ slug: goods.slug })
+        .from(goods)
+        .where(eq(goods.id, attempt.confirmedGoodsId))
+        .limit(1)
+    )[0];
+
+    if (confirmedGoods && scanId) {
+      await tx
+        .update(userScans)
+        .set({ resolvedAt: attempt.confirmedAt, updatedAt: new Date() })
+        .where(
+          and(
+            eq(userScans.id, scanId),
+            eq(userScans.userId, userId),
+            eq(userScans.recognitionAttemptId, requestId),
+          ),
+        );
+    }
+    return confirmedGoods
+      ? {
+          success: true as const,
+          goodsSlug: confirmedGoods.slug,
+          confirmedAt: attempt.confirmedAt.toISOString(),
+          alreadyConfirmed: true,
+        }
+      : failure('GOODS_UNAVAILABLE', '对应的 SKU 已不可用。');
+  }
+
+  const candidateMap = recognitionCandidateMapSchema.safeParse(
+    attempt.candidateMap,
+  );
+  if (!candidateMap.success) {
+    return failure('INTERNAL_ERROR', '识别候选记录已损坏。');
+  }
+  const goodsId = candidateMap.data[candidateId];
+  if (!goodsId) {
+    return failure('INVALID_CANDIDATE', '该候选不属于这次识别。');
+  }
+
+  const selectedGoods = (
+    await tx
+      .select({ id: goods.id, slug: goods.slug })
+      .from(goods)
+      .where(and(eq(goods.id, goodsId), eq(goods.status, 'published')))
+      .limit(1)
+  )[0];
+  if (!selectedGoods) {
+    return failure('GOODS_UNAVAILABLE', '对应的 SKU 已不可用。');
+  }
+
+  const confirmedAt = new Date();
+
+  await tx
+    .insert(userGoods)
+    .values({
+      userId,
+      goodsId: selectedGoods.id,
+      status: 'owned',
+      litAt: confirmedAt,
+    })
+    .onConflictDoUpdate({
+      target: [userGoods.userId, userGoods.goodsId, userGoods.status],
+      // 不改变数量，也保留第一次点亮时间。
+      set: { litAt: sql`coalesce(${userGoods.litAt}, excluded.lit_at)` },
+    });
+
+  await tx
+    .update(recognitionAttempts)
+    .set({
+      confirmedCandidateId: candidateId,
+      confirmedGoodsId: selectedGoods.id,
+      confirmedAt,
+      updatedAt: confirmedAt,
+    })
+    .where(eq(recognitionAttempts.id, attempt.id));
+
+  // 从未鉴定项确认而来：留下原图作识别审计，但不再显示为待鉴定。
+  if (scanId) {
+    await tx
+      .update(userScans)
+      .set({ resolvedAt: confirmedAt, updatedAt: confirmedAt })
+      .where(
+        and(
+          eq(userScans.id, scanId),
+          eq(userScans.userId, userId),
+          eq(userScans.recognitionAttemptId, requestId),
+        ),
+      );
+  }
+
+  return {
+    success: true as const,
+    goodsId: selectedGoods.id,
+    goodsSlug: selectedGoods.slug,
+    confirmedAt: confirmedAt.toISOString(),
+    alreadyConfirmed: false,
   };
 }

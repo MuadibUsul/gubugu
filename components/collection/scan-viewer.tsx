@@ -11,6 +11,9 @@ type Scan = {
   topScore: number | null;
   note: string | null;
   imageUrl: string;
+  backImageUrl: string | null;
+  goodsName: string | null;
+  resolved: boolean;
 };
 
 /**
@@ -56,11 +59,11 @@ export function ScanViewer({ scans }: { scans: Scan[] }) {
                 src={scan.imageUrl}
               />
               <span className="absolute top-1.5 left-1.5 rounded-[4px] bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                未鉴定
+                {scan.resolved ? '已归属' : '未鉴定'}
               </span>
             </div>
             <p className="truncate px-2 py-1.5 text-[11.5px]">
-              {scan.note || '未鉴定收藏'}
+              {scan.goodsName || scan.note || '未鉴定收藏'}
             </p>
           </button>
         ))}
@@ -78,7 +81,9 @@ export function ScanViewer({ scans }: { scans: Scan[] }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-[13px] font-medium">未鉴定收藏 · 仅自己可见</p>
+              <p className="text-[13px] font-medium">
+                {active.goodsName ?? '未鉴定收藏'} · 仅自己可见
+              </p>
               <button
                 aria-label="关闭"
                 className="text-muted-foreground px-2 text-lg leading-none"
@@ -94,15 +99,24 @@ export function ScanViewer({ scans }: { scans: Scan[] }) {
                 alt="未鉴定收藏"
                 key={active.id}
                 src={active.imageUrl}
+                backSrc={active.backImageUrl ?? undefined}
               />
             </div>
 
             <p className="text-muted-foreground mt-2 text-center text-[11px]">
-              {typeof active.topScore === 'number'
-                ? `最接近官方图 ${active.topScore}% · 未达点亮阈值`
-                : '暂未匹配到官方 SKU'}
+              {active.resolved
+                ? '已归属到官方 SKU'
+                : typeof active.topScore === 'number'
+                  ? `最接近官方图 ${active.topScore}% · 未达点亮阈值`
+                  : '暂未匹配到官方 SKU'}
               {' · 拖动卡面转动 · 点卡面翻背'}
             </p>
+            <Link
+              className="mt-3 block rounded-lg border border-[var(--rule)] p-2 text-center text-sm"
+              href={`/recognition?scanId=${active.id}`}
+            >
+              {active.backImageUrl ? '重拍背面' : '补拍背面'}
+            </Link>
 
             <form
               action={updateUserScanNoteAction}

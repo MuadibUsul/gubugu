@@ -80,6 +80,11 @@ jobs:
 
       - run: pnpm db:verify-lighting
 
+      - name: Verify paired scan transactions
+        run: pnpm exec vitest run server/user-scans/save.integration.test.ts
+        env:
+          RUN_DATABASE_TESTS: '1'
+
       # Exercise the real database-backed render path. A no-database build can
       # succeed while SQL or schema assumptions are broken.
       - run: pnpm build

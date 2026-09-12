@@ -322,6 +322,9 @@ export function HoloCard({
             <div className={styles.brandedBack}>
               <span className={styles.brandedBackMark}>谷</span>
               <span className={styles.brandedBackWord}>谷 布 谷</span>
+              <span className="absolute bottom-2 text-[10px] opacity-70">
+                默认卡背 · 尚未拍摄背面
+              </span>
             </div>
           )}
         </div>

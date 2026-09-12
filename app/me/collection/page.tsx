@@ -20,7 +20,7 @@ import { listUserScans } from '@/server/data/user-scans';
 
 export const metadata: Metadata = {
   title: '我的谷柜',
-  description: '当前登录用户的谷柜、完成度与未鉴定收藏。',
+  description: '当前登录用户的谷柜、完成度与正反面实拍收藏。',
 };
 
 export const dynamic = 'force-dynamic';
@@ -106,7 +106,7 @@ export default async function MyCollectionPage({
   ] = await Promise.all([
     getUserProfilePageData({ userId: user.id, viewerMode: 'self' }),
     countUnlockedAchievements(user.id),
-    listUserScans(user.id),
+    listUserScans(user.id, 60, true),
     getFollowCounts(user.id),
     listExchangesForUser({ userId: user.id, limit: 24 }),
     countUnreadMessages(user.id),
@@ -157,7 +157,7 @@ export default async function MyCollectionPage({
       status: 'exchange',
       href: '/me/collection?status=exchange',
     },
-    { label: '未鉴定', count: scans.length, href: '#unverified' },
+    { label: '实拍', count: scans.length, href: '#unverified' },
   ];
 
   return (
@@ -212,7 +212,7 @@ export default async function MyCollectionPage({
         ))}
       </div>
 
-      {/* 状态胶囊：已点亮 / 想要 / 可换 / 未鉴定 */}
+      {/* 状态胶囊：已点亮 / 想要 / 可换 / 实拍 */}
       <div className="mt-[18px] flex gap-1.5 overflow-x-auto border-b border-[var(--rule)] pb-2.5 [scrollbar-width:none]">
         {chips.map((c) => {
           const active = c.status ? c.status === status : false;
@@ -254,14 +254,14 @@ export default async function MyCollectionPage({
         </div>
       )}
 
-      {/* 未鉴定收藏 · 仅自己可见 */}
+      {/* 实拍收藏 · 仅自己可见 */}
       {scans.length > 0 ? (
         <section
           className="mt-5 border-t border-[var(--rule)] pt-4"
           id="unverified"
         >
           <div className="flex items-baseline justify-between">
-            <p className="text-[15px] font-medium">未鉴定收藏 · 仅自己可见</p>
+            <p className="text-[15px] font-medium">实拍收藏 · 仅自己可见</p>
             <span className="text-muted-foreground text-[11px]">
               {scans.length}
             </span>
@@ -272,6 +272,9 @@ export default async function MyCollectionPage({
               topScore: scan.topScore,
               note: scan.note,
               imageUrl: scan.imageUrl,
+              backImageUrl: scan.backImageUrl,
+              goodsName: scan.goodsName,
+              resolved: scan.resolved,
             }))}
           />
         </section>
