@@ -7,6 +7,8 @@ import { join, resolve } from 'node:path';
 
 import sharp from 'sharp';
 
+import { warmImagePreviews } from '@/server/image-variants';
+
 import { CRAWLER_IMAGE_MAX_BYTES } from './safe-fetch';
 
 // 目录图不再贴进固定大画布——那样小源图四周全是空白，显示时产品只占一小块，白白浪费源
@@ -134,6 +136,14 @@ export async function normalizeAndStoreCatalogImage(
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
   }
+
+  // Small list previews are ready before publication; larger sizes are disk-cached on demand.
+  await warmImagePreviews(path).catch((error: unknown) => {
+    console.warn(
+      'Image preview warmup failed; original remains available.',
+      error,
+    );
+  });
 
   return {
     hash,

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { HoloCard } from '@/components/collection/holo-card';
+import { imagePreviewProps } from '@/lib/image-variants';
 
 // 客户端组件只依赖它真正用到的字段，避免从 `@/server/data`（server-only 桶）引入类型。
 type GoodsGalleryImage = {
@@ -86,7 +87,8 @@ export function GoodsGallery({ goods }: GoodsGalleryProps) {
                   alt=""
                   className="size-full object-cover"
                   loading="lazy"
-                  src={image.imageUrl}
+                  decoding="async"
+                  {...imagePreviewProps(image.imageUrl, '56px')}
                 />
               </button>
             );

@@ -1,6 +1,5 @@
-import Image from 'next/image';
-
 import { Button } from '@/components/ui/button';
+import { RemoteImage } from '@/components/ui/remote-image';
 import {
   formatGoodsTypeLabel,
   formatMaterialLabel,
@@ -67,13 +66,11 @@ export function RecognitionCandidateCard({
       <div className="flex gap-4">
         <div className="hud-card relative h-28 w-24 shrink-0 overflow-hidden rounded-[var(--radius)]">
           {candidate.goods.primaryImageUrl ? (
-            <Image
+            <RemoteImage
               alt={candidate.goods.name}
               className="object-cover"
-              fill
               sizes="96px"
               src={candidate.goods.primaryImageUrl}
-              unoptimized
             />
           ) : (
             <div className="flex h-full items-center justify-center text-center text-xs leading-5 text-[color:color-mix(in_oklab,var(--foreground)_56%,var(--background))]">

@@ -6,7 +6,7 @@ import styles from './holo-card.module.css';
 
 /**
  * 交互式全息卡。逻辑移植自 simeydotme/pokemon-cards-css 的 Card.svelte：
- * 指针/触摸/陀螺仪 → 旋转/箔面/眩光目标值，rAF 阻尼 lerp 平滑趋近，静止即停帧。
+ * 拖动用 rAF 平滑倾斜；翻面由独立 CSS 3D 层连续旋转，静止即停帧。
  * 扩展：正/反两面翻转（点卡面或按钮翻面；无背面图时显示品牌卡背）+ 加载占位淡入。
  */
 
@@ -43,25 +43,67 @@ type SpringState = {
 
 const REST = { rx: 0, ry: 0, gx: 50, gy: 50, o: 0, bx: 50, by: 50 };
 
-export function HoloCard({
-  src,
-  alt,
-  backSrc,
-  className,
-}: {
+type HoloCardProps = {
   src: string;
   alt: string;
-  /** 背面图；缺省时显示品牌默认卡背（站点默认图待上传后替换）。 */
   backSrc?: string | null;
   className?: string;
-}) {
+};
+
+export function HoloCard(props: HoloCardProps) {
+  return (
+    <HoloCardSurface key={`${props.src}:${props.backSrc ?? ''}`} {...props} />
+  );
+}
+
+function HoloCardSurface({ src, alt, backSrc, className }: HoloCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const backRef = useRef<HTMLImageElement>(null);
+  const tiltRef = useRef<HTMLDivElement>(null);
+  const rotatorRef = useRef<HTMLDivElement>(null);
+  const flippingRef = useRef(false);
+  const resetTiltRef = useRef(() => {});
   const rafRef = useRef<number | null>(null);
   // 拖动过（超过阈值）就把这次的 click 当成"转卡"而非"翻面"，避免拖完手一松就翻面。
   const draggedRef = useRef(false);
   const [loaded, setLoaded] = useState(false);
   const [flipped, setFlipped] = useState(false);
+  const [backReady, setBackReady] = useState(!backSrc);
+  const [backError, setBackError] = useState(false);
+  const [instant, setInstant] = useState(false);
+  const showingBack = flipped && backReady;
+
+  useEffect(() => {
+    const img = backRef.current;
+    if (!img) return;
+    let cancelled = false;
+    const fail = () => {
+      if (!cancelled) setBackError(true);
+    };
+    const ready = async () => {
+      try {
+        await img.decode();
+        if (!cancelled) {
+          setBackReady(true);
+          setBackError(false);
+        }
+      } catch {
+        fail();
+      }
+    };
+    img.addEventListener('load', ready);
+    img.addEventListener('error', fail);
+    if (img.complete) {
+      if (img.naturalWidth > 0) void ready();
+      else fail();
+    }
+    return () => {
+      cancelled = true;
+      img.removeEventListener('load', ready);
+      img.removeEventListener('error', fail);
+    };
+  }, [backSrc]);
 
   // 图片可能在 React 绑定 onLoad 之前就已从缓存加载完成（complete=true），
   // 那样 load 事件不会再触发、淡入永远卡在 opacity:0。挂载时补一次判断。
@@ -91,22 +133,13 @@ export function HoloCard({
   });
 
   useEffect(() => {
-    const el = cardRef.current;
+    const el = rotatorRef.current;
     if (!el) return;
 
     const write = () => {
       const c = s.current;
-      const fromCenter = clamp(Math.hypot(c.gx - 50, c.gy - 50) / 50, 0, 1);
-      el.style.setProperty('--pointer-x', `${c.gx}%`);
-      el.style.setProperty('--pointer-y', `${c.gy}%`);
-      el.style.setProperty('--pointer-from-center', `${fromCenter}`);
-      el.style.setProperty('--pointer-from-top', `${c.gy / 100}`);
-      el.style.setProperty('--pointer-from-left', `${c.gx / 100}`);
-      el.style.setProperty('--card-opacity', `${c.o}`);
-      el.style.setProperty('--rotate-x', `${c.rx}deg`);
-      el.style.setProperty('--rotate-y', `${c.ry}deg`);
-      el.style.setProperty('--background-x', `${c.bx}%`);
-      el.style.setProperty('--background-y', `${c.by}%`);
+      if (tiltRef.current)
+        tiltRef.current.style.transform = `rotateY(${c.rx}deg) rotateX(${c.ry}deg)`;
     };
 
     const tick = () => {
@@ -148,9 +181,10 @@ export function HoloCard({
       c.to = REST.o;
       c.tbx = REST.bx;
       c.tby = REST.by;
-      el.dataset.active = 'false';
+      if (cardRef.current) cardRef.current.dataset.active = 'false';
       kick();
     };
+    resetTiltRef.current = rest;
 
     // 手动「拖拽自由转动」：在卡面任意按住拖动，累积角度、范围大（远超此前跟手位置的小幅
     // 倾斜），像把实体卡拿在手里转。松手缓缓回正。拖动时陀螺仪让位、且这次不触发翻面。
@@ -158,6 +192,7 @@ export function HoloCard({
     const MAXX = 32; // 上下转（rotateX）最大角
     const SENS = 0.32; // 每像素多少度
     let dragging = false;
+    let activePointer: number | null = null;
     let sx = 0;
     let sy = 0;
     let baseTrx = 0;
@@ -165,7 +200,10 @@ export function HoloCard({
     let moved = 0;
 
     const onPointerDown = (e: PointerEvent) => {
+      if (!e.isPrimary || e.button !== 0 || dragging || flippingRef.current)
+        return;
       dragging = true;
+      activePointer = e.pointerId;
       moved = 0;
       draggedRef.current = false;
       sx = e.clientX;
@@ -179,7 +217,7 @@ export function HoloCard({
       }
     };
     const onPointerMove = (e: PointerEvent) => {
-      if (!dragging) return;
+      if (!dragging || e.pointerId !== activePointer) return;
       const dx = e.clientX - sx;
       const dy = e.clientY - sy;
       moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
@@ -194,12 +232,13 @@ export function HoloCard({
       c.tbx = adjust(c.trx, -MAXY, MAXY, 63, 37);
       c.tby = adjust(c.tryy, -MAXX, MAXX, 33, 67);
       c.to = 1;
-      el.dataset.active = 'true';
+      if (cardRef.current) cardRef.current.dataset.active = 'true';
       kick();
     };
     const onPointerUp = (e: PointerEvent) => {
-      if (!dragging) return;
+      if (!dragging || e.pointerId !== activePointer) return;
       dragging = false;
+      activePointer = null;
       try {
         el.releasePointerCapture(e.pointerId);
       } catch {
@@ -208,48 +247,11 @@ export function HoloCard({
       rest();
     };
 
-    // 陀螺仪退居其次：基准自动跟随当前朝向（~1s 指数低通，解决「基准歪了」），拖动时让位。
-    let gyroBase: { g: number; b: number } | null = null;
-    const onOrient = (e: DeviceOrientationEvent) => {
-      if (dragging) return;
-      if (e.gamma == null || e.beta == null) return;
-      if (!gyroBase) {
-        gyroBase = { g: e.gamma, b: e.beta };
-      } else {
-        gyroBase.g += (e.gamma - gyroBase.g) * 0.03;
-        gyroBase.b += (e.beta - gyroBase.b) * 0.03;
-      }
-      const limit = { x: 16, y: 18 };
-      const gx = clamp(e.gamma - gyroBase.g, -limit.x, limit.x);
-      const gy = clamp(e.beta - gyroBase.b, -limit.y, limit.y);
-      const c = s.current;
-      c.active = true;
-      c.tbx = adjust(gx, -limit.x, limit.x, 37, 63);
-      c.tby = adjust(gy, -limit.y, limit.y, 33, 67);
-      c.trx = gx * -1;
-      c.tryy = gy;
-      c.tgx = adjust(gx, -limit.x, limit.x, 0, 100);
-      c.tgy = adjust(gy, -limit.y, limit.y, 0, 100);
-      c.to = 1;
-      el.dataset.active = 'true';
-      kick();
-    };
-
     el.addEventListener('pointerdown', onPointerDown);
     el.addEventListener('pointermove', onPointerMove);
     el.addEventListener('pointerup', onPointerUp);
     el.addEventListener('pointercancel', onPointerUp);
     el.addEventListener('pointerleave', onPointerUp);
-
-    const coarse =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(pointer: coarse)').matches;
-    const reduce =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (coarse && !reduce) {
-      window.addEventListener('deviceorientation', onOrient);
-    }
 
     write();
 
@@ -259,24 +261,16 @@ export function HoloCard({
       el.removeEventListener('pointerup', onPointerUp);
       el.removeEventListener('pointercancel', onPointerUp);
       el.removeEventListener('pointerleave', onPointerUp);
-      window.removeEventListener('deviceorientation', onOrient);
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
+      resetTiltRef.current = () => {};
     };
   }, []);
 
-  const flipTimer = useRef<number | null>(null);
-  const toggleFlip = () => {
-    const el = cardRef.current;
-    if (el) {
-      el.dataset.flipAnim = 'true';
-      el.style.setProperty('--flip', flipped ? '0deg' : '180deg');
-      // 翻面动画结束后撤掉 transform 过渡，倾斜恢复由 rAF 直接驱动（不发糊）。
-      if (flipTimer.current) window.clearTimeout(flipTimer.current);
-      flipTimer.current = window.setTimeout(() => {
-        el.dataset.flipAnim = 'false';
-      }, 600);
-    }
+  const toggleFlip = (keyboard = false) => {
+    if (!loaded) return;
+    resetTiltRef.current();
+    setInstant(keyboard);
     setFlipped((v) => !v);
   };
 
@@ -284,63 +278,124 @@ export function HoloCard({
     <div
       className={`${styles.card} ${className ?? ''}`}
       data-active="false"
-      data-flip-anim="false"
-      data-flipped={flipped ? 'true' : 'false'}
+      data-instant={instant}
+      data-flipped={showingBack ? 'true' : 'false'}
       data-loaded={loaded ? 'true' : 'false'}
       ref={cardRef}
-      style={{ '--flip': '0deg' } as React.CSSProperties}
     >
-      <div
-        className={styles.rotator}
-        onClick={() => {
-          // 拖动转卡后松手不要误翻面；仅点按(未拖动)才翻面
-          if (draggedRef.current) {
-            draggedRef.current = false;
-            return;
-          }
-          toggleFlip();
-        }}
-      >
-        <div className={`${styles.face} ${styles.front}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            alt={alt}
-            className={styles.art}
-            fetchPriority="high"
-            onLoad={(e) => applyLoaded(e.currentTarget)}
-            ref={imgRef}
-            src={src}
-          />
-          <span aria-hidden="true" className={styles.shine} />
-          <span aria-hidden="true" className={styles.glare} />
-        </div>
-        <div className={`${styles.face} ${styles.back}`}>
-          {backSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt={`${alt} 背面`} className={styles.backImg} src={backSrc} />
-          ) : (
-            <div className={styles.brandedBack}>
-              <span className={styles.brandedBackMark}>谷</span>
-              <span className={styles.brandedBackWord}>谷 布 谷</span>
-              <span className="absolute bottom-2 text-[10px] opacity-70">
-                默认卡背 · 尚未拍摄背面
-              </span>
-            </div>
-          )}
+      <div className={styles.tilt} ref={tiltRef}>
+        <div
+          className={styles.rotator}
+          ref={rotatorRef}
+          onTransitionRun={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              event.propertyName === 'transform'
+            )
+              flippingRef.current = true;
+          }}
+          onTransitionEnd={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              event.propertyName === 'transform'
+            )
+              flippingRef.current = false;
+          }}
+          onTransitionCancel={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              event.propertyName === 'transform'
+            )
+              flippingRef.current = false;
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={`${alt}，${showingBack ? '翻到正面' : '翻到背面'}`}
+          aria-pressed={showingBack}
+          aria-busy={flipped && !backReady && !backError}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              toggleFlip(true);
+            }
+          }}
+          onClick={(event) => {
+            // 拖动转卡后松手不要误翻面；仅点按(未拖动)才翻面
+            if (draggedRef.current) {
+              draggedRef.current = false;
+              return;
+            }
+            toggleFlip(event.detail === 0);
+          }}
+        >
+          <div className={`${styles.face} ${styles.front}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt={alt}
+              className={styles.art}
+              fetchPriority="high"
+              decoding="async"
+              draggable={false}
+              onLoad={(e) => applyLoaded(e.currentTarget)}
+              ref={imgRef}
+              src={src}
+            />
+            <span aria-hidden="true" className={styles.shine} />
+            <span aria-hidden="true" className={styles.glare} />
+          </div>
+          <div className={`${styles.face} ${styles.back}`}>
+            {backSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                alt={`${alt} 背面`}
+                className={styles.backImg}
+                src={backSrc}
+                ref={backRef}
+                decoding="async"
+                fetchPriority="low"
+                draggable={false}
+              />
+            ) : (
+              <div className={styles.brandedBack}>
+                <span className={styles.brandedBackMark}>谷</span>
+                <span className={styles.brandedBackWord}>谷 布 谷</span>
+                <span className="absolute bottom-2 text-[10px] opacity-70">
+                  默认卡背 · 尚未拍摄背面
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <button
-        aria-label={flipped ? '翻到正面' : '翻到背面'}
+        aria-label={
+          flipped && !backReady
+            ? '取消翻面'
+            : showingBack
+              ? '翻到正面'
+              : '翻到背面'
+        }
         className={styles.flipBtn}
+        disabled={!loaded}
         onClick={(e) => {
           e.stopPropagation();
-          toggleFlip();
+          toggleFlip(e.detail === 0);
         }}
         onPointerDown={(e) => e.stopPropagation()}
         type="button"
       >
-        ⟲ {flipped ? '正面' : '背面'}
+        ⟲{' '}
+        {flipped && !backReady
+          ? backError
+            ? '取消翻面'
+            : '加载背面…'
+          : showingBack
+            ? '正面'
+            : '背面'}
       </button>
+      {backError ? (
+        <p role="alert">背面加载失败，请重新打开卡片后重试。</p>
+      ) : null}
     </div>
   );
 }

@@ -1,310 +1,130 @@
-/*
- * 交互式全息卡（移植自 simeydotme/pokemon-cards-css，GPL-3.0）。
- * 我们的谷子图不是标准 TCG 版式，故不套 TCG clip 遮罩，全息层铺满整图。
- * 相比库：箔面强度整体调低（保证原图清晰可见），并加了正/反两面翻转与加载占位。
- */
-
 .card {
-  --red: #f80e35;
-  --yellow: #eedf10;
-  --green: #21e985;
-  --blue: #0dbde9;
-  --violet: #c929f1;
-
-  --card-radius: 4.55% / 3.5%;
-  --card-edge: hsl(47, 100%, 78%);
-  --card-glow: hsl(175, 100%, 90%);
-
-  --pointer-x: 50%;
-  --pointer-y: 50%;
-  --pointer-from-center: 0;
-  --pointer-from-top: 0.5;
-  --pointer-from-left: 0.5;
-  --card-opacity: 0;
-  --rotate-x: 0deg;
-  --rotate-y: 0deg;
-  --background-x: 50%;
-  --background-y: 50%;
-  --flip: 0deg;
-
   position: relative;
   width: 100%;
-  display: grid;
-  place-items: center;
-  perspective: 700px;
-  transform: translate3d(0, 0, 0.01px);
-  transform-style: preserve-3d;
-  will-change: transform;
-  touch-action: none;
-  isolation: isolate;
+  perspective: 900px;
+  --card-radius: 4.55% / 3.5%;
 }
-
+.tilt {
+  width: 100%;
+  transform-style: preserve-3d;
+}
+/* Only this layer flips. No opacity/filter/blending on its 3D ancestors. */
 .rotator {
   position: relative;
   width: 100%;
   aspect-ratio: var(--card-aspect, 0.72);
-  border-radius: var(--card-radius);
-  transform-origin: center;
   transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
-  transform: rotateY(calc(var(--rotate-x) + var(--flip)))
-    rotateX(var(--rotate-y));
-  /* 倾斜由 rAF lerp 平滑，transform 不加过渡（否则双重延迟发糊）；只有翻面时临时启用 */
-  transition: box-shadow 0.4s ease;
+  transform: rotateY(0deg);
+  transition: transform 360ms cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: none;
   cursor: pointer;
-  box-shadow:
-    0 8px 20px -6px rgb(0 0 0 / 40%),
-    0 2px 8px -4px rgb(0 0 0 / 35%);
+  -webkit-tap-highlight-color: transparent;
 }
-.card[data-active='true'] .rotator {
-  transition: box-shadow 0.4s ease;
-  box-shadow:
-    0 0 3px -1px white,
-    0 0 3px 1px var(--card-edge),
-    0 0 12px 2px var(--card-glow),
-    0 10px 24px -6px rgb(0 0 0 / 50%),
-    0 0 40px -30px var(--card-glow),
-    0 0 50px -22px var(--card-glow);
+.rotator:focus-visible {
+  outline: 2px solid var(--shu);
+  outline-offset: 6px;
 }
-/* 翻面动画：用**线性** 0.5s，好让「90° 正好在 0.25s」——与下面透明度硬切换对齐。 */
-.card[data-flip-anim='true'] .rotator {
-  transition:
-    box-shadow 0.4s ease,
-    transform 0.5s linear;
+.card[data-flipped='true'] .rotator {
+  transform: rotateY(180deg);
 }
-
-/* 翻转卡：两面绝对定位。
-   **不再用 backface-visibility**——iOS/微信 WebView 里它在陀螺仪倾斜到某些角度时会
-   误剔除正面，导致卡片突然变空白（用户遇到的「某些角度整卡消失」）。改为纯靠透明度
-   决定哪一面可见：未翻面时永远显示正面(与角度无关)；翻面时在 90°(=0.25s)瞬间把正面
-   切成透明、背面切成不透明。线性翻面保证切换点正好落在 90°，既不露镜像也不闪空白。 */
 .face {
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
-  transition: opacity 0s linear 0.25s;
+  background: var(--surface, #f4efe6);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 6px 18px -7px rgb(0 0 0 / 35%);
 }
 .front {
-  opacity: 1;
+  transform: rotateY(0deg) translateZ(0.5px);
 }
 .back {
-  transform: rotateY(180deg);
-  opacity: 0;
+  transform: rotateY(180deg) translateZ(0.5px);
 }
-.card[data-flipped='true'] .front {
-  opacity: 0;
-}
-.card[data-flipped='true'] .back {
-  opacity: 1;
-}
-
-.art {
+.art,
+.backImg {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: var(--card-radius);
-  transform: translate3d(0, 0, 0.01px);
-  opacity: 0;
-  transition: opacity 0.45s ease;
+  object-fit: contain;
+  border-radius: inherit;
+  user-select: none;
+  -webkit-user-drag: none;
 }
-/* 加载占位：浅色底 + 轻微呼吸，图片就绪即淡入，杜绝“黑屏几秒” */
-.front {
-  background: var(--surface, #f4efe6);
-  border-radius: var(--card-radius);
+.art {
+  opacity: 0;
 }
 .card[data-loaded='true'] .art {
   opacity: 1;
 }
-.front::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    100deg,
-    transparent 30%,
-    rgb(255 255 255 / 45%) 50%,
-    transparent 70%
-  );
-  background-size: 250% 100%;
-  animation: holo-skeleton 1.1s ease-in-out infinite;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-  z-index: 6;
-}
-.card[data-loaded='true'] .front::after {
-  opacity: 0;
-  animation: none;
-}
-@keyframes holo-skeleton {
-  0% {
-    background-position: 150% 0;
-  }
-  100% {
-    background-position: -150% 0;
-  }
-}
-
-/* ---- Shine（彩虹箔面）：强度整体调低，保证原图清晰 ---- */
-.shine,
-.glare {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  border-radius: var(--card-radius);
-}
-
-/*
- * 全部改为「只加光、不压暗」：去掉会把非指针区域压黑的 luminosity 聚光、hard-light
- * 黑竖纹、以及 glare 的黑色外圈。只保留：① 彩虹箔（color-dodge，黑处不改、亮处提亮）
- * ② 指针处一小团柔和白光（soft-light / screen，透明处不改色）。这样原图始终清晰，
- * 指针附近只是轻轻泛光，不再有黑晕影响观感。
- */
+/* No subpixel scanlines or color-dodge: keep the artwork stable and readable. */
 .shine {
-  --scanlines-space: 0.85px;
-  --scanlines-light: #3a3a3a;
-  --scanlines-dark: black;
-
-  z-index: 3;
-  transform: translateZ(1px);
-  background-image:
-    repeating-linear-gradient(
-      110deg,
-      var(--violet),
-      var(--blue),
-      var(--green),
-      var(--yellow),
-      var(--red),
-      var(--violet),
-      var(--blue),
-      var(--green),
-      var(--yellow),
-      var(--red),
-      var(--violet),
-      var(--blue),
-      var(--green),
-      var(--yellow),
-      var(--red)
-    ),
-    repeating-linear-gradient(
-      90deg,
-      var(--scanlines-dark) calc(var(--scanlines-space) * 0),
-      var(--scanlines-dark) calc(var(--scanlines-space) * 2),
-      var(--scanlines-light) calc(var(--scanlines-space) * 2),
-      var(--scanlines-light) calc(var(--scanlines-space) * 4)
-    );
-  background-position:
-    calc(((50% - var(--background-x)) * 2.6) + 50%)
-      calc(((50% - var(--background-y)) * 3.5) + 50%),
-    center center;
-  background-size:
-    400% 400%,
-    cover;
-  background-blend-mode: overlay;
-  filter: saturate(1.05);
-  mix-blend-mode: color-dodge;
-  /* 彩虹箔很淡：静止 ~0.08，交互也只到 ~0.26，原图清楚 */
-  opacity: calc(0.08 + var(--card-opacity) * 0.18);
+  display: none;
 }
-
-/* 指针处柔光（soft-light：白处轻提亮、透明处不改色，绝不压暗） */
-.shine::after {
-  content: '';
+.glare {
+  pointer-events: none;
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-image: radial-gradient(
-    farthest-corner circle at var(--pointer-x) var(--pointer-y),
-    rgb(255 255 255 / 45%) 0%,
-    rgb(255 255 255 / 12%) 20%,
-    rgb(255 255 255 / 0%) 48%
-  );
-  mix-blend-mode: soft-light;
-  opacity: calc(var(--card-opacity) * 0.8);
+  background: linear-gradient(125deg, rgb(255 255 255 / 12%), transparent 55%);
+  opacity: 0;
+  transition: opacity 140ms ease-out;
 }
-
-/* ---- Glare：指针处一小团白色高光，向外淡出到透明（screen 只提亮、不压暗）---- */
-.glare {
-  z-index: 4;
-  transform: translateZ(1.4px);
-  background-image: radial-gradient(
-    farthest-corner circle at var(--pointer-x) var(--pointer-y),
-    rgb(255 255 255 / 40%) 6%,
-    rgb(255 255 255 / 8%) 34%,
-    rgb(255 255 255 / 0%) 60%
-  );
-  mix-blend-mode: screen;
-  opacity: calc(var(--card-opacity) * 0.7);
+.card[data-active='true'] .glare {
+  opacity: 1;
 }
-
-/* ---- 反面：默认站点卡背（未提供 backSrc 时的品牌兜底）---- */
 .brandedBack {
   position: relative;
   width: 100%;
   height: 100%;
   display: grid;
   place-items: center;
-  border-radius: var(--card-radius);
-  background:
-    radial-gradient(
-      120% 90% at 50% 0%,
-      rgb(255 255 255 / 12%),
-      transparent 60%
-    ),
-    linear-gradient(
-      160deg,
-      var(--shu, #c0392b),
-      color-mix(in srgb, var(--shu, #c0392b) 62%, black)
-    );
+  border-radius: inherit;
+  background: linear-gradient(160deg, var(--shu, #c0392b), #752b27);
   color: rgb(255 255 255 / 92%);
 }
 .brandedBackMark {
   font-family: var(--font-heading, serif);
   font-size: clamp(48px, 22vw, 96px);
-  font-weight: 700;
-  line-height: 1;
-  text-shadow: 0 2px 8px rgb(0 0 0 / 35%);
 }
 .brandedBackWord {
   position: absolute;
-  bottom: 8%;
+  bottom: 12%;
   font-size: 12px;
   letter-spacing: 0.35em;
-  opacity: 0.7;
 }
-.backImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--card-radius);
-}
-
-/* ---- 翻面按钮（在 .card 层、不随卡翻转）---- */
 .flipBtn {
   position: absolute;
   right: 8px;
   bottom: 8px;
-  z-index: 8;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 5px 12px;
   border: none;
   border-radius: 999px;
-  background: rgb(0 0 0 / 45%);
+  background: rgb(0 0 0 / 60%);
   color: white;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
-  backdrop-filter: blur(4px);
+  transition: transform 120ms ease-out;
 }
-
+.flipBtn:active {
+  transform: scale(0.97);
+}
+.card[data-instant='true'] .rotator {
+  transition: none;
+}
 @media (prefers-reduced-motion: reduce) {
-  .rotator {
-    transform: rotateY(var(--flip)) !important;
+  .tilt {
+    transform: none !important;
   }
-  .front::after {
-    animation: none;
+  .rotator,
+  .glare,
+  .flipBtn {
+    transition: none;
+  }
+  .glare {
+    display: none;
   }
 }

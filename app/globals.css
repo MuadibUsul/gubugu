@@ -1,5 +1,33 @@
 @import 'tailwindcss';
 
+/* Android shell only. Keep browser selection and native text editing intact. */
+html[data-native-platform='android'] {
+  overscroll-behavior-y: none;
+}
+
+html[data-native-platform='android'] body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html[data-native-platform='android'] :is(img, a) {
+  -webkit-user-drag: none;
+}
+
+html[data-native-platform='android']
+  :is(
+    input,
+    textarea,
+    [contenteditable=''],
+    [contenteditable='true'],
+    [contenteditable='plaintext-only']
+  ) {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /* ── 扫描点亮：相机优先的全屏扫描界面 ─────────────────────────────
    相机屏固定深色（不随明暗主题），朱红作扫描光效与操作色。 */
 .scanner {

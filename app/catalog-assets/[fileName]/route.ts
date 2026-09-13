@@ -1,6 +1,5 @@
-import { readFile } from 'node:fs/promises';
-
 import { catalogAssetPath } from '@/server/catalog-crawler/image-store';
+import { imageAssetResponse } from '@/server/image-variants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,24 +9,17 @@ type CatalogAssetRouteProps = {
 };
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: CatalogAssetRouteProps,
 ) {
   const { fileName } = await params;
 
   try {
-    const bytes = await readFile(
+    return await imageAssetResponse(
+      request,
       catalogAssetPath(fileName, process.env.CATALOG_ASSET_DIR),
+      true,
     );
-
-    return new Response(bytes, {
-      headers: {
-        'Cache-Control': 'public, max-age=31536000, immutable',
-        'Content-Length': String(bytes.byteLength),
-        'Content-Type': 'image/webp',
-        'X-Content-Type-Options': 'nosniff',
-      },
-    });
   } catch {
     return new Response('Not found', { status: 404 });
   }

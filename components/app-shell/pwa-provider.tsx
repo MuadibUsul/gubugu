@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { installNativeInteractions } from '@/lib/native-interactions';
+
 // 注册 Service Worker + 安装引导。挂在根 layout（可水合）里。
 // Android/桌面：捕获 beforeinstallprompt，弹「安装到主屏」；iOS Safari：给「分享→添加到主屏幕」提示。
 // 关闭后记 localStorage，不再打扰。
@@ -26,6 +28,11 @@ export function PwaProvider() {
   const [iosHint, setIosHint] = useState(false);
 
   useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return;
+    return installNativeInteractions(document);
+  }, []);
+
+  useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => undefined);
     }
@@ -39,7 +46,11 @@ export function PwaProvider() {
         }, 1500)
       : null;
 
-    if (localStorage.getItem(DISMISS_KEY) || isStandalone()) {
+    if (
+      Capacitor.isNativePlatform() ||
+      localStorage.getItem(DISMISS_KEY) ||
+      isStandalone()
+    ) {
       return () => {
         if (scannerWarmup !== null) window.clearTimeout(scannerWarmup);
       };

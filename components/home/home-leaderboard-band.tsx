@@ -51,6 +51,8 @@ export async function HomeLeaderboardSection() {
                     alt=""
                     className="size-full object-cover"
                     src={entry.avatarImageUrl}
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   (entry.displayName || entry.handle).slice(0, 1)

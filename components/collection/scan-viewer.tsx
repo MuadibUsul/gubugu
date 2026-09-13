@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { HoloCard } from '@/components/collection/holo-card';
+import { RemoteImage } from '@/components/ui/remote-image';
 import { updateUserScanNoteAction } from '@/server/user-scans/actions';
 
 type Scan = {
@@ -50,12 +51,11 @@ export function ScanViewer({ scans }: { scans: Scan[] }) {
             type="button"
           >
             <div className="goods-card__art relative aspect-[3/4] rounded-none">
-              {/* 私密资产走鉴权路由，同源 <img> 会带上 cookie */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <RemoteImage
                 alt="未鉴定收藏"
                 className="goods-card__art-image"
-                loading="lazy"
+                sizes="(max-width: 639px) 30vw, (max-width: 1023px) 160px, 220px"
+                privateSource
                 src={scan.imageUrl}
               />
               <span className="absolute top-1.5 left-1.5 rounded-[4px] bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">

@@ -1,11 +1,10 @@
-import { readFile } from 'node:fs/promises';
-
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getAuthUser } from '@/server/auth/session';
 import { getOwnedUserScanAssetKey } from '@/server/data/user-scans';
 import { userScanAssetPath } from '@/server/user-scans/image-store';
+import { imageAssetResponse } from '@/server/image-variants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,16 +38,7 @@ export async function GET(
   if (!assetKey) return new NextResponse(null, { status: 404 });
 
   try {
-    const bytes = await readFile(userScanAssetPath(assetKey));
-
-    return new Response(bytes, {
-      headers: {
-        'Cache-Control': 'private, no-store',
-        'Content-Length': String(bytes.byteLength),
-        'Content-Type': 'image/webp',
-        'X-Content-Type-Options': 'nosniff',
-      },
-    });
+    return await imageAssetResponse(request, userScanAssetPath(assetKey));
   } catch {
     return new NextResponse(null, { status: 404 });
   }

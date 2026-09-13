@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import Image from 'next/image';
 
 import { isOptimizableImageUrl } from '@/lib/goods-image';
+import { imagePreviewProps } from '@/lib/image-variants';
 
 type RemoteImageProps = {
   src: string;
@@ -35,7 +36,9 @@ export function RemoteImage({
   priority = false,
   privateSource = false,
 }: RemoteImageProps) {
-  if (!privateSource && isOptimizableImageUrl(src)) {
+  const preview = imagePreviewProps(src, sizes);
+  const authenticated = privateSource || src.startsWith('/api/');
+  if (!preview.srcSet && !authenticated && isOptimizableImageUrl(src)) {
     return (
       <Image
         alt={alt}
@@ -56,8 +59,15 @@ export function RemoteImage({
       className={className}
       decoding="async"
       loading={priority ? 'eager' : 'lazy'}
-      src={src}
-      style={style}
+      fetchPriority={priority ? 'high' : 'auto'}
+      {...preview}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        ...style,
+      }}
     />
   );
 }
