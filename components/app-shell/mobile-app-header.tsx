@@ -50,25 +50,39 @@ type MobileAppHeaderProps = {
 
 export function MobileAppHeader({
   searchPlaceholder = '搜角色、系列、SKU',
-  hasUnread = true,
+  hasUnread = false,
 }: MobileAppHeaderProps) {
   return (
     <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2.5 border-b border-[var(--rule-2)] bg-[var(--paper)] px-4 py-2.5 sm:-mx-6 sm:px-6 lg:hidden">
-      <BrandSeal />
+      <Link
+        aria-label="谷布谷首页"
+        className="flex flex-none items-center gap-1.5 rounded-[10px] transition-transform duration-150 ease-[var(--ease)] active:scale-[.97] motion-reduce:transform-none"
+        href="/"
+      >
+        <BrandSeal size={28} />
+        <span className="leading-none">
+          <strong className="block text-[14px] font-bold tracking-[.06em] text-[var(--ink)]">
+            谷布谷
+          </strong>
+          <small className="mt-1 block text-[9px] tracking-[.08em] text-[var(--ink-3)]">
+            收藏图鉴
+          </small>
+        </span>
+      </Link>
       <Link
         aria-label="搜索"
         href="/search"
-        className="flex flex-1 items-center gap-2 rounded-[10px] border border-[var(--rule)] bg-[var(--surface)] px-3 py-2"
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-[var(--rule)] bg-[var(--surface)] px-3 py-2 transition-transform duration-150 ease-[var(--ease)] active:scale-[.98] motion-reduce:transform-none"
       >
         {searchIcon}
-        <span className="text-[12.5px] text-[var(--ink-3)]">
+        <span className="truncate text-[12.5px] text-[var(--ink-3)]">
           {searchPlaceholder}
         </span>
       </Link>
       <Link
         aria-label="通知"
         href="/me/notifications"
-        className="relative flex-none text-[var(--ink-2)]"
+        className="relative grid size-10 flex-none place-items-center rounded-[10px] text-[var(--ink-2)] transition-[background-color,transform] duration-150 ease-[var(--ease)] active:scale-[.96] active:bg-[var(--sunken)] motion-reduce:transform-none"
       >
         <svg width="21" height="21" viewBox="0 0 256 256" fill="currentColor">
           <path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z" />
