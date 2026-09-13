@@ -1,6 +1,6 @@
 name: Deploy to VPS
 
-# 只部署已通过 CI 的 main commit；部署不再与验证并行。
+# CI 已验证并发布同一 main commit 的镜像；这里仅负责部署，不再重复构建。
 on:
   workflow_run:
     workflows: [CI]
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # 推镜像到 GHCR
+      packages: read
 
     steps:
       - uses: actions/checkout@v4
@@ -39,45 +39,6 @@ jobs:
           echo "owner=${owner}" >> "$GITHUB_OUTPUT"
           echo "base=ghcr.io/${owner}/gubugu" >> "$GITHUB_OUTPUT"
           echo "sha=${DEPLOY_SHA::12}" >> "$GITHUB_OUTPUT"
-
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # ── web（精简运行镜像）──
-      # NEXT_PUBLIC_* 在 build 时内联，必须作为 build-args 传入。站名是公开值，
-      # 放在 Actions Variables（vars）而非 secrets。
-      - name: Build & push web
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: runner
-          push: true
-          tags: |
-            ${{ steps.img.outputs.base }}-web:${{ steps.img.outputs.sha }}
-            ${{ steps.img.outputs.base }}-web:latest
-          build-args: |
-            NEXT_PUBLIC_APP_NAME=${{ vars.NEXT_PUBLIC_APP_NAME }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # ── migrator（跑 drizzle 迁移）──
-      - name: Build & push migrator
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: migrator
-          push: true
-          tags: |
-            ${{ steps.img.outputs.base }}-migrator:${{ steps.img.outputs.sha }}
-            ${{ steps.img.outputs.base }}-migrator:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       # 把编排文件同步到 VPS（.env 与密钥只在 VPS 上手动维护，不经 CI）。
       - name: Copy compose files to VPS
