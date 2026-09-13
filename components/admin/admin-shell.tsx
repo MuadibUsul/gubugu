@@ -34,6 +34,12 @@ export function AdminShell({
               >
                 爬虫采集
               </Link>
+              <Link
+                className="rounded border px-4 py-2 text-sm"
+                href="/admin/design-preview"
+              >
+                UI / VI 样板
+              </Link>
             </>
           ) : null}
           <Link
